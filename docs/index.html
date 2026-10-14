@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>化療給藥情境練習</title>
+<style>
+:root{
+  color-scheme:light;
+  --bg:#f6f7f9; --card:#ffffff; --ink:#14171c; --ink2:#4b5260; --muted:#7a8190; --line:#dfe3ea;
+  --accent:#2a78d6; --accent-ink:#ffffff; --soft:#eaf2fc;
+  --ok:#0f7a3d; --ok-bg:#e6f4ec; --bad:#b42318; --bad-bg:#fdecea; --warn-bg:#fff6e0; --warn:#8a5a00;
+  --g-known:#2a78d6; --g-over:#eb6834; --g-unsure:#1baf7a; --g-gap:#eda100; --g-na:#c9ced8;
+  --radius:14px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#121417; --card:#1b1e23; --ink:#eef0f3; --ink2:#c2c7d0; --muted:#8d94a1; --line:#2d323a;
+    --accent:#3987e5; --accent-ink:#ffffff; --soft:#1d2a3b;
+    --ok:#5fd08f; --ok-bg:#15291e; --bad:#ff8a80; --bad-bg:#33191a; --warn-bg:#2e2510; --warn:#f1c25a;
+    --g-known:#3987e5; --g-over:#d95926; --g-unsure:#199e70; --g-gap:#c98500; --g-na:#3a404a;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#121417; --card:#1b1e23; --ink:#eef0f3; --ink2:#c2c7d0; --muted:#8d94a1; --line:#2d323a;
+  --accent:#3987e5; --accent-ink:#ffffff; --soft:#1d2a3b;
+  --ok:#5fd08f; --ok-bg:#15291e; --bad:#ff8a80; --bad-bg:#33191a; --warn-bg:#2e2510; --warn:#f1c25a;
+  --g-known:#3987e5; --g-over:#d95926; --g-unsure:#199e70; --g-gap:#c98500; --g-na:#3a404a;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 "Noto Sans TC","Microsoft JhengHei","PingFang TC",system-ui,sans-serif}
+main{max-width:760px;margin:0 auto;padding:16px 16px 96px}
+.top{display:flex;align-items:center;gap:10px;margin:4px 0 12px}
+.top h1{font-size:17px;margin:0;flex:1}
+.prog{height:6px;background:var(--line);border-radius:99px;overflow:hidden;margin-bottom:14px}
+.prog i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:14px}
+.act{font-size:13px;color:var(--muted);letter-spacing:.04em}
+h2{font-size:19px;margin:4px 0 10px}
+.ref{font-size:12px;color:var(--muted)}
+.pic{width:100%;aspect-ratio:3/2;border-radius:10px;background:var(--soft);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px;margin:6px 0 12px;overflow:hidden;border:1px dashed var(--line)}
+.pic img{width:100%;height:100%;object-fit:cover;display:block}
+.stem{white-space:pre-line;font-size:16.5px;margin:0 0 12px}
+.ask{font-size:14px;color:var(--ink2);margin:6px 0}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+button{font:inherit;cursor:pointer;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:10px 14px;min-height:44px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+button.sel{border-color:var(--accent);background:var(--soft);font-weight:600}
+button:disabled{opacity:.45;cursor:not-allowed}
+.opt{display:block;width:100%;text-align:left;margin:0 0 8px;padding:12px 14px}
+.opt.unk{color:var(--ink2);border-style:dashed}
+.conf button{flex:1}
+.banner{background:var(--warn-bg);color:var(--warn);border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:15px}
+.banner b{display:block;margin-bottom:2px}
+.steps .opt .n{display:inline-block;min-width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--accent-ink);text-align:center;font-size:14px;line-height:26px;margin-right:8px}
+.steps .opt .n.e{background:var(--line);color:var(--muted)}
+canvas{width:100%;aspect-ratio:1/1;border-radius:10px;touch-action:none;display:block;background:#f3d9c6}
+.hint{font-size:14px;color:var(--ink2);margin:8px 0}
+.rv{border-top:1px solid var(--line);padding:10px 0}
+.rv:first-of-type{border-top:0}
+.rv .h{display:flex;gap:8px;align-items:baseline}
+.tag{font-size:12px;border-radius:99px;padding:1px 8px;white-space:nowrap}
+.tag.ok{background:var(--ok-bg);color:var(--ok)}
+.tag.bad{background:var(--bad-bg);color:var(--bad)}
+.tag.wait{background:var(--soft);color:var(--ink2)}
+.rv p{margin:4px 0;font-size:14.5px;color:var(--ink2)}
+.map{display:grid;grid-template-columns:repeat(auto-fill,minmax(54px,1fr));gap:6px;margin:8px 0 4px}
+.cell{border-radius:8px;padding:6px 4px;text-align:center;font-size:12px;line-height:1.3;color:#fff;font-weight:600}
+.cell small{display:block;font-weight:400;opacity:.95}
+.leg{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--ink2);margin:8px 0}
+.leg span{display:inline-flex;align-items:center;gap:6px}
+.leg i{width:14px;height:14px;border-radius:4px;display:inline-block}
+textarea,input[type=text]{width:100%;font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+textarea{min-height:84px}
+label.ck{display:flex;gap:8px;align-items:flex-start;padding:6px 0;font-size:15px}
+label.ck input{margin-top:5px;width:18px;height:18px}
+.grp{font-size:13px;color:var(--muted);margin:10px 0 2px}
+.status{border-radius:10px;padding:10px 12px;margin-top:10px;font-size:15px}
+.status.ok{background:var(--ok-bg);color:var(--ok)} .status.warn{background:var(--warn-bg);color:var(--warn)} .status.bad{background:var(--bad-bg);color:var(--bad)}
+.foot{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom))}
+.foot .in{max-width:760px;margin:0 auto;display:flex;justify-content:flex-end;gap:8px}
+.big{font-size:28px;font-weight:700}
+</style>
+</head>
+<body>
+<main id="app"><p>載入中…</p></main>
+<div class="foot" id="foot" hidden><div class="in" id="footin"></div></div>
+<script>
+/* 新進護理師化療給藥到職訓練｜實體課 2D 互動情境
+   題目資料：data/script.json（由 _build.py 從腳本 md 產生；不要手改）
+   ENDPOINT：作答回傳的 Google Apps Script 網址（apps-script/Code.gs）；空白時只在本頁顯示 */
+const ENDPOINT = "";
+const VERSION = "onboard-v0.3";
+const $app = document.getElementById("app"), $foot = document.getElementById("foot"), $footin = document.getElementById("footin");
+let D, S;   // D＝題目資料；S＝作答狀態
+const CONF = [["high","很確定"],["mid","有點把握"],["low","不確定"]];
+const GAPCLS = {
+  known:{c:"var(--g-known)",l:"已經會",i:"✓",d:"很確定，而且答對"},
+  over:{c:"var(--g-over)",l:"以為會",i:"!",d:"很確定，卻答錯——最要注意"},
+  unsure:{c:"var(--g-unsure)",l:"會但沒把握",i:"?",d:"沒把握，但答對"},
+  gap:{c:"var(--g-gap)",l:"還不會",i:"✗",d:"沒把握或選不知道，而且答錯"}};
+
+function esc(s){return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function rng(seed){let h=2166136261;for(const c of seed)h=Math.imul(h^c.charCodeAt(0),16777619);return()=>{h+=0x6D2B79F5;let t=h;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296}}
+function shuffle(arr,seed){const a=arr.slice(),r=rng(seed);for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function foot(btns){ $footin.innerHTML=""; if(!btns||!btns.length){$foot.hidden=true;return} $foot.hidden=false; $footin.innerHTML=""; btns.forEach(b=>$footin.appendChild(b)); }
+function btn(txt,cls,fn,dis){const b=document.createElement("button");b.textContent=txt;if(cls)b.className=cls;b.onclick=fn;if(dis)b.disabled=true;return b}
+function pic(img){ if(img && D.images && D.images[img]) return `<div class="pic"><img src="images/${esc(D.images[img])}" alt=""></div>`; return img?`<div class="pic">圖卡 ${esc(img)}（製作中）</div>`:"" }
+function save(){ try{ localStorage.setItem("onboard_state",JSON.stringify(S)) }catch(e){} }
+function gapClass(a){ if(!a) return null; if(a.correct) return a.conf==="high"?"known":"unsure"; return (a.conf==="high"&&!a.unknown)?"over":"gap" }
+function itemById(id){return D.items.find(x=>x.id===id)}
+function deferredTo(id){const c=D.conseq.find(c=>c.src===id);if(!c)return null;const t=itemById(c.target);return t&&t.act!==itemById(id).act?t.act:null}
+
+fetch("data/script.json",{cache:"no-cache"}).then(r=>r.json()).then(d=>{D=d;
+  let old=null; try{old=JSON.parse(localStorage.getItem("onboard_state")||"null")}catch(e){}
+  if(old&&old.ver===VERSION&&!old.sent&&old.idx>0){ S=old; renderResume() } else { newState(); renderStart() }
+}).catch(e=>{$app.innerHTML=`<div class="card">題目載入失敗，請重新整理。<br><small>${esc(e)}</small></div>`});
+
+function newState(){ S={ver:VERSION,code:"",idx:-1,answers:{},started_at:null,phase:"start",reviewed:{}} }
+
+function renderResume(){
+  $app.innerHTML=`<div class="card"><h2>要接著上次的進度嗎？</h2><p>你上次做到第 ${S.idx+1} 題。</p></div>`;
+  foot([btn("重新開始","",()=>{newState();save();renderStart()}),btn("接著做","primary",()=>route())]);
+}
+
+/* ---------- 開始 ---------- */
+function renderStart(){
+  $app.innerHTML=`
+  <div class="top"><h1>化療給藥情境練習</h1></div>
+  <div class="card">
+    <h2>走一遍，找出你自己的差距</h2>
+    <p>你會陪同一位病人走完三幕：<b>Port-A 角針置放 → 化療給藥 → Port-A 角針移除</b>，約 20–25 分鐘。</p>
+    <p>每一題作答前，先問自己<b>「我有多確定？」</b>。每個段落做完會看到結果；最後會有一張<b>差距地圖</b>，請你用自己的話寫下差距，老師會依全班的差距安排接下來的實作練習。</p>
+    <p class="hint">不會就選「不知道」——它不是扣分，是幫你標出要補的地方。</p>
+    <label for="emp"><b>員工編號（6 碼數字）</b></label>
+    <input id="emp" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off" spellcheck="false" placeholder="例：012345">
+    <div class="hint" id="cnt">已填 0 / 6 碼</div>
+  </div>`;
+  const inp=document.getElementById("emp"), cnt=document.getElementById("cnt"); let comp=false;
+  const go=btn("開始","primary",()=>{S.code=inp.value;S.started_at=new Date().toISOString();S.idx=0;S.phase="intro";save();route()},true);
+  const norm=()=>{ if(comp) return; let v=inp.value.replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-65248)).replace(/\D/g,"").slice(0,6); if(v!==inp.value) inp.value=v; cnt.textContent=`已填 ${v.length} / 6 碼`; go.disabled=v.length!==6 };
+  inp.addEventListener("compositionstart",()=>comp=true); inp.addEventListener("compositionend",()=>{comp=false;norm()}); inp.addEventListener("input",norm);
+  foot([go]);
+}
+
+/* ---------- 流程 ---------- */
+function route(){
+  if(S.phase==="intro") return renderIntro();
+  if(S.phase==="actTitle") return renderActTitle();
+  if(S.phase==="item") return renderItem();
+  if(S.phase==="review") return renderReview();
+  if(S.phase==="final") return renderFinal();
+  if(S.phase==="done") return renderDone();
+}
+function progress(){ const n=D.items.length, k=Object.keys(S.answers).length; return `<div class="prog"><i style="width:${Math.round(k/n*100)}%"></i></div>` }
+function renderIntro(){
+  $app.innerHTML=`${progress()}<div class="card"><div class="act">開場</div>${pic(D.intro_img)}<p class="stem">${esc(D.intro)}</p></div>`;
+  foot([btn("開始第一幕","primary",()=>{S.phase="actTitle";S.act="A";save();route()})]);
+}
+function renderActTitle(){
+  const n=D.items.filter(x=>x.act===S.act).length;
+  $app.innerHTML=`${progress()}<div class="card"><div class="act">共 ${n} 題</div><h2>${esc(D.acts[S.act])}</h2></div>`;
+  foot([btn("開始","primary",()=>{S.phase="item";S.idx=D.items.findIndex(x=>x.act===S.act);save();route()})]);
+  window.scrollTo(0,0);
+}
+function next(){
+  const cur=D.items[S.idx], nx=D.items[S.idx+1];
+  if(!nx||nx.act!==cur.act){ S.phase="review"; S.act=cur.act }
+  else { S.idx++ }
+  save(); route();
+}
+
+/* ---------- 題目 ---------- */
+let T;   // 本題暫存
+function renderItem(){
+  const it=D.items[S.idx]; T={conf:null};
+  const cq=D.conseq.filter(c=>c.target===it.id && S.answers[c.src] && !S.answers[c.src].correct);
+  const banner=cq.map(c=>`<div class="banner"><b>⏩ 前面的選擇，現在出現後果</b>${esc(c.text)}</div>`).join("");
+  $app.innerHTML=`${progress()}
+  <div class="card">
+    <div class="act">${esc(D.acts[it.act])}</div>
+    <h2>${esc(it.title)}</h2>
+    ${banner}
+    ${pic(it.img)}
+    <p class="stem">${esc(it.stem)}</p>
+    <div id="confbox"><div class="ask">作答前：<b>你有多確定自己會這一題？</b></div>
+      <div class="row conf">${CONF.map(([k,l])=>`<button data-c="${k}">${l}</button>`).join("")}</div></div>
+    <div id="ans" hidden></div>
+    <div class="ref">依據：${esc(it.ref)}</div>
+  </div>`;
+  foot([]);
+  document.querySelectorAll("#confbox button").forEach(b=>b.onclick=()=>{
+    T.conf=b.dataset.c; document.querySelectorAll("#confbox button").forEach(x=>x.classList.toggle("sel",x===b));
+    const a=document.getElementById("ans"); if(a.hidden){a.hidden=false; ({mcq:ansMcq,multi:ansMulti,order:ansOrder,paint:ansPaint})[it.type](it,a); a.scrollIntoView({behavior:"smooth",block:"nearest"})}
+  });
+  window.scrollTo(0,0);
+}
+function record(it,chosen,correct,unknown,extra){
+  S.answers[it.id]=Object.assign({conf:T.conf,chosen,correct:!!correct,unknown:!!unknown},extra||{}); save(); next();
+}
+function ansMcq(it,box){
+  const opts=shuffle(it.opts.filter(o=>!o.unknown),it.id).concat(it.opts.filter(o=>o.unknown));
+  box.innerHTML=`<div class="ask">請選一個：</div>`+opts.map((o,i)=>`<button class="opt${o.unknown?" unk":""}" data-i="${i}">${esc(o.t)}</button>`).join("");
+  box.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{const o=opts[+b.dataset.i]; record(it,o.unknown?"不知道":o.t,o.ok,o.unknown)});
+}
+function ansMulti(it,box){
+  const opts=shuffle(it.opts.filter(o=>!o.unknown),it.id).concat(it.opts.filter(o=>o.unknown));
+  const sel=new Set();
+  box.innerHTML=`<div class="ask">可以選多個，選好按「確認」：</div>`+opts.map((o,i)=>`<button class="opt${o.unknown?" unk":""}" data-i="${i}">${esc(o.t)}</button>`).join("");
+  const ok=btn("確認","primary",()=>{
+    const ch=[...sel].map(i=>opts[i]); const unk=ch.some(o=>o.unknown);
+    const correct=!unk && opts.every((o,i)=>o.unknown || (o.ok===sel.has(i)));
+    record(it,unk?"不知道":ch.map(o=>o.t).join("、"),correct,unk);
+  },true);
+  box.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{const i=+b.dataset.i;
+    if(opts[i].unknown){sel.clear();sel.add(i)} else {const u=opts.findIndex(o=>o.unknown);sel.delete(u); sel.has(i)?sel.delete(i):sel.add(i)}
+    box.querySelectorAll(".opt").forEach(x=>x.classList.toggle("sel",sel.has(+x.dataset.i))); ok.disabled=!sel.size});
+  foot([ok]);
+}
+function ansOrder(it,box){
+  const idx=shuffle(it.steps.map((_,i)=>i),it.id+"o"); let seq=[];
+  const draw=()=>{
+    box.innerHTML=`<div class="ask">依序點選步驟（點錯可按「重排」）：</div><div class="steps">`+idx.map(i=>{const p=seq.indexOf(i);return `<button class="opt${p>=0?" sel":""}" data-i="${i}"><span class="n${p<0?" e":""}">${p>=0?p+1:"·"}</span>${esc(it.steps[i])}</button>`}).join("")+`</div>`;
+    box.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{const i=+b.dataset.i;if(seq.includes(i))return;seq.push(i);draw()});
+    foot([btn("不知道","",()=>record(it,"不知道",false,true)),btn("重排","",()=>{seq=[];draw()}),btn("確認","primary",()=>{
+      const correct=seq.every((v,k)=>v===it.answer_order[k]); record(it,seq.map(v=>v+1).join("→"),correct,false)},seq.length!==it.steps.length)]);
+  }; draw();
+}
+function ansPaint(it,box){
+  box.innerHTML=`<div class="ask">用手指或滑鼠在下圖塗抹（清潔與消毒的範圍與方向）：</div><canvas id="cv" width="600" height="600"></canvas><div class="hint" id="ph">從入針處（中間的點）開始。</div>`;
+  const cv=document.getElementById("cv"), g=cv.getContext("2d"), W=600, C={x:300,y:290}, R={x:170,y:160,w:260,h:260};
+  const G=30, cell=W/G, painted=new Set(); let first=null, down=false, tries=(S._paintTries||0);
+  const base=()=>{ g.fillStyle="#f3d9c6";g.fillRect(0,0,W,W);
+    g.strokeStyle="#d9b8a3";g.lineWidth=6;g.beginPath();g.moveTo(40,90);g.quadraticCurveTo(300,40,560,90);g.stroke();   // 鎖骨示意
+    g.fillStyle="#ead0bc";g.beginPath();g.arc(C.x,C.y,52,0,7);g.fill();   // Port-A 輪廓
+    g.setLineDash([12,8]);g.strokeStyle="#5b6b86";g.lineWidth=3;g.strokeRect(R.x,R.y,R.w,R.h);g.setLineDash([]);   // 敷料範圍
+    g.fillStyle="#5b6b86";g.font="22px sans-serif";g.fillText("敷料範圍",R.x+6,R.y-10);
+    g.fillStyle="#c0392b";g.beginPath();g.arc(C.x,C.y,8,0,7);g.fill(); };
+  base();
+  const pos=e=>{const r=cv.getBoundingClientRect();const p=e.touches?e.touches[0]:e;return{x:(p.clientX-r.left)*W/r.width,y:(p.clientY-r.top)*W/r.height}};
+  const paint=p=>{g.fillStyle="rgba(120,180,240,.45)";g.beginPath();g.arc(p.x,p.y,26,0,7);g.fill();
+    for(let i=Math.floor((p.x-26)/cell);i<=Math.floor((p.x+26)/cell);i++)for(let j=Math.floor((p.y-26)/cell);j<=Math.floor((p.y+26)/cell);j++){const cx=(i+.5)*cell,cy=(j+.5)*cell;if((cx-p.x)**2+(cy-p.y)**2<=26*26)painted.add(i+","+j)}};
+  const st=e=>{e.preventDefault();down=true;const p=pos(e);if(!first)first=p;paint(p)}, mv=e=>{if(!down)return;e.preventDefault();paint(pos(e))}, en=()=>down=false;
+  cv.addEventListener("pointerdown",st);cv.addEventListener("pointermove",mv);window.addEventListener("pointerup",en);
+  const judge=()=>{ let tot=0,hit=0;
+    for(let i=0;i<G;i++)for(let j=0;j<G;j++){const cx=(i+.5)*cell,cy=(j+.5)*cell;if(cx>R.x&&cx<R.x+R.w&&cy>R.y&&cy<R.y+R.h){tot++;if(painted.has(i+","+j))hit++}}
+    let out=0; painted.forEach(k=>{const[i,j]=k.split(",").map(Number);const cx=(i+.5)*cell,cy=(j+.5)*cell;if(cx<R.x||cx>R.x+R.w||cy<R.y||cy>R.y+R.h)out++});
+    const cov=hit/tot, center=first&&Math.hypot(first.x-C.x,first.y-C.y)<60, beyond=out>12;
+    return {cov,center,beyond,pass:center&&cov>=.9&&beyond}; };
+  foot([btn("重塗","",()=>{painted.clear();first=null;base()}),btn("完成","primary",()=>{
+    const j=judge(); tries++; S._paintTries=tries;
+    if(j.pass){ delete S._paintTries; record(it,`通過（第 ${tries} 次）`,tries===1,false,{tries}); return }
+    const msg=!j.center?"要從入針處（中間的點）開始，環狀由內向外。":(j.cov<.9?`敷料範圍內還有空白（目前約 ${Math.round(j.cov*100)}%）。`:"塗抹範圍要「大於」敷料範圍，往外再多塗一圈。");
+    document.getElementById("ph").innerHTML=`<b>再試一次：</b>${msg}`; painted.clear();first=null;base();
+  })]);
+}
+
+/* ---------- 段落結果 ---------- */
+function renderReview(){
+  const act=S.act, its=D.items.filter(x=>x.act===act);
+  const pending=D.items.filter(x=>deferredTo(x.id)===act && S.answers[x.id]);   // 前面幕待揭曉、本幕揭曉
+  const line=(it,a)=>{ const ok=a.correct; const right=it.type==="order"?it.answer_order.map(i=>it.steps[i]).join(" → "):it.type==="paint"?"從入針處環狀由內向外，範圍大於敷料":it.opts.filter(o=>o.ok).map(o=>o.t).join("、");
+    return `<div class="rv"><div class="h"><span class="tag ${ok?"ok":"bad"}">${ok?"答對":(a.unknown?"不知道":"答錯")}</span><b>${esc(it.title)}</b></div>
+      ${ok?"":`<p>你的答案：${esc(a.chosen)}</p><p>正確：${esc(right)}</p>`}${it.explain?`<p>${esc(it.explain)}</p>`:""}</div>`};
+  let html=`${progress()}<div class="card"><div class="act">段落結果</div><h2>${esc(D.acts[act])}</h2>`;
+  its.forEach(it=>{const a=S.answers[it.id]; if(!a) return;
+    if(deferredTo(it.id)) html+=`<div class="rv"><div class="h"><span class="tag wait">⏳ 之後揭曉</span><b>${esc(it.title)}</b></div><p>這一題的結果，會在後面的情境裡看到。</p></div>`;
+    else html+=line(it,a)});
+  if(pending.length){ html+=`<div class="grp">前面待揭曉的題目</div>`; pending.forEach(it=>html+=line(it,S.answers[it.id])) }
+  const n=its.filter(it=>S.answers[it.id]&&S.answers[it.id].correct&&!deferredTo(it.id)).length;
+  html+=`</div>`; $app.innerHTML=html;
+  const nextAct={A:"B",B:"C"}[act];
+  foot([btn(nextAct?`進入${D.acts[nextAct].split("｜")[0]}`:"看我的差距地圖","primary",()=>{ if(nextAct){S.act=nextAct;S.phase="actTitle"} else S.phase="final"; save(); route() })]);
+  window.scrollTo(0,0);
+}
+
+/* ---------- 差距地圖＋寫出差距 ---------- */
+function renderFinal(){
+  const cnt={known:0,over:0,unsure:0,gap:0}; D.items.forEach(it=>{const c=gapClass(S.answers[it.id]); if(c) cnt[c]++});
+  const map=act=>`<div class="grp">${esc(D.acts[act])}</div><div class="map">`+D.items.filter(x=>x.act===act).map(it=>{const c=gapClass(S.answers[it.id]);const g=GAPCLS[c]||{c:"var(--g-na)",i:"·",l:"未答"};return `<div class="cell" style="background:${g.c}" title="${esc(it.title)}｜${g.l}">${it.id}<small>${g.i} ${g.l}</small></div>`}).join("")+`</div>`;
+  const total=D.items.filter(it=>S.answers[it.id]&&S.answers[it.id].correct).length;
+  $app.innerHTML=`${progress()}
+  <div class="card"><div class="act">我的差距地圖</div>
+    <div class="big">${total} / ${D.items.length} 題答對</div>
+    <div class="leg">${Object.entries(GAPCLS).map(([k,g])=>`<span><i style="background:${g.c}"></i>${g.i} ${g.l}（${cnt[k]}）</span>`).join("")}</div>
+    <p class="hint"><b>橘色「以為會」最要注意</b>：你很確定、卻答錯的地方。</p>
+    ${map("A")}${map("B")}${map("C")}
+  </div>
+  <div class="card"><h2>用你自己的話寫下差距</h2>
+    <label for="g1"><b>1. 哪一步你原本以為會、結果不會？</b>（必填）</label>
+    <textarea id="g1" placeholder="例：我以為回血有出來就可以給，原來要確認是全血。"></textarea>
+    <label for="g2" style="display:block;margin-top:10px"><b>2. 你打算怎麼補？</b></label>
+    <textarea id="g2" placeholder="例：等一下實作請老師示範回抽；回去重看數位課程的人工血管照護。"></textarea>
+    <div style="margin-top:10px"><b>3. 等一下實作，你想請老師帶哪些步驟？</b>（可複選）</div>
+    ${["A","B","C"].map(act=>`<div class="grp">${esc(D.acts[act])}</div>`+D.items.filter(x=>x.act===act).map(it=>`<label class="ck"><input type="checkbox" value="${it.id}"${gapClass(S.answers[it.id])==="over"||gapClass(S.answers[it.id])==="gap"?"":""}> ${esc(it.id)}　${esc(it.title)}</label>`).join("")).join("")}
+    <div id="st"></div>
+  </div>`;
+  const g1=document.getElementById("g1"); const send=btn("送出","primary",submit,true);
+  g1.addEventListener("input",()=>send.disabled=!g1.value.trim()); foot([send]); window.scrollTo(0,0);
+}
+async function submit(){
+  const st=document.getElementById("st"), setS=(c,m)=>st.innerHTML=`<div class="status ${c}">${m}</div>`;
+  const ans=D.items.map(it=>{const a=S.answers[it.id]||{};return{id:it.id,conf:a.conf||"",chosen:a.chosen||"",correct:!!a.correct,unknown:!!a.unknown,cls:gapClass(a)||""}});
+  const now=new Date();
+  const payload={code:S.code,started_at:S.started_at,submitted_at:now.toISOString(),duration_sec:Math.round((now-new Date(S.started_at))/1000),
+    total:ans.filter(a=>a.correct).length,max:ans.length,unknown:ans.filter(a=>a.unknown).length,answers:ans,
+    hc_wrong:ans.filter(a=>a.cls==="over").map(a=>a.id),ask_steps:[...document.querySelectorAll("input[type=checkbox]:checked")].map(x=>x.value),
+    gap1:document.getElementById("g1").value.trim(),gap2:document.getElementById("g2").value.trim(),
+    submission_id:S.sid||(S.sid=S.code+"-"+Date.now().toString(36)),version:VERSION,ua:navigator.userAgent};
+  S.payload=payload; save();
+  if(!ENDPOINT){ setS("warn","（測試版）尚未設定回傳網址，作答只留在本頁。"); S.sent=true; S.phase="done"; save(); setTimeout(route,1200); return }
+  setS("warn","送出中…");
+  try{
+    const r=await fetch(ENDPOINT,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload),redirect:"follow"});
+    const j=await r.json().catch(()=>null);
+    if(j&&j.ok){ S.sent=true; S.phase="done"; save(); route(); return }
+    throw new Error(j&&j.error||"no response");
+  }catch(e){
+    try{ await fetch(ENDPOINT,{method:"POST",mode:"no-cors",body:JSON.stringify(payload)}); S.sent=true; S.phase="done"; save(); route() }
+    catch(e2){ setS("bad","送出失敗，請檢查網路後再按一次「送出」。") }
+  }
+}
+function renderDone(){
+  $app.innerHTML=`<div class="card"><h2>已送出，謝謝你</h2><p>老師正在看全班的差距地圖，等一下的實作會先帶大家最需要的步驟。</p><p class="hint">你寫的差距：${esc(S.payload&&S.payload.gap1)}</p></div>`;
+  foot([btn("再做一次","",()=>{try{localStorage.removeItem("onboard_state")}catch(e){} newState(); renderStart()})]);
+}
+</script>
+</body>
+</html>

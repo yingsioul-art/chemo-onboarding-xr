@@ -1,0 +1,1363 @@
+{
+ "ver": "v0.3",
+ "intro": "你是病房的新進護理師。病人**陳先生**（虛構）右胸有 Port-A，今天要開始化療：先置放角針，再給一袋化療藥（接在生理食鹽水上，用輸液幫浦滴注），療程結束後移除角針。",
+ "intro_img": "I01",
+ "acts": {
+  "A": "第一幕｜Port-A 角針置放",
+  "B": "第二幕｜化療給藥",
+  "C": "第三幕｜Port-A 角針移除"
+ },
+ "items": [
+  {
+   "id": "A1",
+   "act": "A",
+   "title": "角針長度",
+   "ref": "置放#5",
+   "stem": "陳先生比較胖，Port-A 外觀不明顯，摸不到完整的圓盤。你選哪一種角針？",
+   "explain": "外觀明顯突出、可摸到完整圓盤 → <1 吋；外觀不明顯、摸不到完整圓盤 → ≧1 吋；困難置放應與醫師討論。",
+   "opts": [
+    {
+     "k": "A",
+     "t": "≧1 吋的針具",
+     "ok": true,
+     "unknown": false
+    },
+    {
+     "k": "B",
+     "t": "<1 吋的針具",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "C",
+     "t": "長短都可以，插到有阻力即可",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "D",
+     "t": "不知道",
+     "ok": false,
+     "unknown": true
+    }
+   ],
+   "img": "I02",
+   "type": "mcq"
+  },
+  {
+   "id": "A2a",
+   "act": "A",
+   "title": "皮膚清潔：選溶液",
+   "ref": "置放#6",
+   "stem": "置放前先清潔皮膚。無菌棉棒要沾哪一種？",
+   "explain": "清潔用 70–75% 酒精或無菌蒸餾水；皮膚不潔可重複至乾淨。chlorhexidine 是下一步「消毒」用的。",
+   "opts": [
+    {
+     "k": "A",
+     "t": "70–75% 酒精或無菌蒸餾水",
+     "ok": true,
+     "unknown": false
+    },
+    {
+     "k": "B",
+     "t": "生理食鹽水",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "C",
+     "t": ">0.5% chlorhexidine alcoholic solution",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "D",
+     "t": "不知道",
+     "ok": false,
+     "unknown": true
+    }
+   ],
+   "img": "I03",
+   "type": "mcq"
+  },
+  {
+   "id": "A2b",
+   "act": "A",
+   "title": "皮膚消毒：選溶液",
+   "ref": "置放#7",
+   "stem": "清潔完要消毒，用哪一種？",
+   "explain": "小於 2 個月或對 chlorhexidine 過敏，才改用 10% povidone-iodine alcoholic solution。",
+   "opts": [
+    {
+     "k": "A",
+     "t": ">0.5% chlorhexidine alcoholic solution",
+     "ok": true,
+     "unknown": false
+    },
+    {
+     "k": "B",
+     "t": "生理食鹽水",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "C",
+     "t": "10% povidone-iodine alcoholic solution（陳先生沒有禁忌症）",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "D",
+     "t": "不知道",
+     "ok": false,
+     "unknown": true
+    }
+   ],
+   "img": "I03",
+   "type": "mcq"
+  },
+  {
+   "id": "A2c",
+   "act": "A",
+   "title": "動手塗抹：範圍與方向",
+   "ref": "置放#6–7",
+   "stem": "以 Port-A 圓盤針頭插入處為中心，環狀由內向外塗抹，範圍要大於後續敷料或無菌洞巾洞口。",
+   "explain": "清潔與消毒都依這個方向與範圍，可重複至消毒完全。",
+   "opts": [],
+   "img": "",
+   "rule": "起點在入針處、由內往外、塗滿面積大於畫面上的敷料框 → 通過；範圍太小或由外往內 → 顯示提示，再塗一次。",
+   "type": "paint"
+  },
+  {
+   "id": "A3",
+   "act": "A",
+   "title": "角針排氣",
+   "ref": "置放#10",
+   "stem": "排氣完成後，接下來？",
+   "explain": "慣用手戴 1 支無菌手套、以 10 mL 注射器（不可移除針頭）抽 NS 10 mL；非慣用手戴 1 支無菌手套排氣；排氣後夾緊管夾，注射器勿移除。",
+   "opts": [
+    {
+     "k": "A",
+     "t": "夾緊管夾，注射器不要移除",
+     "ok": true,
+     "unknown": false
+    },
+    {
+     "k": "B",
+     "t": "夾緊管夾，移除注射器、蓋上注射帽備用",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "C",
+     "t": "管夾保持打開，注射器不要移除，方便等一下回抽",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "D",
+     "t": "不知道",
+     "ok": false,
+     "unknown": true
+    }
+   ],
+   "img": "I04",
+   "type": "mcq"
+  },
+  {
+   "id": "A4",
+   "act": "A",
+   "title": "持針與固定",
+   "ref": "置放#12–13",
+   "stem": "",
+   "explain": "",
+   "opts": [
+    {
+     "k": "A",
+     "t": "慣用手三點（拇指、食指、中指）持針、角針與盤面垂直對準下針處；非慣用手移除針套後，摸圓盤邊緣，以拇指、食指、中指用力固定盤面",
+     "ok": true,
+     "unknown": false
+    },
+    {
+     "k": "B",
+     "t": "慣用手兩點（拇指、食指）持針、角針與盤面呈 45 度；非慣用手輕壓圓盤中心定位後放開",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "C",
+     "t": "非慣用手三點持針、角針與盤面垂直；慣用手撐開皮膚，使皮膚平整",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "D",
+     "t": "不知道",
+     "ok": false,
+     "unknown": true
+    }
+   ],
+   "img": "I05",
+   "type": "mcq"
+  },
+  {
+   "id": "A5",
+   "act": "A",
+   "title": "插入角針",
+   "ref": "置放#14",
+   "stem": "",
+   "explain": "插到底後再用力強壓，會使角針前端變鈍。",
+   "opts": [
+    {
+     "k": "A",
+     "t": "請病人深呼吸，垂直快速插入圓盤中央底部；插到底後不要再用力強壓",
+     "ok": true,
+     "unknown": false
+    },
+    {
+     "k": "B",
+     "t": "請病人憋氣，垂直緩慢插入，感覺到阻力後再用力壓到底確認",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "C",
+     "t": "請病人深呼吸，斜角緩慢插入，墊片和皮膚留一點空隙方便固定",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "D",
+     "t": "不知道",
+     "ok": false,
+     "unknown": true
+    }
+   ],
+   "img": "I05",
+   "type": "mcq"
+  },
+  {
+   "id": "A6",
+   "act": "A",
+   "title": "回抽不順（認知分支）",
+   "ref": "",
+   "stem": "打開管夾用 10 mL 注射器回抽，回血很不順。你可以先試哪些？（可複選）",
+   "explain": "至少說出兩項（參考答案三項）。",
+   "opts": [
+    {
+     "k": null,
+     "t": "請病人改變姿勢，例如坐起、Port-A 那一側上臂抬高",
+     "ok": true,
+     "unknown": false
+    },
+    {
+     "k": null,
+     "t": "請病人深呼吸、屏息（Valsalva）或咳嗽，改變胸內壓",
+     "ok": true,
+     "unknown": false
+    },
+    {
+     "k": null,
+     "t": "減緩回抽速度",
+     "ok": true,
+     "unknown": false
+    },
+    {
+     "k": null,
+     "t": "用力加快回抽，把血抽出來",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": null,
+     "t": "用 NS 用力推注把管路沖開",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": null,
+     "t": "不知道",
+     "ok": false,
+     "unknown": true
+    }
+   ],
+   "img": "I06",
+   "type": "multi"
+  },
+  {
+   "id": "A7",
+   "act": "A",
+   "title": "回血顏色",
+   "ref": "置放#14、給藥#28",
+   "stem": "回抽到的血是淡粉紅色、比較稀。你要？",
+   "explain": "處置依使用者 10/14 回覆（先不接化療 → 改變姿勢、深呼吸等 → 檢查角針是否插到底 → 通知醫師評估）。",
+   "opts": [
+    {
+     "k": "A",
+     "t": "不算確認通暢，先不接化療；改變姿勢、深呼吸等方法再試，檢查角針有沒有插到圓盤底部（必要時重新置放），仍不是全血就通知醫師評估",
+     "ok": true,
+     "unknown": false
+    },
+    {
+     "k": "B",
+     "t": "算通暢：有回血就可以沖管、接上化療",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "C",
+     "t": "先用 10 mL NS 沖管，沖得過去就接上化療",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "D",
+     "t": "不知道",
+     "ok": false,
+     "unknown": true
+    }
+   ],
+   "img": "I06",
+   "type": "mcq"
+  },
+  {
+   "id": "A8",
+   "act": "A",
+   "title": "沖管與墊片",
+   "ref": "置放#15–16",
+   "stem": "",
+   "explain": "",
+   "opts": [
+    {
+     "k": "A",
+     "t": "用 10 mL NS 以「推-停-推-停」沖淨管壁；安全針具墊片下壓平貼皮膚（或 Port-A 專用 CHG 敷料）",
+     "ok": true,
+     "unknown": false
+    },
+    {
+     "k": "B",
+     "t": "用 10 mL NS 一次快速推完；墊片與皮膚留一點空隙，方便之後移除",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "C",
+     "t": "用 5 mL NS 緩慢等速推完；墊片下壓平貼皮膚",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "D",
+     "t": "不知道",
+     "ok": false,
+     "unknown": true
+    }
+   ],
+   "img": "I05",
+   "type": "mcq"
+  },
+  {
+   "id": "A9",
+   "act": "A",
+   "title": "敷料與換藥日期",
+   "ref": "置放#17、#19",
+   "stem": "陳先生入針處有一點滲血。你選哪一種固定方式？敷料外要寫幾天後換？",
+   "explain": "只用透明敷料（17-1）七天換一次；Y 紗＋透明敷料（17-2，適用入針處滲血或滲液）、紗布＋紙膠（17-3）兩天換一次；敷料外註明換藥起迄日期。",
+   "opts": [
+    {
+     "k": "A",
+     "t": "戴無菌手套把 Y 型紗布墊在墊片下方，外層蓋無菌透明敷料；兩天更換",
+     "ok": true,
+     "unknown": false
+    },
+    {
+     "k": "B",
+     "t": "只蓋無菌透明敷料，四周黏貼無空隙；七天更換",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "C",
+     "t": "紗布覆蓋入針處、透氣紙膠固定；七天更換",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "D",
+     "t": "不知道",
+     "ok": false,
+     "unknown": true
+    }
+   ],
+   "img": "I07",
+   "type": "mcq"
+  },
+  {
+   "id": "B1",
+   "act": "B",
+   "title": "給藥前文件與評估",
+   "ref": "給藥#2–4",
+   "stem": "簽收醫囑後、按「化療調劑」之前，你必須先確認哪一組？",
+   "explain": "",
+   "opts": [
+    {
+     "k": "A",
+     "t": "已簽「癌症藥物治療說明暨同意書」、查得到「癌症病人專屬治療計劃書」、完成化療前評估（檢驗值、前次副作用、給藥前 4 小時內生命徵象）",
+     "ok": true,
+     "unknown": false
+    },
+    {
+     "k": "B",
+     "t": "已簽同意書、病人已禁食 4 小時、完成化療前評估（檢驗值、前次副作用、給藥前 1 小時內生命徵象）",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "C",
+     "t": "查得到治療計劃書、病人已排尿、完成化療前評估（檢驗值、前次副作用、當班任一時間生命徵象）",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "D",
+     "t": "不知道",
+     "ok": false,
+     "unknown": true
+    }
+   ],
+   "img": "",
+   "type": "mcq"
+  },
+  {
+   "id": "B2",
+   "act": "B",
+   "title": "化療藥存放",
+   "ref": "給藥#7",
+   "stem": "",
+   "explain": "",
+   "opts": [
+    {
+     "k": "A",
+     "t": "依點滴標籤上的保存方式、保存期間、是否避光存放",
+     "ok": true,
+     "unknown": false
+    },
+    {
+     "k": "B",
+     "t": "一律放冰箱冷藏，給藥前 30 分鐘取出回溫",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "C",
+     "t": "一律放治療車上室溫存放，避免溫差造成結晶",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "D",
+     "t": "不知道",
+     "ok": false,
+     "unknown": true
+    }
+   ],
+   "img": "",
+   "type": "mcq"
+  },
+  {
+   "id": "B3",
+   "act": "B",
+   "title": "組裝 CSTD（排順序）",
+   "ref": "給藥#9–13",
+   "stem": "",
+   "explain": "接著出 B3b「① 為什麼要完全沒入」。",
+   "opts": [],
+   "img": "I08",
+   "answer_order": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ],
+   "type": "order",
+   "steps": [
+    "輸液套管的 Spike 完全沒入 CSTD Adapter 的透明軟管",
+    "CSTD 的 Spike 與 Adapter 相互銜接",
+    "CSTD 的 Spike 戳入生理食鹽水橡皮塞，確認橡皮塞下方無液體殘留",
+    "排氣：反折滴室下方管路、擠壓滴室，液面保持在標示線上",
+    "手部衛生"
+   ]
+  },
+  {
+   "id": "B3b",
+   "act": "B",
+   "title": "為什麼要完全沒入",
+   "ref": "給藥#9",
+   "stem": "「輸液套管的 Spike 要完全沒入 CSTD Adapter 的透明軟管」，是為了什麼？",
+   "explain": "",
+   "opts": [
+    {
+     "k": "A",
+     "t": "避免化療滴注過程發生滲漏",
+     "ok": true,
+     "unknown": false
+    },
+    {
+     "k": "B",
+     "t": "避免排氣時滴室液面過高",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "C",
+     "t": "避免輸液幫浦偵測到空氣而警報",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "D",
+     "t": "不知道",
+     "ok": false,
+     "unknown": true
+    }
+   ],
+   "img": "I08",
+   "type": "mcq"
+  },
+  {
+   "id": "B4",
+   "act": "B",
+   "title": "防護裝備（選物）",
+   "ref": "給藥#14",
+   "stem": "勾出全部需要的：",
+   "explain": "",
+   "opts": [
+    {
+     "k": null,
+     "t": "防水隔離衣（後開式、長袖、袖口可束緊）",
+     "ok": true,
+     "unknown": false
+    },
+    {
+     "k": null,
+     "t": "一般布質隔離衣",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": null,
+     "t": "雙層丁腈膠或乳膠手套、套住袖口",
+     "ok": true,
+     "unknown": false
+    },
+    {
+     "k": null,
+     "t": "單層手套",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": null,
+     "t": "外科口罩",
+     "ok": true,
+     "unknown": false
+    },
+    {
+     "k": null,
+     "t": "護目鏡或防護面罩",
+     "ok": true,
+     "unknown": false
+    },
+    {
+     "k": null,
+     "t": "不知道",
+     "ok": false,
+     "unknown": true
+    }
+   ],
+   "img": "I09",
+   "type": "multi"
+  },
+  {
+   "id": "B5",
+   "act": "B",
+   "title": "藥袋放哪裡",
+   "ref": "給藥#16",
+   "stem": "",
+   "explain": "",
+   "opts": [
+    {
+     "k": "A",
+     "t": "鋪單面防水吸水紙、吸水面朝上的工作檯面",
+     "ok": true,
+     "unknown": false
+    },
+    {
+     "k": "B",
+     "t": "鋪單面防水吸水紙、防水面朝上的工作檯面",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "C",
+     "t": "直接放治療車上層，方便隨時拿取",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "D",
+     "t": "不知道",
+     "ok": false,
+     "unknown": true
+    }
+   ],
+   "img": "I08",
+   "type": "mcq"
+  },
+  {
+   "id": "B6",
+   "act": "B",
+   "title": "手套碰過藥袋之後（情境）",
+   "ref": "給藥#15",
+   "stem": "你剛用手套調整化療藥袋在夾鏈袋裡的位置，接著要拉開治療車抽屜拿酒精棉片。你要？",
+   "explain": "藥劑部配置後的化療藥袋表面屬化療藥品污染區域；勿以污染的手套碰觸工作車及其他乾淨環境，懷疑手套污染須立即更換。",
+   "opts": [
+    {
+     "k": "A",
+     "t": "先更換手套，再碰治療車與乾淨物品",
+     "ok": true,
+     "unknown": false
+    },
+    {
+     "k": "B",
+     "t": "直接拉抽屜拿棉片，拿完再一起換手套",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "C",
+     "t": "用另一隻沒碰藥袋的手去拉抽屜",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "D",
+     "t": "不知道",
+     "ok": false,
+     "unknown": true
+    }
+   ],
+   "img": "I08",
+   "type": "mcq"
+  },
+  {
+   "id": "B7",
+   "act": "B",
+   "title": "條碼（連線幫浦）",
+   "ref": "給藥#17–18",
+   "stem": "",
+   "explain": "非連線情境才只掃手圈與藥袋。",
+   "opts": [
+    {
+     "k": "A",
+     "t": "病人辨識後，掃幫浦條碼、病人手圈條碼、化療藥袋標籤條碼",
+     "ok": true,
+     "unknown": false
+    },
+    {
+     "k": "B",
+     "t": "病人辨識後，掃病人手圈條碼、化療藥袋標籤條碼",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "C",
+     "t": "先掃三個條碼，掃完再做病人辨識",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "D",
+     "t": "不知道",
+     "ok": false,
+     "unknown": true
+    }
+   ],
+   "img": "I10",
+   "type": "mcq"
+  },
+  {
+   "id": "B8",
+   "act": "B",
+   "title": "條碼錯誤警示",
+   "ref": "給藥#22；影片 03:24",
+   "stem": "畫面跳出「錯誤！病歷號不符」。你要？",
+   "explain": "條碼化檢核通過後，才可將化療藥袋 CSTD Spike 與 Adapter 銜接。條碼不符時採人工檢查、確認原因（是否拿錯藥品），不是人工核對相符就略過條碼。（處置依使用者 10/14 回覆）",
+   "opts": [
+    {
+     "k": "A",
+     "t": "停止，不接上這袋藥；人工檢查病人手圈與藥袋標籤，確認錯誤原因，是不是拿錯藥品",
+     "ok": true,
+     "unknown": false
+    },
+    {
+     "k": "B",
+     "t": "先接上藥袋但不開幫浦，再回頭重新掃描",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "C",
+     "t": "人工核對姓名與床號相符，就直接接上繼續給藥",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "D",
+     "t": "不知道",
+     "ok": false,
+     "unknown": true
+    }
+   ],
+   "img": "I10",
+   "type": "mcq"
+  },
+  {
+   "id": "B9",
+   "act": "B",
+   "title": "換上化療藥（排順序）",
+   "ref": "給藥#19–23",
+   "stem": "",
+   "explain": "",
+   "opts": [],
+   "img": "I08",
+   "answer_order": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "type": "order",
+   "steps": [
+    "生理食鹽水袋放低於眼睛，旋開 CSTD Spike 與 Adapter，移除",
+    "酒精棉片消毒 Adapter 與化療藥袋上 CSTD Spike 接頭面",
+    "不把化療藥從夾鏈袋取出，只露出 CSTD Spike，與 Adapter 銜接，掛上點滴架",
+    "脫除外層手套"
+   ]
+  },
+  {
+   "id": "B10",
+   "act": "B",
+   "title": "幫浦設定（非連線）",
+   "ref": "給藥#24",
+   "stem": "",
+   "explain": "",
+   "opts": [
+    {
+     "k": "A",
+     "t": "先設 Rate，再設 VTBI",
+     "ok": true,
+     "unknown": false
+    },
+    {
+     "k": "B",
+     "t": "先設 VTBI，再設 Rate",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "C",
+     "t": "只設 Rate，VTBI 由幫浦自動計算",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "D",
+     "t": "不知道",
+     "ok": false,
+     "unknown": true
+    }
+   ],
+   "img": "I11",
+   "type": "mcq"
+  },
+  {
+   "id": "B11",
+   "act": "B",
+   "title": "雙人複核（情境）",
+   "ref": "給藥#25–29",
+   "stem": "複核護理師和你一起核對時，發現輸液幫浦顯示的流速和醫囑不同（例：醫囑 100 mL/h，幫浦 110 mL/h）。你們要？",
+   "explain": "複核要共同確認病人辨識、流速與預輸注總量與醫囑相同、回血為全血且無外滲徵象、CSTD 已銜接並貼化療管路貼紙（給藥#25–29）。不符時的處置依使用者 10/14 回覆。",
+   "opts": [
+    {
+     "k": "A",
+     "t": "先不開始給藥；確認不符的原因（必要時詢問醫師確認醫囑），修正後兩人重新從頭核對",
+     "ok": true,
+     "unknown": false
+    },
+    {
+     "k": "B",
+     "t": "由主護直接把幫浦改成醫囑流速，改完就開始給藥",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "C",
+     "t": "差距不到一成，先開始給藥，之後再請醫師確認",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "D",
+     "t": "不知道",
+     "ok": false,
+     "unknown": true
+    }
+   ],
+   "img": "I11",
+   "type": "mcq"
+  },
+  {
+   "id": "B12",
+   "act": "B",
+   "title": "外袋標註",
+   "ref": "給藥#33",
+   "stem": "",
+   "explain": "",
+   "opts": [
+    {
+     "k": "A",
+     "t": "起迄時間、給藥流速、主護護理師簽名",
+     "ok": true,
+     "unknown": false
+    },
+    {
+     "k": "B",
+     "t": "開始時間、藥名劑量、複核護理師簽名",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "C",
+     "t": "起迄時間、病人床號、主護與複核護理師簽名",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "D",
+     "t": "不知道",
+     "ok": false,
+     "unknown": true
+    }
+   ],
+   "img": "",
+   "type": "mcq"
+  },
+  {
+   "id": "B13",
+   "act": "B",
+   "title": "開始給藥後（連線）",
+   "ref": "給藥#35",
+   "stem": "",
+   "explain": "B 是非連線流程的做法。",
+   "opts": [
+    {
+     "k": "A",
+     "t": "電子給藥畫面按「查詢/重整」，確認幫浦給藥時間已傳到給藥紀錄",
+     "ok": true,
+     "unknown": false
+    },
+    {
+     "k": "B",
+     "t": "電子給藥畫面按「給藥確認」，手動記錄實際給藥時間",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "C",
+     "t": "不用做，連線幫浦會自動完成",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "D",
+     "t": "不知道",
+     "ok": false,
+     "unknown": true
+    }
+   ],
+   "img": "",
+   "type": "mcq"
+  },
+  {
+   "id": "B14",
+   "act": "B",
+   "title": "輸注反應",
+   "ref": "給藥#36",
+   "stem": "滴注 20 分鐘，陳先生胸悶、呼吸急促、臉上出現蕁麻疹。你第一步？",
+   "explain": "",
+   "opts": [
+    {
+     "k": "A",
+     "t": "停止藥品輸注、通知醫師，依醫囑監測生命徵象",
+     "ok": true,
+     "unknown": false
+    },
+    {
+     "k": "B",
+     "t": "流速調慢一半，觀察 15 分鐘再決定",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "C",
+     "t": "先量生命徵象並記錄，正常就繼續",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "D",
+     "t": "不知道",
+     "ok": false,
+     "unknown": true
+    }
+   ],
+   "img": "I12",
+   "type": "mcq"
+  },
+  {
+   "id": "B15",
+   "act": "B",
+   "title": "接班時檢查（情境）",
+   "ref": "給藥#37–38",
+   "stem": "小夜接班，你依「每班監測血流導管回血功能」去看陳先生：回抽回血不順，注射部位周圍紅腫，陳先生說「這裡有點痛」。你要？",
+   "explain": "化療滴注期間每班監測回血並記錄（#37）；注射部位紅、腫、痛須停止輸注、鑑別皮膚反應並處理、記錄（#38）。外滲後續處置可連到化療外滲網頁版教材。",
+   "opts": [
+    {
+     "k": "A",
+     "t": "停止輸注，進行皮膚反應鑑別及後續處理，並記錄",
+     "ok": true,
+     "unknown": false
+    },
+    {
+     "k": "B",
+     "t": "先冰敷注射部位，繼續輸注並縮短觀察間隔",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "C",
+     "t": "再用力回抽一次，抽得到回血就繼續輸注",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "D",
+     "t": "不知道",
+     "ok": false,
+     "unknown": true
+    }
+   ],
+   "img": "I13",
+   "type": "mcq"
+  },
+  {
+   "id": "B17",
+   "act": "B",
+   "title": "Port-A 抽血（認知分支）",
+   "ref": "",
+   "stem": "給藥中醫師要驗血球，要從 Port-A 抽血。你要？",
+   "explain": "預防殘留藥物污染血液影響判讀。（血液培養則不可棄血、用第一管血；成人 8–10 mL、病童 1–5 mL——要不要另出一題？）",
+   "opts": [
+    {
+     "k": "A",
+     "t": "先停止輸液，無菌技術以 NS 沖淨 Port-A，回抽 4–5 mL 棄血，再採送檢血",
+     "ok": true,
+     "unknown": false
+    },
+    {
+     "k": "B",
+     "t": "不停輸液，直接從 Port-A 回抽送檢，速度較快",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "C",
+     "t": "先停止輸液，直接回抽送檢，不棄血以免浪費",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "D",
+     "t": "不知道",
+     "ok": false,
+     "unknown": true
+    }
+   ],
+   "img": "",
+   "type": "mcq"
+  },
+  {
+   "id": "B17b",
+   "act": "B",
+   "title": "血液培養（認知分支）",
+   "ref": "",
+   "stem": "醫師改要從 Port-A 抽血做血液細菌培養。下列哪一個正確？",
+   "explain": "病童收集 1–5 mL；避免輸液稀釋造成檢體量不足。和 B17 驗血球（要棄血）相反。",
+   "opts": [
+    {
+     "k": "A",
+     "t": "管路接頭消毒後抽血，不可棄血，用第一時間抽出的血做培養；成人收集 8–10 mL",
+     "ok": true,
+     "unknown": false
+    },
+    {
+     "k": "B",
+     "t": "管路接頭消毒後，先回抽 4–5 mL 棄血，再抽 8–10 mL 做培養",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "C",
+     "t": "不需消毒接頭，直接抽第一管血 2–3 mL 做培養",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "D",
+     "t": "不知道",
+     "ok": false,
+     "unknown": true
+    }
+   ],
+   "img": "",
+   "type": "mcq"
+  },
+  {
+   "id": "B18",
+   "act": "B",
+   "title": "換回生理食鹽水時的防護",
+   "ref": "給藥#39",
+   "stem": "",
+   "explain": "",
+   "opts": [
+    {
+     "k": "A",
+     "t": "穿戴完整防護（隔離衣、雙層手套套住袖口、外科口罩、護目鏡）",
+     "ok": true,
+     "unknown": false
+    },
+    {
+     "k": "B",
+     "t": "戴一層手套即可，化療藥已經滴完",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "C",
+     "t": "雙層手套即可，隔離衣與護目鏡可省略",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "D",
+     "t": "不知道",
+     "ok": false,
+     "unknown": true
+    }
+   ],
+   "img": "",
+   "type": "mcq"
+  },
+  {
+   "id": "B19",
+   "act": "B",
+   "title": "用完的化療藥袋",
+   "ref": "給藥#43",
+   "stem": "",
+   "explain": "",
+   "opts": [
+    {
+     "k": "A",
+     "t": "不拔除 CSTD Spike，連藥袋直接丟化療廢棄物收集桶",
+     "ok": true,
+     "unknown": false
+    },
+    {
+     "k": "B",
+     "t": "拔除 Spike，藥袋丟化療廢棄物桶、Spike 丟針頭收集筒",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "C",
+     "t": "拔除 Spike，兩者分裝夾鏈袋再丟棄",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "D",
+     "t": "不知道",
+     "ok": false,
+     "unknown": true
+    }
+   ],
+   "img": "",
+   "type": "mcq"
+  },
+  {
+   "id": "B20",
+   "act": "B",
+   "title": "沖管量（計算）",
+   "ref": "給藥#42、#46",
+   "stem": "使用思邁幫浦輸液套管（含過濾器的避光套）。全部化療藥滴完、要分離血流導管與套管前，原則上至少沖多少？",
+   "explain": "35 mL 是續接下一個化療藥前的量；NTG 型號一倍 40／兩倍 80 mL；限水、兒科病童要與醫師討論。",
+   "opts": [
+    {
+     "k": "A",
+     "t": "70 mL（兩倍套管填充容積＋CSTD 5 mL）",
+     "ok": true,
+     "unknown": false
+    },
+    {
+     "k": "B",
+     "t": "35 mL（一倍套管填充容積＋CSTD 5 mL）",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "C",
+     "t": "10 mL（與沖 Port-A 相同）",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "D",
+     "t": "不知道",
+     "ok": false,
+     "unknown": true
+    }
+   ],
+   "img": "",
+   "type": "mcq"
+  },
+  {
+   "id": "B21",
+   "act": "B",
+   "title": "給藥後監測",
+   "ref": "給藥#44–45",
+   "stem": "",
+   "explain": "",
+   "opts": [
+    {
+     "k": "A",
+     "t": "每筆結束確認回血與外滲並記錄；所有化療藥結束後 4 小時內監測生命徵象並記錄",
+     "ok": true,
+     "unknown": false
+    },
+    {
+     "k": "B",
+     "t": "每筆結束量一次生命徵象；所有化療藥結束後 24 小時內再量一次",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "C",
+     "t": "只在所有化療藥結束時確認回血與生命徵象一次",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "D",
+     "t": "不知道",
+     "ok": false,
+     "unknown": true
+    }
+   ],
+   "img": "",
+   "type": "mcq"
+  },
+  {
+   "id": "B22",
+   "act": "B",
+   "title": "卸除防護裝備（排順序）",
+   "ref": "給藥#47–52；外層手套前面已脫",
+   "stem": "",
+   "explain": "",
+   "opts": [],
+   "img": "I14",
+   "answer_order": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "type": "order",
+   "steps": [
+    "脫護目鏡或防護面罩（可重複使用者以酒精擦拭；沾到化療藥丟夾鏈袋）",
+    "懷疑口罩沾染 → 脫除放夾鏈袋（不適用可略）",
+    "脫防水隔離衣，由內向外包覆，放夾鏈袋",
+    "所有化療廢棄物放夾鏈袋並封緊",
+    "脫內層手套",
+    "手部衛生"
+   ]
+  },
+  {
+   "id": "C2",
+   "act": "C",
+   "title": "移除前沖管（排順序）",
+   "ref": "移除#6–7",
+   "stem": "",
+   "explain": "",
+   "opts": [],
+   "img": "",
+   "answer_order": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "type": "order",
+   "steps": [
+    "移除注射帽，70–75% 酒精棉消毒 Port-A 接頭",
+    "無菌技術以 NS 10 mL 注射器測回血",
+    "推-停震盪式水流注入 NS，沖淨角針與管路",
+    "接上 heparin saline，注入後夾住管夾"
+   ]
+  },
+  {
+   "id": "C3",
+   "act": "C",
+   "title": "敷料滲濕",
+   "ref": "移除#11",
+   "stem": "移除敷料後發現有明顯血跡。拔角針前你要？",
+   "explain": "",
+   "opts": [
+    {
+     "k": "A",
+     "t": "棉棒沾 70–75% 酒精或無菌蒸餾水清潔，再以 >0.5% chlorhexidine alcoholic solution 消毒",
+     "ok": true,
+     "unknown": false
+    },
+    {
+     "k": "B",
+     "t": "直接拔針，拔完再一起清潔消毒",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "C",
+     "t": "用乾紗布擦乾淨即可拔針",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "D",
+     "t": "不知道",
+     "ok": false,
+     "unknown": true
+    }
+   ],
+   "img": "",
+   "type": "mcq"
+  },
+  {
+   "id": "C4",
+   "act": "C",
+   "title": "移除安全針具",
+   "ref": "移除#13",
+   "stem": "巴德安全性賀伯注射針組，怎麼移除？",
+   "explain": "本院以巴德安全性賀伯注射針組為例（使用者 10/14 確認；人工血管 21 項表寫的 BD 不採用）。",
+   "opts": [
+    {
+     "k": "A",
+     "t": "非慣用手拇指、食指固定針座盤，慣用手拇指與食指緊握握柄；請病人深呼吸，垂直上拉到針尖卡住定位，聽到「喀」一聲",
+     "ok": true,
+     "unknown": false
+    },
+    {
+     "k": "B",
+     "t": "慣用手固定針座盤、非慣用手握柄；請病人憋氣，斜角拉出後按下按鈕",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "C",
+     "t": "非慣用手固定針座盤、慣用手握柄；快速拉出，針尖會自動回縮，不需聽聲音",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "D",
+     "t": "不知道",
+     "ok": false,
+     "unknown": true
+    }
+   ],
+   "img": "I15",
+   "type": "mcq"
+  },
+  {
+   "id": "C5",
+   "act": "C",
+   "title": "拔針後",
+   "ref": "移除#14–15",
+   "stem": "",
+   "explain": "",
+   "opts": [
+    {
+     "k": "A",
+     "t": "非慣用手以 2\"×2\" 紗布蓋住入針處，隔著紗布加壓止血 5 分鐘；角針立即丟尖銳物品收集器",
+     "ok": true,
+     "unknown": false
+    },
+    {
+     "k": "B",
+     "t": "紗布蓋住入針處，加壓 1 分鐘；角針丟感染性垃圾桶",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "C",
+     "t": "直接貼 OK 繃，不需加壓；角針丟尖銳物品收集器",
+     "ok": false,
+     "unknown": false
+    },
+    {
+     "k": "D",
+     "t": "不知道",
+     "ok": false,
+     "unknown": true
+    }
+   ],
+   "img": "I15",
+   "type": "mcq"
+  }
+ ],
+ "conseq": [
+  {
+   "src": "A1",
+   "target": "B15",
+   "text": "（因為第一幕角針長度選得不合適）角針沒有插到圓盤底部：剛開始還有回血，但組織推擠針具後，回血變得不順。"
+  },
+  {
+   "src": "A7",
+   "target": "B15",
+   "text": "（因為第一幕回血不是全血卻繼續接上化療）注射部位開始紅、腫，病人覺得痛。"
+  },
+  {
+   "src": "B3b",
+   "target": "B13",
+   "text": "（因為組裝時輸液套管的 Spike 沒有完全沒入 Adapter）開始輸注後，Adapter 接合處出現滲漏。"
+  },
+  {
+   "src": "B9",
+   "target": "B10",
+   "text": "（因為換上化療藥後沒有先脫除外層手套）你碰觸幫浦按鍵，手套上的化療藥殘留沾到了幫浦。"
+  }
+ ],
+ "images": {}
+}

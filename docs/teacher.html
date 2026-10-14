@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>化療給藥情境｜老師圖表</title>
+<style>
+:root{
+  color-scheme:light;
+  --bg:#f6f7f9; --card:#ffffff; --ink:#14171c; --ink2:#4b5260; --muted:#7a8190; --line:#dfe3ea; --grid:#eceff3;
+  --s1:#2a78d6; --s2:#eb6834; --accent:#2a78d6; --soft:#eaf2fc;
+  --g-known:#2a78d6; --g-over:#eb6834; --g-unsure:#1baf7a; --g-gap:#eda100; --g-na:#c9ced8;
+  --warn-bg:#fff6e0; --warn:#8a5a00;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#121417; --card:#1b1e23; --ink:#eef0f3; --ink2:#c2c7d0; --muted:#8d94a1; --line:#2d323a; --grid:#262a31;
+    --s1:#3987e5; --s2:#d95926; --accent:#3987e5; --soft:#1d2a3b;
+    --g-known:#3987e5; --g-over:#d95926; --g-unsure:#199e70; --g-gap:#c98500; --g-na:#3a404a;
+    --warn-bg:#2e2510; --warn:#f1c25a;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#121417; --card:#1b1e23; --ink:#eef0f3; --ink2:#c2c7d0; --muted:#8d94a1; --line:#2d323a; --grid:#262a31;
+  --s1:#3987e5; --s2:#d95926; --accent:#3987e5; --soft:#1d2a3b;
+  --g-known:#3987e5; --g-over:#d95926; --g-unsure:#199e70; --g-gap:#c98500; --g-na:#3a404a;
+  --warn-bg:#2e2510; --warn:#f1c25a;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Noto Sans TC","Microsoft JhengHei","PingFang TC",system-ui,sans-serif}
+main{max-width:1280px;margin:0 auto;padding:16px}
+header{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
+header h1{font-size:20px;margin:0;flex:1 1 260px}
+select,button{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:8px 12px;min-height:40px;cursor:pointer}
+button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:14px}
+.kpi,.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.kpi .v{font-size:34px;font-weight:700;line-height:1.1}
+.kpi .l{font-size:14px;color:var(--ink2)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,520px),1fr));gap:14px;margin-bottom:14px}
+.card h2{font-size:17px;margin:0 0 4px}
+.card .sub{font-size:13px;color:var(--muted);margin-bottom:10px}
+.grp{font-size:13px;color:var(--muted);margin:10px 0 4px}
+.bar{display:grid;grid-template-columns:minmax(120px,38%) 1fr;gap:8px;align-items:center;margin:3px 0;position:relative}
+.bar .lab{font-size:13.5px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar .trk{position:relative;height:18px;background:linear-gradient(to right,var(--grid) 1px,transparent 1px) 0 0/25% 100%}
+.bar .fill{height:100%;border-radius:0 4px 4px 0;background:var(--s1)}
+.bar .fill.s2{background:var(--s2)}
+.bar .val{position:absolute;top:0;font-size:12.5px;color:var(--ink2);line-height:18px;padding-left:6px;white-space:nowrap}
+.bar:hover .lab{font-weight:600}
+.empty{color:var(--muted);font-size:14px;padding:8px 0}
+.gaps{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.gap{background:var(--soft);border-radius:10px;padding:10px 12px;font-size:15px}
+.gap small{display:block;color:var(--ink2);margin-top:4px;font-size:13px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left;vertical-align:top}
+th{color:var(--ink2);font-weight:600;white-space:nowrap}
+.strip{display:flex;flex-wrap:wrap;gap:2px;max-width:340px}
+.strip i{width:9px;height:14px;border-radius:2px;display:inline-block}
+.leg{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--ink2);margin:4px 0 8px}
+.leg span{display:inline-flex;align-items:center;gap:6px}.leg i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.note{background:var(--warn-bg);color:var(--warn);border-radius:10px;padding:8px 12px;font-size:14px;margin-bottom:12px}
+#tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--bg);font-size:13px;padding:6px 9px;border-radius:8px;max-width:320px;display:none;z-index:9}
+details summary{cursor:pointer;color:var(--ink2);font-size:14px}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <h1>化療給藥情境練習｜全班結果</h1>
+  <select id="range" aria-label="時間範圍"><option value="3">最近 3 小時</option><option value="today" selected>今天</option><option value="168">最近 7 天</option></select>
+  <button id="mProj" class="on">投影版</button><button id="mTea">老師版</button>
+  <button id="refresh">重新整理</button>
+</header>
+<div id="msg"></div>
+<div class="kpis" id="kpis"></div>
+<div class="grid2">
+  <div class="card"><h2>「以為會」最多的題目</h2><div class="sub">很確定、卻答錯的人數（前 10 題）</div><div id="over"></div></div>
+  <div class="card"><h2>學員想請老師帶的步驟</h2><div class="sub">勾選人數（前 10 項）</div><div id="ask"></div></div>
+</div>
+<div class="card" style="margin-bottom:14px"><h2>各題答對率</h2><div class="sub">依三幕排列；滑過長條看人數</div><div id="rate"></div>
+  <details><summary>表格檢視</summary><div id="rateTable"></div></details></div>
+<div class="card" style="margin-bottom:14px"><h2>學員寫的差距</h2><div class="sub">「哪一步原本以為會、結果不會」與「打算怎麼補」（不顯示是誰寫的）</div><div id="gaps" class="gaps"></div></div>
+<div class="card" id="teacherBox" hidden><h2>每位學員的需求（老師版，請勿投影）</h2>
+  <div class="leg"><span><i style="background:var(--g-known)"></i>✓ 已經會</span><span><i style="background:var(--g-over)"></i>! 以為會</span><span><i style="background:var(--g-unsure)"></i>? 會但沒把握</span><span><i style="background:var(--g-gap)"></i>✗ 還不會</span></div>
+  <div style="overflow-x:auto"><table id="tt"></table></div></div>
+</main>
+<div id="tip"></div>
+<script>
+/* 老師圖表：讀 Apps Script（apps-script/Code.gs）的 doGet；ENDPOINT 與學員頁相同。網址加 ?demo=1 可看假資料預覽。 */
+const ENDPOINT = "";
+const REFRESH_SEC = 15;
+const qs = new URLSearchParams(location.search), DEMO = qs.has("demo");
+let D, mode = "proj", key = "", timer;
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const GC = {known:"var(--g-known)",over:"var(--g-over)",unsure:"var(--g-unsure)",gap:"var(--g-gap)"};
+
+fetch("data/script.json",{cache:"no-cache"}).then(r=>r.json()).then(d=>{D=d;load();timer=setInterval(load,REFRESH_SEC*1000)});
+$("range").onchange=load; $("refresh").onclick=load;
+$("mProj").onclick=()=>{mode="proj";$("mProj").classList.add("on");$("mTea").classList.remove("on");load()};
+$("mTea").onclick=()=>{ if(!key && !DEMO){ key=prompt("請輸入老師密碼")||""; if(!key) return }
+  mode="teacher";$("mTea").classList.add("on");$("mProj").classList.remove("on");load()};
+
+function since(){ const v=$("range").value; if(v==="today"){const t=new Date();t.setHours(0,0,0,0);return t} return new Date(Date.now()-v*3600e3) }
+async function load(){
+  let rows;
+  try{
+    if(DEMO) rows=demo();
+    else{
+      if(!ENDPOINT){ $("msg").innerHTML=`<div class="note">尚未設定資料來源（ENDPOINT）。網址加上 <b>?demo=1</b> 可看假資料預覽。</div>`; render([]); return }
+      const u=`${ENDPOINT}?mode=${mode==="teacher"?"detail":"summary"}&since=${encodeURIComponent(since().toISOString())}`+(mode==="teacher"?`&key=${encodeURIComponent(key)}`:"");
+      const j=await (await fetch(u,{cache:"no-store"})).json();
+      if(!j.ok){ if(j.error==="bad_key"){ key=""; $("msg").innerHTML=`<div class="note">老師密碼不對，已切回投影版。</div>`; $("mProj").click(); return } throw new Error(j.error) }
+      rows=j.rows;
+    }
+    $("msg").innerHTML = DEMO?`<div class="note">預覽模式：以下是假資料。</div>`:"";
+    render(rows);
+  }catch(e){ $("msg").innerHTML=`<div class="note">讀取失敗（${esc(e.message||e)}），${REFRESH_SEC} 秒後自動再試。</div>` }
+}
+
+function bars(el,list,max,cls,fmt){
+  if(!list.length){el.innerHTML=`<div class="empty">還沒有資料</div>`;return}
+  el.innerHTML=list.map(x=>{const w=max?x.v/max*88:0;return `<div class="bar" data-tip="${esc(x.tip||"")}"><div class="lab">${esc(x.l)}</div><div class="trk"><div class="fill ${cls||""}" style="width:${w}%"></div><span class="val" style="left:${w}%">${fmt(x)}</span></div></div>`}).join("");
+}
+function render(rows){
+  const n=rows.length, items=D.items, title=id=>{const it=items.find(x=>x.id===id);return it?`${id} ${it.title}`:id};
+  const avg=n?rows.reduce((s,r)=>s+r.total/r.max,0)/n:0;
+  const overTot=rows.reduce((s,r)=>s+(r.hc_wrong||[]).length,0);
+  $("kpis").innerHTML=[[n,"位已送出"],[n?Math.round(avg*100)+"%":"—","平均答對率"],[overTot,"次「以為會」（很確定卻答錯）"],[rows.reduce((s,r)=>s+(r.unknown||0),0),"次選「不知道」"]]
+    .map(([v,l])=>`<div class="kpi"><div class="v">${v}</div><div class="l">${l}</div></div>`).join("");
+  // 以為會 Top 10
+  const oc={}; rows.forEach(r=>(r.hc_wrong||[]).forEach(id=>oc[id]=(oc[id]||0)+1));
+  const ol=Object.entries(oc).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([id,v])=>({l:title(id),v,tip:`${title(id)}：${v} 人很確定卻答錯`}));
+  bars($("over"),ol,n,"s2",x=>`${x.v} 人`);
+  // 想請老師帶的步驟
+  const ac={}; rows.forEach(r=>(r.ask_steps||[]).forEach(id=>ac[id]=(ac[id]||0)+1));
+  const al=Object.entries(ac).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([id,v])=>({l:title(id),v,tip:`${title(id)}：${v} 人勾選`}));
+  bars($("ask"),al,n,"",x=>`${x.v} 人`);
+  // 各題答對率（依幕）
+  let html="", tbl=`<table><tr><th>題</th><th>答對</th><th>作答人數</th><th>答對率</th></tr>`;
+  ["A","B","C"].forEach(act=>{
+    const list=items.filter(x=>x.act===act).map(it=>{let c=0,k=0;rows.forEach(r=>{const a=(r.answers||[]).find(a=>a.id===it.id);if(a){k++;if(a.correct)c++}});
+      tbl+=`<tr><td>${esc(title(it.id))}</td><td>${c}</td><td>${k}</td><td>${k?Math.round(c/k*100)+"%":"—"}</td></tr>`;
+      return {l:title(it.id),v:k?c/k*100:0,tip:`${title(it.id)}：${c}/${k} 人答對`,k}});
+    const tmp=document.createElement("div"); bars(tmp,list,100,"",x=>x.k?`${Math.round(x.v)}%`:"—");
+    html+=`<div class="grp">${esc(D.acts[act])}</div>`+tmp.innerHTML;
+  });
+  $("rate").innerHTML=n?html:`<div class="empty">還沒有資料</div>`; $("rateTable").innerHTML=tbl+"</table>";
+  // 差距文字
+  const gs=rows.filter(r=>r.gap1||r.gap2);
+  $("gaps").innerHTML=gs.length?gs.map(r=>`<div class="gap">${esc(r.gap1)}${r.gap2?`<small>打算：${esc(r.gap2)}</small>`:""}</div>`).join(""):`<div class="empty">還沒有資料</div>`;
+  // 老師版
+  $("teacherBox").hidden = mode!=="teacher";
+  if(mode==="teacher"){
+    const rs=rows.slice().sort((a,b)=>(a.t||"")<(b.t||"")?1:-1);
+    $("tt").innerHTML=`<tr><th>員工編號</th><th>答對</th><th>差距地圖</th><th>以為會</th><th>想請老師帶</th><th>寫的差距</th></tr>`+rs.map(r=>`<tr>
+      <td>${esc(r.code||"—")}</td><td>${r.total}/${r.max}</td>
+      <td><div class="strip">${(r.answers||[]).map(a=>`<i title="${esc(title(a.id))}" style="background:${GC[a.cls]||"var(--g-na)"}"></i>`).join("")}</div></td>
+      <td>${esc((r.hc_wrong||[]).join("、"))}</td><td>${esc((r.ask_steps||[]).join("、"))}</td>
+      <td>${esc(r.gap1)}${r.gap2?`<br><small>打算：${esc(r.gap2)}</small>`:""}</td></tr>`).join("");
+  }
+}
+// 滑過提示
+const tip=$("tip");
+document.addEventListener("mousemove",e=>{const b=e.target.closest&&e.target.closest("[data-tip]");if(!b||!b.dataset.tip){tip.style.display="none";return}
+  tip.textContent=b.dataset.tip;tip.style.display="block";tip.style.left=Math.min(e.clientX+14,innerWidth-330)+"px";tip.style.top=(e.clientY+14)+"px"});
+
+function demo(){
+  const r=s=>{let h=0;for(const c of s)h=(h*31+c.charCodeAt(0))>>>0;return()=>((h=(h*1664525+1013904223)>>>0)/4294967296)};
+  const gapsT=["以為回血有出來就可以給，原來要確認是全血","不知道換上化療藥後要先脫外層手套","沖管量 35 和 70 搞混","條碼不符時以為人工核對就可以","角針長度不知道要看 Port 外觀選"];
+  return Array.from({length:14},(_,k)=>{const R=r("p"+k);const answers=D.items.map(it=>{const conf=["high","mid","low"][Math.floor(R()*3)],correct=R()<.72,unknown=!correct&&R()<.2;
+    return{id:it.id,conf,correct,unknown,cls:correct?(conf==="high"?"known":"unsure"):(conf==="high"&&!unknown?"over":"gap")}});
+    return{code:String(100000+k*7919).slice(0,6),t:new Date(Date.now()-k*60e3).toISOString(),total:answers.filter(a=>a.correct).length,max:answers.length,unknown:answers.filter(a=>a.unknown).length,answers,
+      hc_wrong:answers.filter(a=>a.cls==="over").map(a=>a.id),ask_steps:D.items.filter(()=>R()<.12).map(i=>i.id),gap1:gapsT[k%gapsT.length],gap2:k%2?"實作時請老師示範":""}});
+}
+</script>
+</body>
+</html>
