@@ -33,6 +33,12 @@ def clean(t):
 
 md = MD.read_text(encoding="utf-8")
 intro = re.search(r"## 開場\s*\n+> (.+)", md).group(1).strip()
+ACT_DESC = {}
+for k, h in (("A", "第一幕"), ("B", "第二幕"), ("C", "第三幕")):
+    m = re.search(r"## " + h + r"[^\n]*\n+> 幕說明：(.+)", md)
+    ACT_DESC[k] = clean(m.group(1)) if m else ""
+if not all(ACT_DESC.values()):
+    print("缺幕說明", ACT_DESC); sys.exit(1)
 blocks = re.split(r"(?m)^(?=\*\*[ABC]\d+[a-c]?　)", md)[1:]
 items = []
 for b in blocks:
@@ -108,7 +114,7 @@ try:
 except ImportError:
     pass
 
-data = {"ver": "v0.3", "intro": intro, "intro_img": IMG["intro"], "acts": ACT, "items": items, "conseq": CONSEQ, "images": have}
+data = {"ver": "v0.3", "intro": intro, "intro_img": IMG["intro"], "acts": ACT, "act_desc": ACT_DESC, "items": items, "conseq": CONSEQ, "images": have}
 OUT.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
 from collections import Counter
 print("items", len(items), Counter(i["type"] for i in items), "images", len(have))

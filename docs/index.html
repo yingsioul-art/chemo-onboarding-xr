@@ -92,13 +92,13 @@ label.ck input{margin-top:5px;width:18px;height:18px}
    題目資料：data/script.json（由 _build.py 從腳本 md 產生；不要手改）
    ENDPOINT：作答回傳的 Google Apps Script 網址（apps-script/Code.gs）；空白時只在本頁顯示 */
 const ENDPOINT = "";
-const VERSION = "onboard-v0.3";
+const VERSION = "onboard-v0.3b";
 const $app = document.getElementById("app"), $foot = document.getElementById("foot"), $footin = document.getElementById("footin");
 let D, S;   // D＝題目資料；S＝作答狀態
 const CONF = [["high","很確定"],["mid","有點把握"],["low","不確定"]];
 const GAPCLS = {
   known:{c:"var(--g-known)",l:"已經會",i:"✓",d:"很確定，而且答對"},
-  over:{c:"var(--g-over)",l:"以為會",i:"!",d:"很確定，卻答錯——最要注意"},
+  over:{c:"var(--g-over)",l:"以為會",i:"!",d:"這一幕選很確定，卻答錯——最要注意"},
   unsure:{c:"var(--g-unsure)",l:"會但沒把握",i:"?",d:"沒把握，但答對"},
   gap:{c:"var(--g-gap)",l:"還不會",i:"✗",d:"沒把握或選不知道，而且答錯"}};
 
@@ -132,7 +132,7 @@ function renderStart(){
   <div class="card">
     <h2>走一遍，找出你自己的差距</h2>
     <p>你會陪同一位病人走完三幕：<b>Port-A 角針置放 → 化療給藥 → Port-A 角針移除</b>，約 20–25 分鐘。</p>
-    <p>每一題作答前，先問自己<b>「我有多確定？」</b>。每個段落做完會看到結果；最後會有一張<b>差距地圖</b>，請你用自己的話寫下差距，老師會依全班的差距安排接下來的實作練習。</p>
+    <p>你已經在到職當日看過數位課程。每一幕開始前會先說明這一幕要做什麼，並請你評估<b>「這一幕我有多確定？」</b>。每一幕做完會看到結果；最後會有一張<b>差距地圖</b>，請你用自己的話寫下差距，老師會依全班的差距安排接下來的實作練習。</p>
     <p class="hint">不會就選「不知道」——它不是扣分，是幫你標出要補的地方。</p>
     <label for="emp"><b>員工編號（6 碼數字）</b></label>
     <input id="emp" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off" spellcheck="false" placeholder="例：012345">
@@ -161,8 +161,15 @@ function renderIntro(){
 }
 function renderActTitle(){
   const n=D.items.filter(x=>x.act===S.act).length;
-  $app.innerHTML=`${progress()}<div class="card"><div class="act">共 ${n} 題</div><h2>${esc(D.acts[S.act])}</h2></div>`;
-  foot([btn("開始","primary",()=>{S.phase="item";S.idx=D.items.findIndex(x=>x.act===S.act);save();route()})]);
+  $app.innerHTML=`${progress()}<div class="card"><div class="act">共 ${n} 題</div><h2>${esc(D.acts[S.act])}</h2>
+    <p>${esc(D.act_desc[S.act])}</p>
+    <div id="confbox"><div class="ask">開始前：<b>這一幕，你有多確定自己會？</b></div>
+      <div class="row conf">${CONF.map(([k,l])=>`<button data-c="${k}">${l}</button>`).join("")}</div></div></div>`;
+  const go=btn("開始","primary",()=>{S.phase="item";S.idx=D.items.findIndex(x=>x.act===S.act);save();route()},true);
+  document.querySelectorAll("#confbox button").forEach(b=>b.onclick=()=>{
+    S.actConf=S.actConf||{}; S.actConf[S.act]=b.dataset.c; save();
+    document.querySelectorAll("#confbox button").forEach(x=>x.classList.toggle("sel",x===b)); go.disabled=false});
+  foot([go]);
   window.scrollTo(0,0);
 }
 function next(){
@@ -175,7 +182,7 @@ function next(){
 /* ---------- 題目 ---------- */
 let T;   // 本題暫存
 function renderItem(){
-  const it=D.items[S.idx]; T={conf:null};
+  const it=D.items[S.idx]; T={conf:(S.actConf||{})[it.act]||""};
   const cq=D.conseq.filter(c=>c.target===it.id && S.answers[c.src] && !S.answers[c.src].correct);
   const banner=cq.map(c=>`<div class="banner"><b>⏩ 前面的選擇，現在出現後果</b>${esc(c.text)}</div>`).join("");
   $app.innerHTML=`${progress()}
@@ -185,16 +192,11 @@ function renderItem(){
     ${banner}
     ${pic(it.img)}
     <p class="stem">${esc(it.stem)}</p>
-    <div id="confbox"><div class="ask">作答前：<b>你有多確定自己會這一題？</b></div>
-      <div class="row conf">${CONF.map(([k,l])=>`<button data-c="${k}">${l}</button>`).join("")}</div></div>
-    <div id="ans" hidden></div>
+    <div id="ans"></div>
     <div class="ref">依據：${esc(it.ref)}</div>
   </div>`;
   foot([]);
-  document.querySelectorAll("#confbox button").forEach(b=>b.onclick=()=>{
-    T.conf=b.dataset.c; document.querySelectorAll("#confbox button").forEach(x=>x.classList.toggle("sel",x===b));
-    const a=document.getElementById("ans"); if(a.hidden){a.hidden=false; ({mcq:ansMcq,multi:ansMulti,order:ansOrder,paint:ansPaint})[it.type](it,a); a.scrollIntoView({behavior:"smooth",block:"nearest"})}
-  });
+  ({mcq:ansMcq,multi:ansMulti,order:ansOrder,paint:ansPaint})[it.type](it,document.getElementById("ans"));
   window.scrollTo(0,0);
 }
 function record(it,chosen,correct,unknown,extra){
@@ -285,7 +287,7 @@ function renderFinal(){
   <div class="card"><div class="act">我的差距地圖</div>
     <div class="big">${total} / ${D.items.length} 題答對</div>
     <div class="leg">${Object.entries(GAPCLS).map(([k,g])=>`<span><i style="background:${g.c}"></i>${g.i} ${g.l}（${cnt[k]}）</span>`).join("")}</div>
-    <p class="hint"><b>橘色「以為會」最要注意</b>：你很確定、卻答錯的地方。</p>
+    <p class="hint"><b>橘色「以為會」最要注意</b>：你在那一幕開始前選「很確定」、卻答錯的題目。</p>
     ${map("A")}${map("B")}${map("C")}
   </div>
   <div class="card"><h2>用你自己的話寫下差距</h2>
@@ -308,7 +310,7 @@ async function submit(){
     total:ans.filter(a=>a.correct).length,max:ans.length,unknown:ans.filter(a=>a.unknown).length,answers:ans,
     hc_wrong:ans.filter(a=>a.cls==="over").map(a=>a.id),ask_steps:[...document.querySelectorAll("input[type=checkbox]:checked")].map(x=>x.value),
     gap1:document.getElementById("g1").value.trim(),gap2:document.getElementById("g2").value.trim(),
-    submission_id:S.sid||(S.sid=S.code+"-"+Date.now().toString(36)),version:VERSION,ua:navigator.userAgent};
+    act_conf:S.actConf||{},submission_id:S.sid||(S.sid=S.code+"-"+Date.now().toString(36)),version:VERSION,ua:navigator.userAgent};
   S.payload=payload; save();
   if(!ENDPOINT){ setS("warn","（測試版）尚未設定回傳網址，作答只留在本頁。"); S.sent=true; S.phase="done"; save(); setTimeout(route,1200); return }
   setS("warn","送出中…");
