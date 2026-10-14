@@ -13,7 +13,7 @@ MD = SRC / "04_情境腳本_v0.3.md"
 OUT = HERE / "docs" / "data" / "script.json"
 
 # 題目 → 圖卡（對應 05_ChatGPT生圖prompt_圖卡清單）
-IMG = {"intro": "I01", "A1": "I02", "A2a": "I03", "A2b": "I03", "A3": "I04", "A4": "I05", "A5": "I05",
+IMG = {"intro": "I01", "A1": "I02", "A4b": "", "A2a": "I03", "A2b": "I03", "A3": "I04", "A4": "I05", "A5": "I05",
        "A6": "I06", "A7": "I06", "A8": "I05", "A9": "I07", "B3": "I08", "B3b": "I08", "B4": "I09",
        "B5": "I08", "B6": "I08", "B7": "I10", "B8": "I10", "B9": "I08", "B10": "I11", "B11": "I11",
        "B14": "I12", "B15": "I13", "B22": "I14", "C4": "I15", "C5": "I15"}
@@ -79,6 +79,8 @@ for b in blocks:
     it["stem"] = "\n".join(stem)
     if order:
         it["type"] = "order"; it["steps"] = order
+    elif "〔互動：角度動畫〕" in lines[0]:
+        it["type"] = "mcq"; it["opts"] = opts; it["anim"] = "angle"
     elif "〔互動" in lines[0] + it["stem"] or qid == "A2c":
         it["type"] = "paint"
     elif opts and all(o["k"] for o in opts):
