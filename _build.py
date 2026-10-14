@@ -3,6 +3,7 @@ r"""新進護理師化療給藥到職訓練｜實體課 2D 互動情境 — 資�
 單一來源（本腳本只讀不改）：
   腳本 md：D:\Zettelkasten\20_教學\Makar\40_新進護理師到職訓練XR\04_情境腳本_v0.3.md
   圖卡：   D:\Zettelkasten\20_教學\Makar\40_新進護理師到職訓練XR\images\I01.png …（使用者用 ChatGPT 生圖）
+           images\supplies\S01.png…、images\outcomes\…、images\options\A3-A.png…（〔圖卡選項〕題）
 產出：docs/data/script.json、docs/images/*.jpg（有圖才複製；沒有圖網頁用佔位）
 用法：PYTHONUTF8=1 python _build.py
 """
@@ -150,6 +151,22 @@ for act, h in (("A", "第一幕"), ("B", "第二幕"), ("C", "第三幕")):
                          "ref": {"A": "Port-A 角針置放查核表", "B": "化療靜脈給藥查核表", "C": "Port-A 角針移除查核表"}[act],
                          "explain": "", "img": "", "outs": outs, "douts": douts, "keys": keys, "dsup": dsup})
 
+# 圖卡選項（腳本題目標題後標〔圖卡選項〕）：A2a、A2b 用用物圖卡（08 清單），其餘用 images\options\<題號>-<選項>.png
+OPT_SUP = {"生理食鹽水": "S08"}   # 選項文字和 08 用物名稱不同時的對照
+for it in items:
+    blk = next((b for b in blocks if b.startswith(f"**{it['id']}　")), "")
+    if "〔圖卡選項〕" not in blk.split("\n")[0]: continue
+    it["imgopts"] = True
+    for o in it["opts"]:
+        if o["unknown"]: continue
+        if it["id"] in ("A2a", "A2b"):
+            n = re.sub(r"（.*?）$", "", o["t"]).strip()
+            sid = OPT_SUP.get(n) or ALIAS.get(n) or next((k for k, v in CAT.items() if v == n), None)
+            if not sid: print("圖卡選項對不到用物：", it["id"], o["t"]); sys.exit(1)
+            o["img"], o["ph"] = "sup/" + sid, "🧴"
+        else:
+            o["img"], o["ph"] = f"opt/{it['id']}-{o['k']}", "💉"
+
 # 圖卡
 imgdir = HERE / "docs" / "images"; have = {}
 try:
@@ -168,6 +185,11 @@ try:
         if p.suffix.lower() not in (".png", ".jpg", ".jpeg", ".webp"): continue
         im = Image.open(p).convert("RGB"); im.thumbnail((600, 600))
         dst = outdir / (p.stem + ".jpg"); im.save(dst, "JPEG", quality=82, optimize=True); have["out/" + p.stem] = "outcomes/" + dst.name
+    optdir = imgdir / "options"; optdir.mkdir(exist_ok=True)   # 題目選項圖卡（A3-A.png…）
+    for p in sorted((SRC / "images" / "options").glob("*.*")):
+        if p.suffix.lower() not in (".png", ".jpg", ".jpeg", ".webp"): continue
+        im = Image.open(p).convert("RGB"); im.thumbnail((600, 600))
+        dst = optdir / (p.stem + ".jpg"); im.save(dst, "JPEG", quality=82, optimize=True); have["opt/" + p.stem] = "options/" + dst.name
 except ImportError:
     pass
 

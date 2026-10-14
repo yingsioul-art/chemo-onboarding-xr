@@ -110,6 +110,39 @@ label.ck input{margin-top:5px;width:18px;height:18px}
 .foot{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom))}
 .foot .in{max-width:760px;margin:0 auto;display:flex;justify-content:flex-end;gap:8px}
 .big{font-size:28px;font-weight:700}
+/* 情境大圖還沒生：縮成一行細條 */
+.pic.none{aspect-ratio:auto;min-height:0;padding:6px 10px;justify-content:flex-start;font-size:13px}
+/* 進度 */
+.pgw{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.pgw .prog{flex:1;margin:0}
+.pgw span{font-size:13px;color:var(--muted);white-space:nowrap}
+/* 成果卡沒圖時改矮卡 */
+.oc .ph.sm{aspect-ratio:auto;height:34px;font-size:20px}
+/* 圖卡選項 */
+.icards{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:8px}
+.ic{display:flex;flex-direction:column;gap:6px;padding:6px;text-align:center;font-size:14.5px;line-height:1.35;word-break:break-word}
+.ic img,.ic .ph{width:100%;aspect-ratio:1/1;object-fit:contain;border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:40px;border:1px solid var(--line)}
+.ic .ph{background:var(--soft)}
+.ic.sel{box-shadow:0 0 0 2px var(--accent)}
+/* 排順序：拖進答案框 */
+.pool{display:flex;flex-direction:column;gap:6px;padding:8px;margin:0 0 10px;border:1px solid var(--line);border-radius:12px;background:var(--bg);min-height:52px}
+.pool .empty{font-size:14px;color:var(--muted);text-align:center;padding:6px}
+.stc{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:15px;line-height:1.45;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
+.stc[data-pk]{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.stc.ghost{position:fixed;z-index:50;pointer-events:none;opacity:.92;box-shadow:0 8px 20px rgba(0,0,0,.25)}
+.slots{display:flex;flex-direction:column;gap:6px}
+.slot{display:flex;align-items:stretch;gap:8px;border:2px dashed var(--line);border-radius:12px;padding:6px;min-height:52px;background:var(--card)}
+.slot .n{flex:none;align-self:center;width:28px;height:28px;border-radius:50%;background:var(--line);color:var(--muted);text-align:center;font-size:14px;line-height:28px;font-weight:600}
+.slot.full{border-style:solid}
+.slot.full .n{background:var(--accent);color:var(--accent-ink)}
+.slot .stc{flex:1;border:0;padding:4px 2px;background:transparent}
+.slot .hold{flex:1;align-self:center;font-size:14px;color:var(--muted)}
+.slot.over{border-color:var(--accent);background:var(--soft)}
+@media (max-width:480px){
+  main{padding:12px 10px 96px}
+  .card{padding:14px 12px}
+  .foot .in button{flex:1}
+}
 </style>
 </head>
 <body>
@@ -120,7 +153,7 @@ label.ck input{margin-top:5px;width:18px;height:18px}
    題目資料：data/script.json（由 _build.py 從腳本 md 產生；不要手改）
    ENDPOINT：作答回傳的 Google Apps Script 網址（apps-script/Code.gs）；空白時只在本頁顯示 */
 const ENDPOINT = "";
-const VERSION = "onboard-v0.4c";
+const VERSION = "onboard-v0.5";
 const $app = document.getElementById("app"), $foot = document.getElementById("foot"), $footin = document.getElementById("footin");
 let D, S;   // D＝題目資料；S＝作答狀態
 const CONF = [["high","很確定"],["mid","有點把握"],["low","不確定"]];
@@ -135,7 +168,7 @@ function rng(seed){let h=2166136261;for(const c of seed)h=Math.imul(h^c.charCode
 function shuffle(arr,seed){const a=arr.slice(),r=rng(seed);for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 function foot(btns){ $footin.innerHTML=""; if(!btns||!btns.length){$foot.hidden=true;return} $foot.hidden=false; $footin.innerHTML=""; btns.forEach(b=>$footin.appendChild(b)); }
 function btn(txt,cls,fn,dis){const b=document.createElement("button");b.textContent=txt;if(cls)b.className=cls;b.onclick=fn;if(dis)b.disabled=true;return b}
-function pic(img){ if(img && D.images && D.images[img]) return `<div class="pic"><img src="images/${esc(D.images[img])}" alt=""></div>`; return img?`<div class="pic">圖卡 ${esc(img)}（製作中）</div>`:"" }
+function pic(img){ if(img && D.images && D.images[img]) return `<div class="pic"><img src="images/${esc(D.images[img])}" alt=""></div>`; return img?`<div class="pic none">🖼️ 圖卡 ${esc(img)}（製作中）</div>`:"" }
 function save(){ try{ localStorage.setItem("onboard_state",JSON.stringify(S)) }catch(e){} }
 function gapClass(a){ if(!a) return null; if(a.correct) return a.conf==="high"?"known":"unsure"; return (a.conf==="high"&&!a.unknown)?"over":"gap" }
 function itemById(id){return D.items.find(x=>x.id===id)}
@@ -182,7 +215,9 @@ function route(){
   if(S.phase==="final") return renderFinal();
   if(S.phase==="done") return renderDone();
 }
-function progress(){ const n=D.items.length, k=Object.keys(S.answers).length; return `<div class="prog"><i style="width:${Math.round(k/n*100)}%"></i></div>` }
+function progress(){ const n=D.items.length, k=Object.keys(S.answers).length;
+  const lab=S.phase==="item"?`第 ${S.idx+1}／${n} 題`:`已完成 ${k}／${n} 題`;
+  return `<div class="pgw"><div class="prog"><i style="width:${Math.round(k/n*100)}%"></i></div><span>${lab}</span></div>` }
 function renderIntro(){
   $app.innerHTML=`${progress()}<div class="card"><div class="act">開場</div>${pic(D.intro_img)}<p class="stem">${esc(D.intro)}</p></div>`;
   foot([btn("開始第一幕","primary",()=>{S.phase="actTitle";S.act="A";save();route()})]);
@@ -267,8 +302,21 @@ function angleAnim(){
 }
 function ansMcq(it,box){
   const opts=shuffle(it.opts.filter(o=>!o.unknown),it.id).concat(it.opts.filter(o=>o.unknown));
+  if(it.imgopts) return ansImgMcq(it,box,opts);
   box.innerHTML=`<div class="ask">請選一個：</div>`+opts.map((o,i)=>`<button class="opt${o.unknown?" unk":""}" data-i="${i}">${esc(o.t)}</button>`).join("");
   box.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{const o=opts[+b.dataset.i]; record(it,o.unknown?"不知道":o.t,o.ok,o.unknown)});
+}
+/* 圖卡選項：兩欄圖卡，先選中再按「確認」；「不知道」維持文字按鈕 */
+function ansImgMcq(it,box,opts){
+  let sel=-1;
+  const card=(o,i)=>{ const im=o.img&&D.images&&D.images[o.img];
+    return `<button class="ic" data-i="${i}">${im?`<img src="images/${esc(im)}" alt="" draggable="false">`:`<div class="ph">${esc(o.ph||"🖼️")}</div>`}<span>${esc(o.t)}</span></button>` };
+  box.innerHTML=`<div class="ask">點一張圖卡，再按「確認」：</div><div class="icards">`+opts.map((o,i)=>o.unknown?"":card(o,i)).join("")+`</div>`+
+    opts.map((o,i)=>o.unknown?`<button class="opt unk" data-i="${i}">${esc(o.t)}</button>`:"").join("");
+  const ok=btn("確認","primary",()=>{const o=opts[sel]; record(it,o.unknown?"不知道":o.t,o.ok,o.unknown)},true);
+  box.querySelectorAll("[data-i]").forEach(b=>b.onclick=()=>{ sel=+b.dataset.i;
+    box.querySelectorAll("[data-i]").forEach(x=>x.classList.toggle("sel",+x.dataset.i===sel)); ok.disabled=false });
+  foot([ok]);
 }
 function ansMulti(it,box){
   const opts=shuffle(it.opts.filter(o=>!o.unknown),it.id).concat(it.opts.filter(o=>o.unknown));
@@ -284,37 +332,48 @@ function ansMulti(it,box){
     box.querySelectorAll(".opt").forEach(x=>x.classList.toggle("sel",sel.has(+x.dataset.i))); ok.disabled=!sel.size});
   foot([ok]);
 }
+/* 排順序：上方打亂的步驟卡，拖進下方編號答案框（或先點卡、再點框）；點已填的框＝退回；框與框之間拖曳＝互換 */
 function ansOrder(it,box){
-  let ord=shuffle(it.steps.map((_,i)=>i),it.id+"o"), moved=false;
+  const mix=shuffle(it.steps.map((_,i)=>i),it.id+"o"), slots=it.steps.map(()=>null);
+  let picked=null;
+  const put=(i,k)=>{ const j=slots.indexOf(i); if(j>=0) slots[j]=null; slots[k]=i };   // 原框的卡退回上方
   const draw=()=>{
-    box.innerHTML=`<div class="ask">按住步驟<b>上下拖曳</b>，排成正確順序（也可以按右邊的 ▲▼）：</div><div class="steps drag">`+
-      ord.map((i,k)=>`<div class="dr" data-i="${i}"><span class="n">${k+1}</span><span class="tx">${esc(it.steps[i])}</span><span class="mv"><button data-u="${k}" aria-label="上移"${k?"":" disabled"}>▲</button><button data-d="${k}" aria-label="下移"${k<ord.length-1?"":" disabled"}>▼</button></span></div>`).join("")+`</div>`;
-    box.querySelectorAll("[data-u]").forEach(b=>b.onclick=e=>{e.stopPropagation();const k=+b.dataset.u;[ord[k-1],ord[k]]=[ord[k],ord[k-1]];moved=true;draw()});
-    box.querySelectorAll("[data-d]").forEach(b=>b.onclick=e=>{e.stopPropagation();const k=+b.dataset.d;[ord[k+1],ord[k]]=[ord[k],ord[k+1]];moved=true;draw()});
-    const list=box.querySelector(".drag");
-    list.querySelectorAll(".dr").forEach(row=>{
-      row.addEventListener("pointerdown",e=>{
-        if(e.target.closest("button")) return;
-        e.preventDefault(); row.setPointerCapture(e.pointerId); row.classList.add("dragging");
-        const y0=e.clientY; let lastY=e.clientY;
-        const mv=ev=>{ lastY=ev.clientY; row.style.transform=`translateY(${ev.clientY-y0}px)`;
-          const rows=[...list.querySelectorAll(".dr")].filter(r=>r!==row);
-          rows.forEach(r=>r.classList.toggle("over",(()=>{const b=r.getBoundingClientRect();return ev.clientY>b.top&&ev.clientY<b.bottom})())) };
-        const up=()=>{ row.removeEventListener("pointermove",mv); row.removeEventListener("pointerup",up); row.removeEventListener("pointercancel",up);
-          const rows=[...list.querySelectorAll(".dr")]; const from=rows.indexOf(row);
-          let to=rows.findIndex(r=>{const b=r.getBoundingClientRect();return lastY<b.top+b.height/2}); if(to<0) to=rows.length;
-          if(to>from) to--; const v=ord.splice(from,1)[0]; ord.splice(to,0,v); if(to!==from) moved=true; draw() };
-        row.addEventListener("pointermove",mv); row.addEventListener("pointerup",up); row.addEventListener("pointercancel",up);
-      });
-    });
+    const pool=mix.filter(i=>!slots.includes(i));
+    box.innerHTML=`<div class="ask">把上面的步驟卡<b>拖進</b>下面的答案框，排成正確順序（也可以先點步驟卡、再點答案框；點已放好的卡可以退回）：</div>
+      <div class="pool">${pool.map(i=>`<div class="stc" data-i="${i}" data-src="pool"${picked===i?" data-pk=\"1\"":""}>${esc(it.steps[i])}</div>`).join("")||`<div class="empty">步驟卡都放好了</div>`}</div>
+      <div class="slots">${slots.map((i,k)=>`<div class="slot${i===null?"":" full"}" data-k="${k}"><span class="n">${k+1}</span>${i===null?`<span class="hold">${picked!==null?"點這裡放入":"拖到這裡"}</span>`:`<div class="stc" data-i="${i}" data-src="slot" data-k="${k}">${esc(it.steps[i])}</div>`}</div>`).join("")}</div>`;
+    box.querySelectorAll(".slot").forEach(s=>s.onclick=()=>{ const k=+s.dataset.k;
+      if(picked!==null&&slots[k]===null){ put(picked,k); picked=null; draw() } });
+    box.querySelectorAll(".stc").forEach(c=>c.addEventListener("pointerdown",e=>{
+      e.preventDefault(); const i=+c.dataset.i, from=c.dataset.src, fk=from==="slot"?+c.dataset.k:-1;
+      const r=c.getBoundingClientRect(); let moved=false, lastY=e.clientY, raf=0, ghost=null;
+      const hitAt=(x,y)=>{ let hit=null; box.querySelectorAll(".slot,.pool").forEach(d=>{const b=d.getBoundingClientRect();const o=x>b.left&&x<b.right&&y>b.top&&y<b.bottom;d.classList.toggle("over",o&&d.classList.contains("slot"));if(o)hit=d}); return hit };
+      const tick=()=>{ if(moved){ const h=innerHeight; if(lastY>h-120) scrollBy(0,14); else if(lastY<80) scrollBy(0,-14) } raf=requestAnimationFrame(tick) };   // 拖到畫面上下緣自動捲動
+      raf=requestAnimationFrame(tick);
+      const mv=ev=>{ lastY=ev.clientY;
+        if(!moved&&Math.hypot(ev.clientX-e.clientX,ev.clientY-e.clientY)>8){ moved=true;
+          ghost=c.cloneNode(true); ghost.className="stc ghost"; ghost.removeAttribute("data-pk"); ghost.style.width=r.width+"px"; document.body.appendChild(ghost) }
+        if(ghost){ ghost.style.left=(ev.clientX-r.width/2)+"px"; ghost.style.top=(ev.clientY-20)+"px"; hitAt(ev.clientX,ev.clientY) } };
+      const clean=()=>{ cancelAnimationFrame(raf); window.removeEventListener("pointermove",mv); window.removeEventListener("pointerup",up); window.removeEventListener("pointercancel",clean); if(ghost) ghost.remove() };
+      const up=ev=>{ const hit=moved?hitAt(ev.clientX,ev.clientY):null; clean();
+        if(moved){
+          if(hit&&hit.classList.contains("slot")){ const k=+hit.dataset.k;
+            if(from==="slot"){ [slots[fk],slots[k]]=[slots[k],slots[fk]] } else put(i,k); picked=null }
+          else if(hit&&hit.classList.contains("pool")&&from==="slot"){ slots[fk]=null }
+        } else if(from==="pool"){ picked=picked===i?null:i }
+        else if(picked!==null){ put(picked,fk); picked=null }   // 先點了上方的卡，再點已填的框＝換掉
+        else { slots[fk]=null }   // 點已放好的卡＝退回
+        draw() };
+      window.addEventListener("pointermove",mv); window.addEventListener("pointerup",up); window.addEventListener("pointercancel",clean);
+    }));
     foot([btn("不知道","",()=>record(it,"不知道",false,true)),btn("確認","primary",()=>{
-      const correct=ord.every((v,k)=>v===it.answer_order[k]); record(it,ord.map(v=>v+1).join("→"),correct,false)})]);
+      const correct=slots.every((v,k)=>v===it.answer_order[k]); record(it,slots.map(v=>v+1).join("→"),correct,false)},slots.includes(null))]);
   }; draw();
 }
 function supCard(sid,extra){ const nm=D.catalog[sid]||sid, im=D.images&&D.images["sup/"+sid];
   return `<div class="sc" data-s="${sid}"${extra||""}>${im?`<img src="images/${esc(im)}" alt="" draggable="false">`:`<div class="ph">🧰</div>`}<span>${esc(nm)}</span></div>` }
 function outCard(o,sel,i){ const im=D.images&&D.images["out/"+o.id];
-  return `<button class="oc${sel?" sel":""}" data-i="${i}">${im?`<img src="images/${esc(im)}" alt="" draggable="false">`:`<div class="ph">🖼️</div>`}<span>${sel?"☑ ":""}${esc(o.s)}</span></button>` }
+  return `<button class="oc${sel?" sel":""}" data-i="${i}">${im?`<img src="images/${esc(im)}" alt="" draggable="false">`:`<div class="ph sm">🖼️</div>`}<span>${sel?"☑ ":""}${esc(o.s)}</span></button>` }
 function ansOutcome(it,box){
   const all=shuffle(it.outs.map(o=>({...o,ok:true})).concat(it.douts.map(o=>({...o,ok:false}))),it.id+"o");
   const sel=new Set(); let own=""; const place={}; it.keys.forEach(k=>place[k.id]=new Set());

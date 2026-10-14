@@ -8,7 +8,7 @@
   "C": "第三幕｜Port-A 角針移除"
  },
  "act_desc": {
-  "A": "這一幕從選角針開始，依序是皮膚清潔與消毒（含動手塗抹範圍）、角針排氣、持針與插入、確認回血（回抽不順怎麼辦、回血顏色）、沖管，到敷料固定與換藥日期。內容對應你到職當日完成的數位課程「總院-人工血管照護」。",
+  "A": "這一幕從選角針開始，依序是皮膚清潔與消毒（含動手塗抹範圍）、角針排氣、持針與插入、確認回血（回抽不順怎麼辦、回血顏色）、沖管，到敷料固定與換藥日期。內容對應你到職當日完成的數位課程「總院-人工血管照護」。持針與入針的手法在實體課練習，這裡先確認原則。",
   "B": "這一幕是同一位病人的化療給藥全程：給藥前文件與評估 → 組裝密閉式藥品轉移裝置（CSTD）→ 穿防護裝備、條碼檢核 → 換上化療藥、設定幫浦 → 雙人複核、開始給藥 → 給藥中監測（含從 Port-A 抽血）→ 換回生理食鹽水與沖管 → 卸除防護裝備。內容對應數位課程「總院-安全處理化療藥品」與「總院-化療藥品靜脈給藥流程」。",
   "C": "療程結束，要移除角針：移除前沖管與 Heparin 封管、敷料滲濕時的清潔消毒、巴德安全針具的移除方式，以及拔針後加壓止血與針具丟棄。內容對應數位課程「總院-人工血管照護」。"
  },
@@ -238,19 +238,25 @@
      "k": "A",
      "t": "70–75% 酒精或無菌蒸餾水",
      "ok": true,
-     "unknown": false
+     "unknown": false,
+     "img": "sup/S03",
+     "ph": "🧴"
     },
     {
      "k": "B",
      "t": "生理食鹽水",
      "ok": false,
-     "unknown": false
+     "unknown": false,
+     "img": "sup/S08",
+     "ph": "🧴"
     },
     {
      "k": "C",
      "t": ">0.5% chlorhexidine alcoholic solution",
      "ok": false,
-     "unknown": false
+     "unknown": false,
+     "img": "sup/S04",
+     "ph": "🧴"
     },
     {
      "k": "D",
@@ -260,7 +266,8 @@
     }
    ],
    "img": "I03",
-   "type": "mcq"
+   "type": "mcq",
+   "imgopts": true
   },
   {
    "id": "A2b",
@@ -274,19 +281,25 @@
      "k": "A",
      "t": ">0.5% chlorhexidine alcoholic solution",
      "ok": true,
-     "unknown": false
+     "unknown": false,
+     "img": "sup/S04",
+     "ph": "🧴"
     },
     {
      "k": "B",
      "t": "生理食鹽水",
      "ok": false,
-     "unknown": false
+     "unknown": false,
+     "img": "sup/S08",
+     "ph": "🧴"
     },
     {
      "k": "C",
      "t": "10% povidone-iodine alcoholic solution（陳先生沒有禁忌症）",
      "ok": false,
-     "unknown": false
+     "unknown": false,
+     "img": "sup/S36",
+     "ph": "🧴"
     },
     {
      "k": "D",
@@ -296,7 +309,8 @@
     }
    ],
    "img": "I03",
-   "type": "mcq"
+   "type": "mcq",
+   "imgopts": true
   },
   {
    "id": "A2c",
@@ -322,19 +336,25 @@
      "k": "A",
      "t": "夾緊管夾，注射器不要移除",
      "ok": true,
-     "unknown": false
+     "unknown": false,
+     "img": "opt/A3-A",
+     "ph": "💉"
     },
     {
      "k": "B",
      "t": "夾緊管夾，移除注射器、蓋上注射帽備用",
      "ok": false,
-     "unknown": false
+     "unknown": false,
+     "img": "opt/A3-B",
+     "ph": "💉"
     },
     {
      "k": "C",
      "t": "管夾保持打開，注射器不要移除，方便等一下回抽",
      "ok": false,
-     "unknown": false
+     "unknown": false,
+     "img": "opt/A3-C",
+     "ph": "💉"
     },
     {
      "k": "D",
@@ -344,7 +364,8 @@
     }
    ],
    "img": "I04",
-   "type": "mcq"
+   "type": "mcq",
+   "imgopts": true
   },
   {
    "id": "A4",
@@ -1947,6 +1968,7 @@
   "S32": "尖銳物品收集器",
   "S33": "NS 10 mL 注射器（預充式）",
   "S34": "Prefill heparin saline",
-  "S35": "感染性垃圾桶"
+  "S35": "感染性垃圾桶",
+  "S36": "10% povidone-iodine alcoholic solution"
  }
 }
