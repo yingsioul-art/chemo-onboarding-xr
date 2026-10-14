@@ -122,9 +122,20 @@ OUT_MD = (SRC / "07_逆向設計_完成成果與用物_v0.1.md").read_text(encod
 for act, h in (("A", "第一幕"), ("B", "第二幕"), ("C", "第三幕")):
     sec = re.search(r"## " + h + r"[^\n]*\n(.*?)(?=\n## |\Z)", OUT_MD, re.S).group(1)
     outs, douts = [], []
-    for key, txt, sup, ref in re.findall(r"(?m)^\| ([A-C]-O\d+|✗) \| (.+?) \| (.+?) \| (.+?) \|$", sec):
-        if key == "✗": douts.append({"t": clean(txt), "why": clean(ref)})
-        else: outs.append({"id": key, "t": clean(txt), "sup": [sid_of(n) for n in split_names(sup)]})
+    for key, txt, short, sup, ref in re.findall(r"(?m)^\| ([A-C]-O\d+|✗) \| (.+?) \| (.+?) \| (.+?) \| (.+?) \|$", sec):
+        if key == "✗": douts.append({"id": f"{act}-X{len(douts)+1}", "t": clean(txt), "s": clean(short), "why": clean(ref)})
+        else: outs.append({"id": key, "t": clean(txt), "s": clean(short), "sup": [sid_of(n) for n in split_names(sup)]})
+    keys = []
+    for kid, kt, inc in re.findall(r"(?m)^\| ([A-C]-K\d+) \| (.+?) \| (.+?) \|$", sec):
+        mem = [x.strip() for x in inc.split("、")]
+        sup = []
+        for o in outs:
+            if o["id"] in mem:
+                for x in o["sup"]:
+                    if x not in sup: sup.append(x)
+        keys.append({"id": kid, "t": clean(kt), "mem": mem, "sup": sup})
+    if len(keys) > 5 or sorted(m for k in keys for m in k["mem"]) != sorted(o["id"] for o in outs):
+        print("關鍵成果解析失敗或沒涵蓋全部細項", act); sys.exit(1)
     dsup = []
     m = re.search(r"\*\*干擾用物\*\*(?:（不該拖）)?：(.+)", sec)
     for n in split_names(m.group(1)):
@@ -133,9 +144,9 @@ for act, h in (("A", "第一幕"), ("B", "第二幕"), ("C", "第三幕")):
     if not outs or not douts: print("成果解析失敗", act); sys.exit(1)
     first = next(i for i, x in enumerate(items) if x["act"] == act)
     items.insert(first, {"id": act + "0", "act": act, "type": "outcome", "title": "用物準備：先想完成的樣子",
-                         "stem": "開始之前，先想像這一幕「做完時」應該是什麼樣子。第一步：勾出正確的完成成果；第二步：把用物圖卡拖到每個成果底下（同一張可以拖到好幾個成果，不需要的留在架上）。",
+                         "stem": "開始之前，先想像這一幕「做完時」應該是什麼樣子。第一步（發散）：勾出你想到的完成成果，可以多勾、也可以自己寫；第二步（收斂）：看看歸成 5 個關鍵成果後，你漏了什麼、勾錯什麼；第三步：把用物圖卡拖到 5 個關鍵成果底下。",
                          "ref": {"A": "Port-A 角針置放查核表", "B": "化療靜脈給藥查核表", "C": "Port-A 角針移除查核表"}[act],
-                         "explain": "", "img": "", "outs": outs, "douts": douts, "dsup": dsup})
+                         "explain": "", "img": "", "outs": outs, "douts": douts, "keys": keys, "dsup": dsup})
 
 # 圖卡
 imgdir = HERE / "docs" / "images"; have = {}
@@ -150,6 +161,11 @@ try:
         if p.suffix.lower() not in (".png", ".jpg", ".jpeg", ".webp"): continue
         im = Image.open(p).convert("RGB"); im.thumbnail((480, 480))
         dst = supdir / (p.stem + ".jpg"); im.save(dst, "JPEG", quality=82, optimize=True); have["sup/" + p.stem] = "supplies/" + dst.name
+    outdir = imgdir / "outcomes"; outdir.mkdir(exist_ok=True)
+    for p in sorted((SRC / "images" / "outcomes").glob("*.*")):
+        if p.suffix.lower() not in (".png", ".jpg", ".jpeg", ".webp"): continue
+        im = Image.open(p).convert("RGB"); im.thumbnail((600, 600))
+        dst = outdir / (p.stem + ".jpg"); im.save(dst, "JPEG", quality=82, optimize=True); have["out/" + p.stem] = "outcomes/" + dst.name
 except ImportError:
     pass
 

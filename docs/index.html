@@ -63,8 +63,13 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .drag .dr .mv button{min-height:30px;padding:2px 10px;font-size:12px}
 .drag .dr.dragging{z-index:5;box-shadow:0 6px 18px rgba(0,0,0,.18);border-color:var(--accent);cursor:grabbing}
 .drag .dr.over{border-color:var(--accent);border-style:dashed}
-.shelf{position:sticky;top:0;z-index:3;display:flex;gap:8px;overflow-x:auto;padding:8px 2px;background:var(--bg);margin:0 -4px 10px;border-bottom:1px solid var(--line)}
-.sc{flex:none;width:84px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:6px;text-align:center;font-size:12px;line-height:1.3;touch-action:pan-x;user-select:none;cursor:grab}
+.shelf{display:flex;flex-wrap:wrap;gap:6px;padding:8px 0;margin:0 0 10px;border-bottom:1px solid var(--line)}
+.ogrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:10px}
+.oc{display:flex;flex-direction:column;gap:6px;padding:6px;text-align:center;font-size:14px;line-height:1.35}
+.oc img,.oc .ph{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:8px;background:var(--soft);display:flex;align-items:center;justify-content:center;font-size:30px}
+.mi{font-size:14px;padding:3px 0}.mi.ok{color:var(--ok)}.mi.miss{color:var(--bad)}
+.drop.bad{border-color:var(--bad)}
+.sc{flex:none;width:76px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:6px;text-align:center;font-size:12px;line-height:1.3;touch-action:none;user-select:none;cursor:grab}
 .sc img,.sc .ph{width:100%;aspect-ratio:1/1;object-fit:contain;border-radius:6px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:4px}
 .sc[data-pk]{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
 .sc.ghost{position:fixed;z-index:50;pointer-events:none;opacity:.9;box-shadow:0 8px 20px rgba(0,0,0,.25)}
@@ -110,7 +115,7 @@ label.ck input{margin-top:5px;width:18px;height:18px}
    題目資料：data/script.json（由 _build.py 從腳本 md 產生；不要手改）
    ENDPOINT：作答回傳的 Google Apps Script 網址（apps-script/Code.gs）；空白時只在本頁顯示 */
 const ENDPOINT = "";
-const VERSION = "onboard-v0.4";
+const VERSION = "onboard-v0.4b";
 const $app = document.getElementById("app"), $foot = document.getElementById("foot"), $footin = document.getElementById("footin");
 let D, S;   // D＝題目資料；S＝作答狀態
 const CONF = [["high","很確定"],["mid","有點把握"],["low","不確定"]];
@@ -268,50 +273,54 @@ function ansOrder(it,box){
 }
 function supCard(sid,extra){ const nm=D.catalog[sid]||sid, im=D.images&&D.images["sup/"+sid];
   return `<div class="sc" data-s="${sid}"${extra||""}>${im?`<img src="images/${esc(im)}" alt="" draggable="false">`:`<div class="ph">🧰</div>`}<span>${esc(nm)}</span></div>` }
+function outCard(o,sel,i){ const im=D.images&&D.images["out/"+o.id];
+  return `<button class="oc${sel?" sel":""}" data-i="${i}">${im?`<img src="images/${esc(im)}" alt="" draggable="false">`:`<div class="ph">🖼️</div>`}<span>${sel?"☑ ":""}${esc(o.s)}</span></button>` }
 function ansOutcome(it,box){
-  const all=shuffle(it.outs.map(o=>({t:o.t,id:o.id,ok:true})).concat(it.douts.map(o=>({t:o.t,why:o.why,ok:false}))),it.id+"o");
-  const sel=new Set(); const place={};   // place[index] = Set(sid)
+  const all=shuffle(it.outs.map(o=>({...o,ok:true})).concat(it.douts.map(o=>({...o,ok:false}))),it.id+"o");
+  const sel=new Set(); let own=""; const place={}; it.keys.forEach(k=>place[k.id]=new Set());
   const step1=()=>{
-    box.innerHTML=`<div class="ask"><b>第一步</b>：這一幕<b>做完時</b>，應該看到哪些成果？（可複選）</div>`+all.map((o,i)=>`<button class="opt${sel.has(i)?" sel":""}" data-i="${i}">${sel.has(i)?"☑":"☐"}　${esc(o.t)}</button>`).join("");
-    box.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{const i=+b.dataset.i;sel.has(i)?sel.delete(i):sel.add(i);step1()});
-    foot([btn("下一步：放用物","primary",step2,!sel.size)]);
-  };
-  const shelf=shuffle([...new Set(it.outs.flatMap(o=>o.sup).concat(it.dsup.map(x=>x.s)))],it.id+"sh");
-  let picked=null;   // 點選模式：先點圖卡、再點成果框
+    box.innerHTML=`<div class="ask"><b>第一步（發散）</b>：這一幕<b>做完時</b>，你會看到什麼？勾出所有你想到的（可以多勾）。</div>
+      <div class="ogrid">${all.map((o,i)=>outCard(o,sel.has(i),i)).join("")}</div>
+      <label class="hint" for="own">還想到別的嗎？（選填）</label><textarea id="own" placeholder="例：病人知道角針要留置到什麼時候">${esc(own)}</textarea>`;
+    box.querySelectorAll(".oc").forEach(b=>b.onclick=()=>{own=document.getElementById("own").value;const i=+b.dataset.i;sel.has(i)?sel.delete(i):sel.add(i);step1()});
+    foot([btn("下一步：收斂","primary",()=>{own=document.getElementById("own").value;step2()},!sel.size)]); };
   const step2=()=>{
-    const chosen=[...sel].sort((a,b)=>a-b);
-    chosen.forEach(i=>place[i]=place[i]||new Set());
-    box.innerHTML=`<div class="ask"><b>第二步</b>：把上方架子的用物圖卡<b>往下拖到</b>需要它的成果底下（架子可以左右滑；同一張可以拖到好幾個；也可以先點圖卡、再點成果框）。</div>
-      <div class="shelf">${shelf.map(sid=>supCard(sid,picked===sid?' data-pk="1"':"")).join("")}</div>`+
-      chosen.map(i=>`<div class="drop" data-i="${i}"><div class="dt">${esc(all[i].t)}</div><div class="chips">${[...place[i]].map(sid=>`<span class="chip">${esc(D.catalog[sid])}<button data-rm="${i}|${sid}" aria-label="移除">×</button></span>`).join("")||`<span class="hint">拖用物到這裡</span>`}</div></div>`).join("");
-    box.querySelectorAll("[data-rm]").forEach(b=>b.onclick=e=>{e.stopPropagation();const [i,sid]=b.dataset.rm.split("|");place[i].delete(sid);step2()});
-    box.querySelectorAll(".drop").forEach(d=>d.onclick=()=>{ if(picked){ place[d.dataset.i].add(picked); picked=null; step2() } });
+    const pk=new Set([...sel].map(i=>all[i].id));
+    box.innerHTML=`<div class="ask"><b>第二步（收斂）</b>：做完時最關鍵的就是下面 <b>${it.keys.length} 個成果</b>。看看你勾的細項歸到哪裡、漏了什麼。</div>`+
+      it.keys.map((k,n)=>`<div class="drop"><div class="dt">${n+1}. ${esc(k.t)}</div>${k.mem.map(mid=>{const o=it.outs.find(x=>x.id===mid);return `<div class="mi ${pk.has(mid)?"ok":"miss"}">${pk.has(mid)?"✓ 你有想到":"✗ 漏了"}：${esc(o.s)}</div>`}).join("")}</div>`).join("")+
+      (it.douts.some(o=>pk.has(o.id))?`<div class="drop bad"><div class="dt">這些不是正確的完成樣子</div>${it.douts.filter(o=>pk.has(o.id)).map(o=>`<div class="mi miss">✗ ${esc(o.s)}（${esc(o.why)}）</div>`).join("")}</div>`:"")+
+      (own.trim()?`<div class="hint">你自己寫的：${esc(own)}</div>`:"");
+    foot([btn("回上一步","",step1),btn("下一步：放用物","primary",step3)]); window.scrollTo(0,0); };
+  const shelf=shuffle([...new Set(it.keys.flatMap(k=>k.sup).concat(it.dsup.map(x=>x.s)))],it.id+"sh");
+  let picked=null;
+  const step3=()=>{
+    box.innerHTML=`<div class="ask"><b>第三步</b>：把用物圖卡<b>拖到</b>需要它的關鍵成果底下（同一張可以拖到好幾個；也可以先點圖卡、再點成果框；不需要的留在原地）。</div>
+      <div class="shelf">${shelf.map(sid=>supCard(sid,picked===sid?" data-pk=\"1\"":"")).join("")}</div>`+
+      it.keys.map((k,n)=>`<div class="drop" data-k="${k.id}"><div class="dt">${n+1}. ${esc(k.t)}</div><div class="chips">${[...place[k.id]].map(sid=>`<span class="chip">${esc(D.catalog[sid])}<button data-rm="${k.id}|${sid}" aria-label="移除">×</button></span>`).join("")||`<span class="hint">拖用物到這裡</span>`}</div></div>`).join("");
+    box.querySelectorAll("[data-rm]").forEach(b=>b.onclick=e=>{e.stopPropagation();const [k,sid]=b.dataset.rm.split("|");place[k].delete(sid);step3()});
+    box.querySelectorAll(".drop").forEach(d=>d.onclick=()=>{ if(picked){ place[d.dataset.k].add(picked); picked=null; step3() } });
     box.querySelectorAll(".shelf .sc").forEach(c=>{
       c.addEventListener("pointerdown",e=>{
-        e.preventDefault(); const sid=c.dataset.s; const r=c.getBoundingClientRect(); let moved=false;
+        e.preventDefault(); const sid=c.dataset.s; const r=c.getBoundingClientRect(); let moved=false, lastY=e.clientY, raf=0;
         const ghost=c.cloneNode(true); ghost.className="sc ghost"; ghost.style.width=r.width+"px"; document.body.appendChild(ghost);
         const pos=ev=>{ghost.style.left=(ev.clientX-r.width/2)+"px";ghost.style.top=(ev.clientY-30)+"px"}; pos(e);
-        const mv=ev=>{ if(Math.hypot(ev.clientX-e.clientX,ev.clientY-e.clientY)>8) moved=true; pos(ev);
-          document.querySelectorAll(".drop").forEach(d=>{const b=d.getBoundingClientRect();d.classList.toggle("over",ev.clientX>b.left&&ev.clientX<b.right&&ev.clientY>b.top&&ev.clientY<b.bottom)}) };
-        const clean=()=>{ window.removeEventListener("pointermove",mv); window.removeEventListener("pointerup",up); window.removeEventListener("pointercancel",cancel); ghost.remove(); document.querySelectorAll(".drop").forEach(d=>d.classList.remove("over")) };
-        const cancel=()=>clean();   // 手指左右滑動架子＝瀏覽器接手捲動，不算拖曳也不算點選
-        const up=ev=>{ clean();
-          let hit=null; document.querySelectorAll(".drop").forEach(d=>{d.classList.remove("over");const b=d.getBoundingClientRect();if(ev.clientX>b.left&&ev.clientX<b.right&&ev.clientY>b.top&&ev.clientY<b.bottom)hit=d});
-          if(hit&&moved){ place[hit.dataset.i].add(sid); step2() } else if(!moved){ picked=picked===sid?null:sid; step2() } };
-        window.addEventListener("pointermove",mv); window.addEventListener("pointerup",up); window.addEventListener("pointercancel",cancel);
+        const tick=()=>{ if(moved){ const h=innerHeight; if(lastY>h-90) scrollBy(0,14); else if(lastY<70) scrollBy(0,-14) } raf=requestAnimationFrame(tick) }; raf=requestAnimationFrame(tick);   // 拖到畫面上下緣自動捲動
+        const over=(x,y)=>{let hit=null;document.querySelectorAll(".drop").forEach(d=>{const b=d.getBoundingClientRect();const o=x>b.left&&x<b.right&&y>b.top&&y<b.bottom;d.classList.toggle("over",o);if(o)hit=d});return hit};
+        const mv=ev=>{ if(Math.hypot(ev.clientX-e.clientX,ev.clientY-e.clientY)>8) moved=true; lastY=ev.clientY; pos(ev); over(ev.clientX,ev.clientY) };
+        const clean=()=>{ cancelAnimationFrame(raf); window.removeEventListener("pointermove",mv); window.removeEventListener("pointerup",up); window.removeEventListener("pointercancel",clean); ghost.remove(); document.querySelectorAll(".drop").forEach(d=>d.classList.remove("over")) };
+        const up=ev=>{ const hit=over(ev.clientX,ev.clientY); clean();
+          if(hit&&moved){ place[hit.dataset.k].add(sid); step3() } else if(!moved){ picked=picked===sid?null:sid; step3() } };
+        window.addEventListener("pointermove",mv); window.addEventListener("pointerup",up); window.addEventListener("pointercancel",clean);
       });
     });
-    foot([btn("回上一步","",()=>{picked=null;step1()}),btn("確認","primary",()=>{
-      const missedO=all.filter((o,i)=>o.ok&&!sel.has(i)).map(o=>o.t);
-      const extraO=chosen.filter(i=>!all[i].ok).map(i=>all[i].t);
-      const supErr=[];
-      chosen.filter(i=>all[i].ok).forEach(i=>{ const need=it.outs.find(o=>o.id===all[i].id).sup, got=[...place[i]];
-        const miss=need.filter(x=>!got.includes(x)), wrong=got.filter(x=>!need.includes(x));
-        if(miss.length||wrong.length) supErr.push({t:all[i].t,miss:miss.map(x=>D.catalog[x]),wrong:wrong.map(x=>D.catalog[x])}) });
+    foot([btn("回上一步","",()=>{picked=null;step2()}),btn("確認","primary",()=>{
+      const pk=new Set([...sel].map(i=>all[i].id));
+      const missedO=it.outs.filter(o=>!pk.has(o.id)).map(o=>o.s), extraO=it.douts.filter(o=>pk.has(o.id)).map(o=>o.s);
+      const supErr=[]; it.keys.forEach(k=>{ const got=[...place[k.id]]; const miss=k.sup.filter(x=>!got.includes(x)), wrong=got.filter(x=>!k.sup.includes(x));
+        if(miss.length||wrong.length) supErr.push({t:k.t,miss:miss.map(x=>D.catalog[x]),wrong:wrong.map(x=>D.catalog[x])}) });
       const correct=!missedO.length&&!extraO.length&&!supErr.length;
-      record(it,`成果漏 ${missedO.length}、多 ${extraO.length}；用物有誤 ${supErr.length} 項`,correct,false,{missedO,extraO,supErr});
-    })]);
-  };
+      record(it,`成果漏 ${missedO.length}、多 ${extraO.length}；用物有誤 ${supErr.length} 項`,correct,false,{missedO,extraO,supErr,own});
+    })]); };
   step1();
 }
 function ansPaint(it,box){
@@ -348,9 +357,10 @@ function renderReview(){
   const act=S.act, its=D.items.filter(x=>x.act===act);
   const pending=D.items.filter(x=>deferredTo(x.id)===act && S.answers[x.id]);   // 前面幕待揭曉、本幕揭曉
   const line=(it,a)=>{ const ok=a.correct;
-    if(it.type==="outcome"){ const need=Object.fromEntries(it.outs.map(o=>[o.t,o.sup.map(x=>D.catalog[x]).join("、")])), why=Object.fromEntries(it.douts.map(o=>[o.t,o.why]));
+    if(it.type==="outcome"){ const why=Object.fromEntries(it.douts.map(o=>[o.s,o.why]));
       return `<div class="rv"><div class="h"><span class="tag ${ok?"ok":"bad"}">${ok?"全對":"要補"}</span><b>${esc(it.title)}</b></div>`+
-        ((a.missedO||[]).length?`<p><b>漏了這些完成成果：</b>${a.missedO.map(t=>`${esc(t)}（用物：${esc(need[t])}）`).join("；")}</p>`:"")+
+        `<p>關鍵成果：${it.keys.map((k,n)=>`${n+1}. ${esc(k.t)}（用物：${esc(k.sup.map(x=>D.catalog[x]).join("、"))}）`).join("；")}</p>`+
+        ((a.missedO||[]).length?`<p><b>沒想到的成果：</b>${esc(a.missedO.join("、"))}</p>`:"")+
         ((a.extraO||[]).length?`<p><b>不是正確的完成樣子：</b>${a.extraO.map(t=>`${esc(t)}（${esc(why[t])}）`).join("；")}</p>`:"")+
         (a.supErr||[]).map(e=>`<p><b>${esc(e.t)}</b>：${e.miss.length?`漏拿 ${esc(e.miss.join("、"))}`:""}${e.miss.length&&e.wrong.length?"；":""}${e.wrong.length?`不需要 ${esc(e.wrong.join("、"))}`:""}</p>`).join("")+
         (it.dsup.length?`<p class="hint">不需要的用物：${it.dsup.map(x=>`${esc(D.catalog[x.s])}（${esc(x.why)}）`).join("；")}</p>`:"")+`</div>` } const right=it.type==="order"?it.answer_order.map(i=>it.steps[i]).join(" → "):it.type==="paint"?"從入針處環狀由內向外，範圍大於敷料":it.opts.filter(o=>o.ok).map(o=>o.t).join("、");
