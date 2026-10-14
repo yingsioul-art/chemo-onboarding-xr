@@ -56,6 +56,13 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .banner b{display:block;margin-bottom:2px}
 .steps .opt .n{display:inline-block;min-width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--accent-ink);text-align:center;font-size:14px;line-height:26px;margin-right:8px}
 .steps .opt .n.e{background:var(--line);color:var(--muted)}
+.drag .dr{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 8px 10px 10px;margin:0 0 8px;touch-action:none;user-select:none;cursor:grab;position:relative}
+.drag .dr .n{flex:none;width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--accent-ink);text-align:center;font-size:14px;line-height:26px}
+.drag .dr .tx{flex:1}
+.drag .dr .mv{display:flex;flex-direction:column;gap:4px}
+.drag .dr .mv button{min-height:30px;padding:2px 10px;font-size:12px}
+.drag .dr.dragging{z-index:5;box-shadow:0 6px 18px rgba(0,0,0,.18);border-color:var(--accent);cursor:grabbing}
+.drag .dr.over{border-color:var(--accent);border-style:dashed}
 canvas{width:100%;aspect-ratio:1/1;border-radius:10px;touch-action:none;display:block;background:#f3d9c6}
 .hint{font-size:14px;color:var(--ink2);margin:8px 0}
 .rv{border-top:1px solid var(--line);padding:10px 0}
@@ -92,7 +99,7 @@ label.ck input{margin-top:5px;width:18px;height:18px}
    題目資料：data/script.json（由 _build.py 從腳本 md 產生；不要手改）
    ENDPOINT：作答回傳的 Google Apps Script 網址（apps-script/Code.gs）；空白時只在本頁顯示 */
 const ENDPOINT = "";
-const VERSION = "onboard-v0.3c";
+const VERSION = "onboard-v0.3d";
 const $app = document.getElementById("app"), $foot = document.getElementById("foot"), $footin = document.getElementById("footin");
 let D, S;   // D＝題目資料；S＝作答狀態
 const CONF = [["high","很確定"],["mid","有點把握"],["low","不確定"]];
@@ -222,12 +229,30 @@ function ansMulti(it,box){
   foot([ok]);
 }
 function ansOrder(it,box){
-  const idx=shuffle(it.steps.map((_,i)=>i),it.id+"o"); let seq=[];
+  let ord=shuffle(it.steps.map((_,i)=>i),it.id+"o"), moved=false;
   const draw=()=>{
-    box.innerHTML=`<div class="ask">依序點選步驟（點錯可按「重排」）：</div><div class="steps">`+idx.map(i=>{const p=seq.indexOf(i);return `<button class="opt${p>=0?" sel":""}" data-i="${i}"><span class="n${p<0?" e":""}">${p>=0?p+1:"·"}</span>${esc(it.steps[i])}</button>`}).join("")+`</div>`;
-    box.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{const i=+b.dataset.i;if(seq.includes(i))return;seq.push(i);draw()});
-    foot([btn("不知道","",()=>record(it,"不知道",false,true)),btn("重排","",()=>{seq=[];draw()}),btn("確認","primary",()=>{
-      const correct=seq.every((v,k)=>v===it.answer_order[k]); record(it,seq.map(v=>v+1).join("→"),correct,false)},seq.length!==it.steps.length)]);
+    box.innerHTML=`<div class="ask">按住步驟<b>上下拖曳</b>，排成正確順序（也可以按右邊的 ▲▼）：</div><div class="steps drag">`+
+      ord.map((i,k)=>`<div class="dr" data-i="${i}"><span class="n">${k+1}</span><span class="tx">${esc(it.steps[i])}</span><span class="mv"><button data-u="${k}" aria-label="上移"${k?"":" disabled"}>▲</button><button data-d="${k}" aria-label="下移"${k<ord.length-1?"":" disabled"}>▼</button></span></div>`).join("")+`</div>`;
+    box.querySelectorAll("[data-u]").forEach(b=>b.onclick=e=>{e.stopPropagation();const k=+b.dataset.u;[ord[k-1],ord[k]]=[ord[k],ord[k-1]];moved=true;draw()});
+    box.querySelectorAll("[data-d]").forEach(b=>b.onclick=e=>{e.stopPropagation();const k=+b.dataset.d;[ord[k+1],ord[k]]=[ord[k],ord[k+1]];moved=true;draw()});
+    const list=box.querySelector(".drag");
+    list.querySelectorAll(".dr").forEach(row=>{
+      row.addEventListener("pointerdown",e=>{
+        if(e.target.closest("button")) return;
+        e.preventDefault(); row.setPointerCapture(e.pointerId); row.classList.add("dragging");
+        const y0=e.clientY; let lastY=e.clientY;
+        const mv=ev=>{ lastY=ev.clientY; row.style.transform=`translateY(${ev.clientY-y0}px)`;
+          const rows=[...list.querySelectorAll(".dr")].filter(r=>r!==row);
+          rows.forEach(r=>r.classList.toggle("over",(()=>{const b=r.getBoundingClientRect();return ev.clientY>b.top&&ev.clientY<b.bottom})())) };
+        const up=()=>{ row.removeEventListener("pointermove",mv); row.removeEventListener("pointerup",up); row.removeEventListener("pointercancel",up);
+          const rows=[...list.querySelectorAll(".dr")]; const from=rows.indexOf(row);
+          let to=rows.findIndex(r=>{const b=r.getBoundingClientRect();return lastY<b.top+b.height/2}); if(to<0) to=rows.length;
+          if(to>from) to--; const v=ord.splice(from,1)[0]; ord.splice(to,0,v); if(to!==from) moved=true; draw() };
+        row.addEventListener("pointermove",mv); row.addEventListener("pointerup",up); row.addEventListener("pointercancel",up);
+      });
+    });
+    foot([btn("不知道","",()=>record(it,"不知道",false,true)),btn("確認","primary",()=>{
+      const correct=ord.every((v,k)=>v===it.answer_order[k]); record(it,ord.map(v=>v+1).join("→"),correct,false)})]);
   }; draw();
 }
 function ansSupply(it,box){
