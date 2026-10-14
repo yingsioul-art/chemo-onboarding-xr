@@ -103,24 +103,39 @@ for it in items:
 if errs:
     print("\n".join(errs)); sys.exit(1)
 
-# 用物準備（06_用物準備清單_v0.1.md）：每幕一題，放在該幕第一題之前；先勾用物、再配用途
-SUP = SRC / "06_用物準備清單_v0.1.md"
-sup_md = SUP.read_text(encoding="utf-8")
+# 用物準備（逆向設計，07_逆向設計_完成成果與用物_v0.1.md）：每幕一題，放在該幕第一題之前
+# 第一步勾「完成時應該看到的成果」；第二步把用物圖卡拖到每個成果（同一張可拖到多個成果）
+CAT = {}   # 用物圖卡目錄：S01… → 名稱（08_用物圖卡_ChatGPT生圖prompt.md）
+for sid, nm in re.findall(r"(?m)^\| (S\d\d) \| (.+?) \|", (SRC / "08_用物圖卡_ChatGPT生圖prompt.md").read_text(encoding="utf-8")):
+    CAT[sid] = clean(nm)
+ALIAS = {"口罩": "S01", "外科口罩": "S01", "條碼機": "S26", "生理食鹽水或相容輸液": "S24",
+         "Port-A 安全角針": "S10", "70–75% 酒精或無菌蒸餾水": "S03", "4\"×4\" Y 型紗布": "S12", "4\"×4\" 紗布": "S11", "2\"×2\" 紗布": "S16", "雙層丁腈膠或乳膠手套": "S18", "CSTD 的 Spike 與 Adapter": "S22", "生理食鹽水點滴袋": "S24", "NS 10 mL 注射器（預充式）": "S33"}
+def sid_of(name):
+    n = re.sub(r"（依外觀.*?）$", "", name.strip())
+    if n in ALIAS: return ALIAS[n]
+    for k, v in CAT.items():
+        if v == n: return k
+    print("用物名稱對不到圖卡：", name); sys.exit(1)
+def split_names(t):
+    return [x.strip() for x in re.split(r"、(?![^（]*）)", t) if x.strip() and x.strip() != "—"]
+OUT_MD = (SRC / "07_逆向設計_完成成果與用物_v0.1.md").read_text(encoding="utf-8")
 for act, h in (("A", "第一幕"), ("B", "第二幕"), ("C", "第三幕")):
-    sec = re.search(r"## " + h + r"[^\n]*\n(.*?)(?=\n## |\Z)", sup_md, re.S).group(1)
-    need, distract = [], []
-    for row in re.findall(r"(?m)^\| *([A-C]-\d+|✗) *\| *(.+?) *\| *(.+?) *\| *(.+?) *\|$", sec):
-        key, name, purpose = row[0], clean(row[1]), clean(row[2])
-        if key == "✗":
-            distract.append({"t": name, "why": purpose})
-        else:
-            need.append({"t": name, "p": purpose})
-    if not need: print("用物清單解析失敗", act); sys.exit(1)
+    sec = re.search(r"## " + h + r"[^\n]*\n(.*?)(?=\n## |\Z)", OUT_MD, re.S).group(1)
+    outs, douts = [], []
+    for key, txt, sup, ref in re.findall(r"(?m)^\| ([A-C]-O\d+|✗) \| (.+?) \| (.+?) \| (.+?) \|$", sec):
+        if key == "✗": douts.append({"t": clean(txt), "why": clean(ref)})
+        else: outs.append({"id": key, "t": clean(txt), "sup": [sid_of(n) for n in split_names(sup)]})
+    dsup = []
+    m = re.search(r"\*\*干擾用物\*\*(?:（不該拖）)?：(.+)", sec)
+    for n in split_names(m.group(1)):
+        mm = re.match(r"(.+?)（(.+)）$", n)
+        dsup.append({"s": sid_of(mm.group(1) if mm else n), "why": mm.group(2) if mm else ""})
+    if not outs or not douts: print("成果解析失敗", act); sys.exit(1)
     first = next(i for i, x in enumerate(items) if x["act"] == act)
-    items.insert(first, {"id": act + "0", "act": act, "type": "supply", "title": "用物準備",
-                         "stem": "開始之前，先備齊用物。第一步：勾出這一幕需要的用物；第二步：替每個用物選出它的使用目的。",
+    items.insert(first, {"id": act + "0", "act": act, "type": "outcome", "title": "用物準備：先想完成的樣子",
+                         "stem": "開始之前，先想像這一幕「做完時」應該是什麼樣子。第一步：勾出正確的完成成果；第二步：把用物圖卡拖到每個成果底下（同一張可以拖到好幾個成果，不需要的留在架上）。",
                          "ref": {"A": "Port-A 角針置放查核表", "B": "化療靜脈給藥查核表", "C": "Port-A 角針移除查核表"}[act],
-                         "explain": "", "img": "", "need": need, "distract": distract})
+                         "explain": "", "img": "", "outs": outs, "douts": douts, "dsup": dsup})
 
 # 圖卡
 imgdir = HERE / "docs" / "images"; have = {}
@@ -130,10 +145,15 @@ try:
         if p.suffix.lower() not in (".png", ".jpg", ".jpeg", ".webp"): continue
         im = Image.open(p).convert("RGB"); im.thumbnail((1600, 1600))
         dst = imgdir / (p.stem + ".jpg"); im.save(dst, "JPEG", quality=82, optimize=True); have[p.stem] = dst.name
+    supdir = imgdir / "supplies"; supdir.mkdir(exist_ok=True)
+    for p in sorted((SRC / "images" / "supplies").glob("S*.*")):
+        if p.suffix.lower() not in (".png", ".jpg", ".jpeg", ".webp"): continue
+        im = Image.open(p).convert("RGB"); im.thumbnail((480, 480))
+        dst = supdir / (p.stem + ".jpg"); im.save(dst, "JPEG", quality=82, optimize=True); have["sup/" + p.stem] = "supplies/" + dst.name
 except ImportError:
     pass
 
-data = {"ver": "v0.3", "intro": intro, "intro_img": IMG["intro"], "acts": ACT, "act_desc": ACT_DESC, "items": items, "conseq": CONSEQ, "images": have}
+data = {"ver": "v0.3", "intro": intro, "intro_img": IMG["intro"], "acts": ACT, "act_desc": ACT_DESC, "items": items, "conseq": CONSEQ, "images": have, "catalog": CAT}
 OUT.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
 from collections import Counter
 print("items", len(items), Counter(i["type"] for i in items), "images", len(have))
