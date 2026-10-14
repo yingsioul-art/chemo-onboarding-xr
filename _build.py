@@ -103,6 +103,25 @@ for it in items:
 if errs:
     print("\n".join(errs)); sys.exit(1)
 
+# 用物準備（06_用物準備清單_v0.1.md）：每幕一題，放在該幕第一題之前；先勾用物、再配用途
+SUP = SRC / "06_用物準備清單_v0.1.md"
+sup_md = SUP.read_text(encoding="utf-8")
+for act, h in (("A", "第一幕"), ("B", "第二幕"), ("C", "第三幕")):
+    sec = re.search(r"## " + h + r"[^\n]*\n(.*?)(?=\n## |\Z)", sup_md, re.S).group(1)
+    need, distract = [], []
+    for row in re.findall(r"(?m)^\| *([A-C]-\d+|✗) *\| *(.+?) *\| *(.+?) *\| *(.+?) *\|$", sec):
+        key, name, purpose = row[0], clean(row[1]), clean(row[2])
+        if key == "✗":
+            distract.append({"t": name, "why": purpose})
+        else:
+            need.append({"t": name, "p": purpose})
+    if not need: print("用物清單解析失敗", act); sys.exit(1)
+    first = next(i for i, x in enumerate(items) if x["act"] == act)
+    items.insert(first, {"id": act + "0", "act": act, "type": "supply", "title": "用物準備",
+                         "stem": "開始之前，先備齊用物。第一步：勾出這一幕需要的用物；第二步：替每個用物選出它的使用目的。",
+                         "ref": {"A": "Port-A 角針置放查核表", "B": "化療靜脈給藥查核表", "C": "Port-A 角針移除查核表"}[act],
+                         "explain": "", "img": "", "need": need, "distract": distract})
+
 # 圖卡
 imgdir = HERE / "docs" / "images"; have = {}
 try:

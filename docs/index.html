@@ -92,7 +92,7 @@ label.ck input{margin-top:5px;width:18px;height:18px}
    題目資料：data/script.json（由 _build.py 從腳本 md 產生；不要手改）
    ENDPOINT：作答回傳的 Google Apps Script 網址（apps-script/Code.gs）；空白時只在本頁顯示 */
 const ENDPOINT = "";
-const VERSION = "onboard-v0.3b";
+const VERSION = "onboard-v0.3c";
 const $app = document.getElementById("app"), $foot = document.getElementById("foot"), $footin = document.getElementById("footin");
 let D, S;   // D＝題目資料；S＝作答狀態
 const CONF = [["high","很確定"],["mid","有點把握"],["low","不確定"]];
@@ -196,7 +196,7 @@ function renderItem(){
     <div class="ref">依據：${esc(it.ref)}</div>
   </div>`;
   foot([]);
-  ({mcq:ansMcq,multi:ansMulti,order:ansOrder,paint:ansPaint})[it.type](it,document.getElementById("ans"));
+  ({mcq:ansMcq,multi:ansMulti,order:ansOrder,paint:ansPaint,supply:ansSupply})[it.type](it,document.getElementById("ans"));
   window.scrollTo(0,0);
 }
 function record(it,chosen,correct,unknown,extra){
@@ -229,6 +229,34 @@ function ansOrder(it,box){
     foot([btn("不知道","",()=>record(it,"不知道",false,true)),btn("重排","",()=>{seq=[];draw()}),btn("確認","primary",()=>{
       const correct=seq.every((v,k)=>v===it.answer_order[k]); record(it,seq.map(v=>v+1).join("→"),correct,false)},seq.length!==it.steps.length)]);
   }; draw();
+}
+function ansSupply(it,box){
+  const all=shuffle(it.need.map(x=>({t:x.t,p:x.p,need:true})).concat(it.distract.map(x=>({t:x.t,why:x.why,need:false}))),it.id+"s");
+  const sel=new Set();
+  const step1=()=>{
+    box.innerHTML=`<div class="ask"><b>第一步</b>：勾出需要的用物（可複選）。</div>`+all.map((o,i)=>`<button class="opt${sel.has(i)?" sel":""}" data-i="${i}">${sel.has(i)?"☑":"☐"}　${esc(o.t)}</button>`).join("");
+    box.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{const i=+b.dataset.i;sel.has(i)?sel.delete(i):sel.add(i);step1()});
+    foot([btn("下一步：配用途","primary",step2,!sel.size)]);
+  };
+  const purposes=shuffle(it.need.map(x=>x.p),it.id+"p");
+  const step2=()=>{
+    const chosen=[...sel].sort((a,b)=>a-b);
+    box.innerHTML=`<div class="ask"><b>第二步</b>：替每個用物選出使用目的。</div>`+chosen.map(i=>`<div style="margin:0 0 12px"><div><b>${esc(all[i].t)}</b></div>
+      <select data-i="${i}" style="width:100%;font:inherit;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink)">
+      <option value="">— 請選擇 —</option>${purposes.map(p=>`<option>${esc(p)}</option>`).join("")}<option value="__none">這個用物其實不需要</option></select></div>`).join("");
+    const ok=btn("確認","primary",()=>{
+      const pick={}; box.querySelectorAll("select").forEach(x=>pick[x.dataset.i]=x.value);
+      const missed=all.filter((o,i)=>o.need&&!sel.has(i)).map(o=>o.t);
+      const extra=chosen.filter(i=>!all[i].need&&pick[i]!=="__none").map(i=>all[i].t);
+      const wrongP=chosen.filter(i=>all[i].need&&pick[i]!==all[i].p).map(i=>all[i].t);
+      const correct=!missed.length&&!extra.length&&!wrongP.length;
+      record(it,`漏 ${missed.length}、多 ${extra.length}、用途配錯 ${wrongP.length}`,correct,false,{missed,extra,wrongP});
+    },true);
+    const chk=()=>ok.disabled=[...box.querySelectorAll("select")].some(x=>!x.value);
+    box.querySelectorAll("select").forEach(x=>x.onchange=chk);
+    foot([btn("回上一步","",step1),ok]); window.scrollTo(0,0);
+  };
+  step1();
 }
 function ansPaint(it,box){
   box.innerHTML=`<div class="ask">用手指或滑鼠在下圖塗抹（清潔與消毒的範圍與方向）：</div><canvas id="cv" width="600" height="600"></canvas><div class="hint" id="ph">從入針處（中間的點）開始。</div>`;
@@ -263,7 +291,12 @@ function ansPaint(it,box){
 function renderReview(){
   const act=S.act, its=D.items.filter(x=>x.act===act);
   const pending=D.items.filter(x=>deferredTo(x.id)===act && S.answers[x.id]);   // 前面幕待揭曉、本幕揭曉
-  const line=(it,a)=>{ const ok=a.correct; const right=it.type==="order"?it.answer_order.map(i=>it.steps[i]).join(" → "):it.type==="paint"?"從入針處環狀由內向外，範圍大於敷料":it.opts.filter(o=>o.ok).map(o=>o.t).join("、");
+  const line=(it,a)=>{ const ok=a.correct;
+    if(it.type==="supply"){ const need=Object.fromEntries(it.need.map(x=>[x.t,x.p])), why=Object.fromEntries(it.distract.map(x=>[x.t,x.why]));
+      return `<div class="rv"><div class="h"><span class="tag ${ok?"ok":"bad"}">${ok?"全對":"要補"}</span><b>${esc(it.title)}</b></div>`+
+        ((a.missed||[]).length?`<p><b>漏拿：</b>${a.missed.map(t=>`${esc(t)}（${esc(need[t])}）`).join("；")}</p>`:"")+
+        ((a.extra||[]).length?`<p><b>多拿：</b>${a.extra.map(t=>`${esc(t)}（${esc(why[t])}）`).join("；")}</p>`:"")+
+        ((a.wrongP||[]).length?`<p><b>用途配錯：</b>${a.wrongP.map(t=>`${esc(t)} → ${esc(need[t])}`).join("；")}</p>`:"")+`</div>` } const right=it.type==="order"?it.answer_order.map(i=>it.steps[i]).join(" → "):it.type==="paint"?"從入針處環狀由內向外，範圍大於敷料":it.opts.filter(o=>o.ok).map(o=>o.t).join("、");
     return `<div class="rv"><div class="h"><span class="tag ${ok?"ok":"bad"}">${ok?"答對":(a.unknown?"不知道":"答錯")}</span><b>${esc(it.title)}</b></div>
       ${ok?"":`<p>你的答案：${esc(a.chosen)}</p><p>正確：${esc(right)}</p>`}${it.explain?`<p>${esc(it.explain)}</p>`:""}</div>`};
   let html=`${progress()}<div class="card"><div class="act">段落結果</div><h2>${esc(D.acts[act])}</h2>`;
