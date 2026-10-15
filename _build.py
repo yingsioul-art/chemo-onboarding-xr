@@ -33,11 +33,11 @@ def clean(t):
     return t.strip()
 
 md = MD.read_text(encoding="utf-8")
-intro = re.search(r"## 開場\s*\n+> (.+)", md).group(1).strip()
-ACT_DESC = {}
+intro = clean(re.search(r"## 開場\s*\n+> (.+)", md).group(1))
+ACT_DESC = {}   # 幕說明：第一行＝這一幕要做什麼，接著「> - 」條列
 for k, h in (("A", "第一幕"), ("B", "第二幕"), ("C", "第三幕")):
-    m = re.search(r"## " + h + r"[^\n]*\n+> 幕說明：(.+)", md)
-    ACT_DESC[k] = clean(m.group(1)) if m else ""
+    m = re.search(r"## " + h + r"[^\n]*\n+> 幕說明：(.+)((?:\n> - .+)*)", md)
+    ACT_DESC[k] = {"do": clean(m.group(1)), "pts": [clean(x) for x in re.findall(r"\n> - (.+)", m.group(2))]} if m else ""
 if not all(ACT_DESC.values()):
     print("缺幕說明", ACT_DESC); sys.exit(1)
 blocks = re.split(r"(?m)^(?=\*\*[ABC]\d+[a-c]?　)", md)[1:]
@@ -109,7 +109,7 @@ if errs:
 # 用物準備（逆向設計，07_逆向設計_完成成果與用物_v0.1.md）：每幕一題，放在該幕第一題之前
 # 第一步勾「完成時應該看到的成果」；第二步把用物圖卡拖到每個成果（同一張可拖到多個成果）
 CAT = {}   # 用物圖卡目錄：S01… → 名稱（08_用物圖卡_ChatGPT生圖prompt.md）
-for sid, nm in re.findall(r"(?m)^\| (S\d\d) \| (.+?) \|", (SRC / "08_用物圖卡_ChatGPT生圖prompt.md").read_text(encoding="utf-8")):
+for sid, nm in re.findall(r"(?m)^\| (S\d\d) \|(?: (?:`[^`]*`|—) \|)? (.+?) \|", (SRC / "08_用物圖卡_ChatGPT生圖prompt.md").read_text(encoding="utf-8")):   # 第二欄「參考圖」可有可無
     CAT[sid] = clean(nm)
 ALIAS = {"口罩": "S01", "外科口罩": "S01", "條碼機": "S26", "生理食鹽水或相容輸液": "S24",
          "Port-A 安全角針": "S10", "70–75% 酒精或無菌蒸餾水": "S03", "4\"×4\" Y 型紗布": "S12", "4\"×4\" 紗布": "S11", "2\"×2\" 紗布": "S16", "雙層丁腈膠或乳膠手套": "S18", "CSTD 的 Spike 與 Adapter": "S22", "生理食鹽水點滴袋": "S24", "NS 10 mL 注射器（預充式）": "S33"}
