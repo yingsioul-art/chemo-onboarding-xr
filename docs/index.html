@@ -146,6 +146,8 @@ label.ck input{margin-top:5px;width:18px;height:18px}
 .stc.lift{opacity:.3}
 .stc.ghost{position:fixed;z-index:50;pointer-events:none;opacity:.95;box-shadow:0 8px 20px rgba(0,0,0,.25)}
 .ins{height:4px;border-radius:2px;background:var(--accent);margin:-1px 0}
+.dz{flex:1 0 auto;min-height:88px;display:flex;align-items:center;justify-content:center;text-align:center;border:2px dashed var(--accent);border-radius:10px;color:var(--accent);font-size:14px;line-height:1.4;background:var(--soft);opacity:.75}   /* 右欄最下方的放置區，撐滿剩下的高度 */
+.dz.on{opacity:1;box-shadow:0 0 0 2px var(--accent) inset}
 @media (max-width:480px){ .stc.in{flex-wrap:wrap;row-gap:2px} .stc.in .tx{order:3;flex-basis:100%} .stc.in .x{margin-left:auto;height:22px;line-height:22px} }   /* 手機：編號與 × 在上，文字用整張卡寬 */
 /* 用物準備第三步：滿版，一頁一個關鍵成果 */
 .fs{position:fixed;inset:0;z-index:40;background:var(--bg);display:flex;flex-direction:column;height:100vh;height:100dvh;padding:0 0 env(safe-area-inset-bottom)}
@@ -372,7 +374,7 @@ function ansOrder(it,box){
     const pool=mix.filter(i=>!list.includes(i));
     box.innerHTML=`<div class="ocols">
       <div class="ocol" data-side="L"><div class="oh">步驟</div>${pool.map(i=>`<div class="stc" data-i="${i}">${esc(it.steps[i])}</div>`).join("")||`<div class="oe">都放到右邊了</div>`}</div>
-      <div class="ocol R" data-side="R"><div class="oh">你的順序</div>${list.map((i,k)=>`<div class="stc in" data-i="${i}"><span class="n">${k+1}</span><span class="tx">${esc(it.steps[i])}</span><button class="x" data-x="${i}" aria-label="退回左邊">×</button></div>`).join("")||`<div class="oe">拖到這裡</div>`}</div></div>`;
+      <div class="ocol R" data-side="R"><div class="oh">你的順序</div>${list.map((i,k)=>`<div class="stc in" data-i="${i}"><span class="n">${k+1}</span><span class="tx">${esc(it.steps[i])}</span><button class="x" data-x="${i}" aria-label="退回左邊">×</button></div>`).join("")}${list.length<it.steps.length?`<div class="dz">拖到這裡<br>（第 ${list.length+1} 步）</div>`:""}</div></div>`;
     box.querySelectorAll("[data-x]").forEach(b=>{ b.addEventListener("pointerdown",e=>e.stopPropagation()); b.onclick=()=>{ list=list.filter(v=>v!==+b.dataset.x); draw() } });
     box.querySelectorAll(".stc").forEach(c=>c.addEventListener("pointerdown",e=>{
       if(e.target.closest(".x")) return;
@@ -385,7 +387,8 @@ function ansOrder(it,box){
         if(inside(R,x,y)){ R.classList.add("over");
           const cards=[...R.querySelectorAll(".stc.in")].filter(el=>el!==c);
           let k=cards.findIndex(el=>{const b=el.getBoundingClientRect();return y<b.top+b.height/2}); if(k<0) k=cards.length;
-          if(k<cards.length) R.insertBefore(ind,cards[k]); else R.appendChild(ind);
+          const dz=R.querySelector(".dz"); if(dz) dz.classList.toggle("on",k===cards.length);
+          if(k<cards.length) R.insertBefore(ind,cards[k]); else if(dz) R.insertBefore(ind,dz); else R.appendChild(ind);
           tgt={side:"R",k} }
         else if(inside(L,x,y)){ L.classList.add("over"); tgt={side:"L"} } };
       const tick=()=>{ if(moved){ const h=innerHeight; if(lastY>h-120) scrollBy(0,14); else if(lastY<80) scrollBy(0,-14) } raf=requestAnimationFrame(tick) };   // 拖到畫面上下緣自動捲動
