@@ -173,22 +173,23 @@ try:
     from PIL import Image
     for p in sorted((SRC / "images").glob("I*.*")):
         if p.suffix.lower() not in (".png", ".jpg", ".jpeg", ".webp"): continue
+        if not re.fullmatch(r"I\d{2}", p.stem): continue  # 只收 I01 這種編號檔名，畫風參考圖不上網
         im = Image.open(p).convert("RGB"); im.thumbnail((1600, 1600))
         dst = imgdir / (p.stem + ".jpg"); im.save(dst, "JPEG", quality=82, optimize=True); have[p.stem] = dst.name
     supdir = imgdir / "supplies"; supdir.mkdir(exist_ok=True)
     for p in sorted((SRC / "images" / "supplies").glob("S*.*")):
         if p.suffix.lower() not in (".png", ".jpg", ".jpeg", ".webp"): continue
-        im = Image.open(p).convert("RGB"); im.thumbnail((480, 480))
+        im = Image.open(p).convert("RGB"); im.thumbnail((1024, 1024))
         dst = supdir / (p.stem + ".jpg"); im.save(dst, "JPEG", quality=82, optimize=True); have["sup/" + p.stem] = "supplies/" + dst.name
     outdir = imgdir / "outcomes"; outdir.mkdir(exist_ok=True)
     for p in sorted((SRC / "images" / "outcomes").glob("*.*")):
         if p.suffix.lower() not in (".png", ".jpg", ".jpeg", ".webp"): continue
-        im = Image.open(p).convert("RGB"); im.thumbnail((600, 600))
+        im = Image.open(p).convert("RGB"); im.thumbnail((1024, 1024))
         dst = outdir / (p.stem + ".jpg"); im.save(dst, "JPEG", quality=82, optimize=True); have["out/" + p.stem] = "outcomes/" + dst.name
     optdir = imgdir / "options"; optdir.mkdir(exist_ok=True)   # 題目選項圖卡（A3-A.png…）
     for p in sorted((SRC / "images" / "options").glob("*.*")):
         if p.suffix.lower() not in (".png", ".jpg", ".jpeg", ".webp"): continue
-        im = Image.open(p).convert("RGB"); im.thumbnail((600, 600))
+        im = Image.open(p).convert("RGB"); im.thumbnail((1024, 1024))
         dst = optdir / (p.stem + ".jpg"); im.save(dst, "JPEG", quality=82, optimize=True); have["opt/" + p.stem] = "options/" + dst.name
 except ImportError:
     pass
