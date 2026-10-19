@@ -249,6 +249,7 @@
     }
    ],
    "img": "I02",
+   "explain_img": "",
    "type": "mcq"
   },
   {
@@ -291,6 +292,7 @@
     }
    ],
    "img": "",
+   "explain_img": "",
    "type": "mcq",
    "imgopts": true
   },
@@ -334,6 +336,7 @@
     }
    ],
    "img": "",
+   "explain_img": "",
    "type": "mcq",
    "imgopts": true
   },
@@ -346,6 +349,7 @@
    "explain": "清潔與消毒都依這個方向與範圍，可重複至消毒完全。",
    "opts": [],
    "img": "",
+   "explain_img": "",
    "rule": "起點在入針處、由內往外、塗滿面積大於畫面上的敷料框 → 通過；範圍太小或由外往內 → 顯示提示，再塗一次。",
    "type": "paint"
   },
@@ -389,6 +393,7 @@
     }
    ],
    "img": "",
+   "explain_img": "",
    "type": "mcq",
    "imgopts": true
   },
@@ -426,6 +431,7 @@
     }
    ],
    "img": "I05",
+   "explain_img": "",
    "type": "mcq"
   },
   {
@@ -462,6 +468,7 @@
     }
    ],
    "img": "",
+   "explain_img": "",
    "type": "mcq",
    "anim": "angle"
   },
@@ -499,6 +506,7 @@
     }
    ],
    "img": "I05",
+   "explain_img": "",
    "type": "mcq"
   },
   {
@@ -546,7 +554,8 @@
      "unknown": true
     }
    ],
-   "img": "I06",
+   "img": "",
+   "explain_img": "",
    "type": "multi"
   },
   {
@@ -583,6 +592,7 @@
     }
    ],
    "img": "I06",
+   "explain_img": "I16",
    "type": "mcq"
   },
   {
@@ -619,6 +629,7 @@
     }
    ],
    "img": "I05",
+   "explain_img": "",
    "type": "mcq"
   },
   {
@@ -655,6 +666,7 @@
     }
    ],
    "img": "I07",
+   "explain_img": "",
    "type": "mcq"
   },
   {
@@ -872,6 +884,7 @@
     }
    ],
    "img": "",
+   "explain_img": "",
    "type": "mcq"
   },
   {
@@ -908,6 +921,7 @@
     }
    ],
    "img": "",
+   "explain_img": "",
    "type": "mcq"
   },
   {
@@ -919,6 +933,7 @@
    "explain": "接著出 B3b「① 為什麼要完全沒入」。",
    "opts": [],
    "img": "I08",
+   "explain_img": "",
    "answer_order": [
     0,
     1,
@@ -969,6 +984,7 @@
     }
    ],
    "img": "I08",
+   "explain_img": "",
    "type": "mcq"
   },
   {
@@ -1023,6 +1039,7 @@
     }
    ],
    "img": "I09",
+   "explain_img": "",
    "type": "multi"
   },
   {
@@ -1059,6 +1076,7 @@
     }
    ],
    "img": "I08",
+   "explain_img": "",
    "type": "mcq"
   },
   {
@@ -1095,6 +1113,7 @@
     }
    ],
    "img": "I08",
+   "explain_img": "",
    "type": "mcq"
   },
   {
@@ -1131,6 +1150,7 @@
     }
    ],
    "img": "I10",
+   "explain_img": "",
    "type": "mcq"
   },
   {
@@ -1167,6 +1187,7 @@
     }
    ],
    "img": "I10",
+   "explain_img": "",
    "type": "mcq"
   },
   {
@@ -1178,6 +1199,7 @@
    "explain": "",
    "opts": [],
    "img": "I08",
+   "explain_img": "",
    "answer_order": [
     0,
     1,
@@ -1226,6 +1248,7 @@
     }
    ],
    "img": "I11",
+   "explain_img": "",
    "type": "mcq"
   },
   {
@@ -1262,6 +1285,7 @@
     }
    ],
    "img": "I11",
+   "explain_img": "",
    "type": "mcq"
   },
   {
@@ -1298,6 +1322,7 @@
     }
    ],
    "img": "",
+   "explain_img": "",
    "type": "mcq"
   },
   {
@@ -1334,6 +1359,7 @@
     }
    ],
    "img": "",
+   "explain_img": "",
    "type": "mcq"
   },
   {
@@ -1370,6 +1396,7 @@
     }
    ],
    "img": "I12",
+   "explain_img": "",
    "type": "mcq"
   },
   {
@@ -1406,6 +1433,7 @@
     }
    ],
    "img": "I13",
+   "explain_img": "",
    "type": "mcq"
   },
   {
@@ -1442,6 +1470,7 @@
     }
    ],
    "img": "",
+   "explain_img": "",
    "type": "mcq"
   },
   {
@@ -1478,6 +1507,7 @@
     }
    ],
    "img": "",
+   "explain_img": "",
    "type": "mcq"
   },
   {
@@ -1514,6 +1544,7 @@
     }
    ],
    "img": "",
+   "explain_img": "",
    "type": "mcq"
   },
   {
@@ -1550,6 +1581,7 @@
     }
    ],
    "img": "",
+   "explain_img": "",
    "type": "mcq"
   },
   {
@@ -1586,6 +1618,7 @@
     }
    ],
    "img": "",
+   "explain_img": "",
    "type": "mcq"
   },
   {
@@ -1622,6 +1655,7 @@
     }
    ],
    "img": "",
+   "explain_img": "",
    "type": "mcq"
   },
   {
@@ -1633,6 +1667,7 @@
    "explain": "",
    "opts": [],
    "img": "I14",
+   "explain_img": "",
    "answer_order": [
     0,
     1,
@@ -1812,6 +1847,7 @@
    "explain": "",
    "opts": [],
    "img": "",
+   "explain_img": "",
    "answer_order": [
     0,
     1,
@@ -1860,6 +1896,7 @@
     }
    ],
    "img": "",
+   "explain_img": "",
    "type": "mcq"
   },
   {
@@ -1896,6 +1933,7 @@
     }
    ],
    "img": "I15",
+   "explain_img": "",
    "type": "mcq"
   },
   {
@@ -1932,6 +1970,7 @@
     }
    ],
    "img": "I15",
+   "explain_img": "",
    "type": "mcq"
   }
  ],
@@ -1960,7 +1999,9 @@
  "images": {
   "I01": "I01.jpg",
   "I02": "I02.jpg",
-  "I05": "I05.jpg"
+  "I05": "I05.jpg",
+  "I06": "I06.jpg",
+  "I16": "I16.jpg"
  },
  "catalog": {
   "S01": "外科口罩",

@@ -532,7 +532,7 @@ function renderReview(){
         (a.supErr||[]).map(e=>`<p><b>${esc(e.t)}</b>：${e.miss.length?`漏拿 ${esc(e.miss.join("、"))}`:""}${e.miss.length&&e.wrong.length?"；":""}${e.wrong.length?`不需要 ${esc(e.wrong.join("、"))}`:""}</p>`).join("")+
         (it.dsup.length?`<p class="hint">不需要的用物：${it.dsup.map(x=>`${esc(D.catalog[x.s])}（${esc(x.why)}）`).join("；")}</p>`:"")+`</div>` } const right=it.type==="order"?it.answer_order.map(i=>it.steps[i]).join(" → "):it.type==="paint"?"從入針處環狀由內向外，範圍大於敷料":it.opts.filter(o=>o.ok).map(o=>o.t).join("、");
     return `<div class="rv"><div class="h"><span class="tag ${ok?"ok":"bad"}">${ok?"答對":(a.unknown?"不知道":"答錯")}</span><b>${esc(it.title)}</b></div>
-      ${ok?"":`<p>你的答案：${esc(a.chosen)}</p><p>正確：${esc(right)}</p>`}${it.explain?`<p>${esc(it.explain)}</p>`:""}</div>`};
+      ${ok?"":`<p>你的答案：${esc(a.chosen)}</p><p>正確：${esc(right)}</p>`}${it.explain?`<p>${esc(it.explain)}</p>`:""}${it.explain_img&&D.images&&D.images[it.explain_img]?pic(it.explain_img):""}</div>`};
   let html=`${progress()}<div class="card"><div class="act">段落結果</div><h2>${esc(D.acts[act])}</h2>${now("看哪幾題要補，再進下一幕")}`;
   its.forEach(it=>{const a=S.answers[it.id]; if(!a) return;
     if(deferredTo(it.id)) html+=`<div class="rv"><div class="h"><span class="tag wait">⏳ 之後揭曉</span><b>${esc(it.title)}</b></div><p>這一題的結果，會在後面的情境裡看到。</p></div>`;

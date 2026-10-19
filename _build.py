@@ -15,9 +15,11 @@ OUT = HERE / "docs" / "data" / "script.json"
 
 # 題目 → 圖卡（對應 05_ChatGPT生圖prompt_圖卡清單）
 IMG = {"intro": "I01", "A1": "I02", "A4b": "", "A2a": "", "A2b": "", "A3": "", "A4": "I05", "A5": "I05",
-       "A6": "I06", "A7": "I06", "A8": "I05", "A9": "I07", "B3": "I08", "B3b": "I08", "B4": "I09",
+       "A6": "", "A7": "I06", "A8": "I05", "A9": "I07", "B3": "I08", "B3b": "I08", "B4": "I09",
        "B5": "I08", "B6": "I08", "B7": "I10", "B8": "I10", "B9": "I08", "B10": "I11", "B11": "I11",
        "B14": "I12", "B15": "I13", "B22": "I14", "C4": "I15", "C5": "I15"}
+# 段落結果的說明附圖（答完後才看到，例如正確樣子的對照）
+EXPLAIN_IMG = {"A7": "I16"}
 # 延後後果：答錯 src → 在 target 題目前出現的後果畫面
 CONSEQ = [
     {"src": "A1", "target": "B15", "text": "（因為第一幕角針長度選得不合適）角針沒有插到圓盤底部：剛開始還有回血，但組織推擠針具後，回血變得不順。"},
@@ -48,7 +50,7 @@ for b in blocks:
     m = re.match(r"\*\*([ABC]\d+[a-c]?)　(.+?)\*\*(.*)", lines[0])
     qid, title, rest = m.group(1), m.group(2), m.group(3)
     ref = re.findall(r"（([^）]*#[^）]*)）", rest)
-    it = {"id": qid, "act": qid[0], "title": clean(title), "ref": ref[0] if ref else "", "stem": "", "explain": "", "opts": [], "img": IMG.get(qid, "")}
+    it = {"id": qid, "act": qid[0], "title": clean(title), "ref": ref[0] if ref else "", "stem": "", "explain": "", "opts": [], "img": IMG.get(qid, ""), "explain_img": EXPLAIN_IMG.get(qid, "")}
     stem, opts, order, multi_inline = [], [], [], None
     for l in lines[1:]:
         if not l.strip():
