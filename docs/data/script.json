@@ -2015,7 +2015,10 @@
   "I16": "I16.jpg",
   "I17": "I17.jpg",
   "I18": "I18.jpg",
-  "I19": "I19.jpg"
+  "I19": "I19.jpg",
+  "opt/A3-A": "options/A3-A.jpg",
+  "opt/A3-B": "options/A3-B.jpg",
+  "opt/A3-C": "options/A3-C.jpg"
  },
  "catalog": {
   "S01": "外科口罩",
