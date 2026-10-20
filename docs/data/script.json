@@ -554,7 +554,7 @@
      "unknown": true
     }
    ],
-   "img": "",
+   "img": "I17",
    "explain_img": "",
    "type": "multi"
   },
@@ -2003,7 +2003,8 @@
   "I04": "I04.jpg",
   "I05": "I05.jpg",
   "I06": "I06.jpg",
-  "I16": "I16.jpg"
+  "I16": "I16.jpg",
+  "I17": "I17.jpg"
  },
  "catalog": {
   "S01": "外科口罩",
