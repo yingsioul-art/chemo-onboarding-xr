@@ -1075,7 +1075,7 @@
      "unknown": true
     }
    ],
-   "img": "I08",
+   "img": "I18",
    "explain_img": "",
    "type": "mcq"
   },
@@ -1112,7 +1112,7 @@
      "unknown": true
     }
    ],
-   "img": "I08",
+   "img": "I18",
    "explain_img": "",
    "type": "mcq"
   },
@@ -1198,7 +1198,7 @@
    "stem": "",
    "explain": "",
    "opts": [],
-   "img": "I08",
+   "img": "I18",
    "explain_img": "",
    "answer_order": [
     0,
@@ -2004,6 +2004,7 @@
   "I05": "I05.jpg",
   "I06": "I06.jpg",
   "I07": "I07.jpg",
+  "I08": "I08.jpg",
   "I16": "I16.jpg",
   "I17": "I17.jpg"
  },
