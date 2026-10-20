@@ -1186,7 +1186,7 @@
      "unknown": true
     }
    ],
-   "img": "I10",
+   "img": "I19",
    "explain_img": "",
    "type": "mcq"
   },
@@ -2006,6 +2006,7 @@
   "I07": "I07.jpg",
   "I08": "I08.jpg",
   "I09": "I09.jpg",
+  "I10": "I10.jpg",
   "I16": "I16.jpg",
   "I17": "I17.jpg",
   "I18": "I18.jpg"
