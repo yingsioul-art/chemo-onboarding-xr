@@ -1017,7 +1017,7 @@ LABS.push({id: "prep", icon: "🛡️", title: "主護護理師執行給藥前�
   ]});
 
 /* ═════ 第 3 站 換接相容輸液點滴（評核表 11–12） ═════ */
-LABS.push({id: "swap", icon: "🔄", title: "換接相容輸液點滴", items: [11, 12], finImg: "outcomes/B-O9.jpg",
+LABS.push({id: "swap", icon: "🔄", title: "換接相容輸液點滴", items: [11, 12], finImg: "lab/B-O9-v2.jpg",
   desc: "化療藥滴完：放低於眼睛旋開、移除化療藥袋，再接回相容輸液。",
   steps: [
     {type: "drag", bg: "lab/L3a.jpg", after: "lab/L3b.jpg", task: "化療藥滴完了。旋開之前，<b>化療點滴藥袋</b>要放在哪裡？",
@@ -1032,10 +1032,10 @@ LABS.push({id: "swap", icon: "🔄", title: "換接相容輸液點滴", items: [
     hangStep({item: 12, task: "把<b>相容輸液點滴袋</b>（已接 CSTD Spike）先<b>接上 Adapter</b>，再<b>掛上點滴架</b>。", name: "相容輸液點滴袋",
       img: COMP, w: COMP_W, h: COMP_H, sx: COMP_SX, ax: LOW_CX, ay: LOWC_A, home: {x: 2, y: 172},
       orderMsg: "先將相容輸液點滴袋上 CSTD 的 Spike 與 Adapter 銜接，再掛上點滴架。", okMsg: "相容輸液點滴袋的 Spike 與 Adapter 銜接，掛上點滴架。"}),
-    {type: "choice", bg: "outcomes/B-O9.jpg", task: "（延伸，不在 21 項內）用完的化療藥袋怎麼丟？", note: "出自化療靜脈給藥 52 項表第 43 項。",
+    {type: "choice", bg: "lab/B-O9-v2.jpg", task: "（延伸，不在 21 項內）用完的化療藥袋怎麼丟？", note: "出自化療靜脈給藥 52 項表第 43 項。",
       q: "輸注完的化療藥袋，怎麼丟？", opts: [
-        {t: "不拔除 CSTD 的 Spike，整袋直接丟棄於化療廢棄物收集桶", ok: true, pic: "outcomes/B-O9.jpg", why: "輸注完之化療藥袋請勿拔除 CSTD 的 Spike，直接丟棄於化療廢棄物收集桶。"},
-        {t: "拔下 Spike，藥袋和 Spike 分開丟", pic: "outcomes/B-X2.jpg", why: "拔下 Spike 時，藥袋裡殘留的藥會流出來。Spike 不拔，整袋丟。"}]},
+        {t: "不拔除 CSTD 的 Spike，連同塑膠夾鏈袋整袋丟棄於化療廢棄物收集桶", ok: true, pic: "lab/B-O9-v2.jpg", why: "輸注完之化療藥袋請勿拔除 CSTD 的 Spike，連同塑膠夾鏈袋直接丟棄於化療廢棄物收集桶。"},
+        {t: "拔下 Spike，藥袋和 Spike 分開丟", pic: "lab/B-X2-v2.jpg", why: "拔下 Spike 時，藥袋裡殘留的藥會流出來。Spike 不拔，整袋丟。"}]},
   ]});
 
 /* ═════ 第 4 站 角針置放（評核表 13–18） ═════
@@ -1100,7 +1100,7 @@ const Z_CLAMP = {x: 195, y: 94};   // I17／L4-clamp 圖上黃色管夾的位置
 const INSET = (open, x, y, c) => `<line x1="${c.x}" y1="${c.y}" x2="${x}" y2="${y}" stroke="#e0a800" stroke-width="2"/>
   <circle cx="${x}" cy="${y}" r="54" fill="#fff" stroke="#e0a800" stroke-width="3.5"/><image href="images/lab/clamp-${open ? "open" : "closed"}.png" x="${x - 52}" y="${y - 52}" width="104" height="104"/>
   <rect x="${x - 30}" y="${y + 50}" width="60" height="16" rx="8" fill="${open ? "#1f9d55" : "rgba(20,30,35,.78)"}"/><text x="${x}" y="${y + 62}" font-size="10" text-anchor="middle" fill="#fff" font-weight="700">${open ? "管夾打開" : "管夾關閉"}</text>`;
-LABS.push({id: "insert", icon: "📍", title: "Port-A 角針置放", items: [13, 14, 15, 16, 17, 18], finImg: "outcomes/A-O7.jpg",
+LABS.push({id: "insert", icon: "📍", title: "Port-A 角針置放", items: [13, 14, 15, 16, 17, 18], finImg: "lab/A-O7-v2.jpg",
   desc: "三點持針、固定圓盤、深呼吸垂直插入、反抽看全血、推-停沖管、正壓封管。",
   steps: [
     {type: "choice", bg: "I05.jpg", task: "慣用手拿握 <b>Port-A 角針握柄</b>，用什麼方法持針？",
@@ -1114,17 +1114,19 @@ LABS.push({id: "insert", icon: "📍", title: "Port-A 角針置放", items: [13,
       goal: [["S10", "v90"]],
       wrong: {"S10@v45": "45 度斜插，針尖會停在矽膠膜或側壁，到不了圓盤底部。角針要與盤面呈「垂直」。"},
       okMsg: "角針與盤面垂直（90 度），針尖才會到達圓盤底部。"},
-    {type: "taps", bg: "I05.jpg", item: 14, task: "先<b>觸摸 Port-A 圓盤邊緣</b>，再用<b>非慣用手（左手）</b>依序以大拇指、食指、中指固定盤面（依序點畫面上的圓圈）。",
-      tapImg: {edge: "lab/L4-fix.jpg"},
-      spots: [{id: "edge", x: 246, y: 118, label: "觸摸圓盤邊緣", lp: "right"}, {id: "th", x: 195, y: 136, label: "拇指", need: "edge"}, {id: "ix", x: 239, y: 92, label: "食指", need: "edge", lp: "up"}, {id: "md", x: 186, y: 114, label: "中指", need: "edge", lp: "left"}],
-      order: ["edge", "th", "ix", "md"], orderMsg: "觸摸圓盤邊緣後，依序用大拇指、食指、中指固定盤面。", why: {th: "先觸摸 Port-A 圓盤邊緣，確認圓盤在哪裡，再用三指固定。", ix: "先觸摸 Port-A 圓盤邊緣，確認圓盤在哪裡，再用三指固定。", md: "先觸摸 Port-A 圓盤邊緣，確認圓盤在哪裡，再用三指固定。"},
+    {type: "taps", bg: "I05.jpg", item: 14, task: "先<b>觸摸 Port-A 圓盤邊緣</b>，再用<b>非慣用手（左手）</b>的大拇指、食指、中指同時固定盤面（先點「觸摸圓盤邊緣」，再點「三指固定盤面」）。",
+      tapImg: {edge: "lab/L4-fix-v5.jpg"},
+      spots: [{id: "edge", x: 246, y: 118, label: "觸摸圓盤邊緣", lp: "right"}, {id: "fix", x: 216, y: 117, label: "三指固定盤面", need: "edge", lp: "down"}],
+      order: ["edge", "fix"], why: {fix: "先觸摸 Port-A 圓盤邊緣，確認圓盤在哪裡，再用三指固定。"},
+      /* 10/25 使用者：三指位置不分順序、同時出現 → 點「三指固定盤面」後，拇指、食指、中指三個標示一起出現在指尖 */
+      overlay: S => S.taps.includes("fix") ? [[198, 134, "拇指"], [230, 90, "食指"], [180, 109, "中指"]].map(([x, y, t]) => `<circle cx="${x}" cy="${y}" r="8" fill="#1f9d55" stroke="#fff" stroke-width="2"/>${TAG(x + (t === "食指" ? 0 : -28), y + (t === "食指" ? -16 : t === "拇指" ? 4 : 0), t, "#1f9d55")}`).join("") : "",
       okMsg: "非慣用手大拇指、食指、中指用力固定盤面，盤面不會滑動。"},
-    {type: "seq", bg: "lab/L4-fix.jpg", okScene: PAD_SCENE, item: 15, task: "插入角針：依序點選動作。", opts: [
+    {type: "seq", bg: "lab/L4-fix-v5.jpg", okScene: PAD_SCENE, item: 15, task: "插入角針：依序點選動作。", opts: [
         {id: "br", t: "請病人深呼吸"}, {id: "in", t: "將角針垂直快速插入圓盤底部"}, {id: "pad", t: "墊片下壓並平貼皮膚"}, {id: "press", t: "插到底後再用力壓一下，確認真的到底"}],
       orders: [["br", "in", "pad"]],
       why: {in: "先請病人深呼吸，再將角針垂直快速插入。", pad: "角針插入圓盤底部以後，墊片才下壓平貼皮膚。", press: "角針插入至底部後，勿再用力強壓，避免角針前端變鈍。"},
       okMsg: "請病人深呼吸 → 垂直快速插入圓盤底部 → 墊片下壓平貼皮膚。"},
-    {type: "taps", bg: "I17.jpg", after: "lab/L4-clamp.jpg", overlay: S => INSET(S.ok, 296, 64, Z_CLAMP), spots: [{id: "clamp", x: Z_CLAMP.x, y: Z_CLAMP.y, label: "黃色管夾"}], order: ["clamp"], okMsg: "管夾打開了：延長管移到管夾的大圓孔，沒有被夾扁。",
+    {type: "taps", bg: "lab/I17c.jpg", after: "lab/L4-clamp.jpg", overlay: S => INSET(S.ok, 296, 64, Z_CLAMP), spots: [{id: "clamp", x: Z_CLAMP.x, y: Z_CLAMP.y, label: "黃色管夾"}], order: ["clamp"], okMsg: "管夾打開了：延長管移到管夾的大圓孔，沒有被夾扁。",
       task: "要反抽測試了。先點<b>黃色管夾</b>，把管夾打開。"},
     {type: "hold", bg: "lab/L4-clamp.jpg", after: "I16.jpg", task: "以 <b>10 mL 注射器反抽</b>，測試是否通暢及回血。", label: "按住＝往後拉活塞（反抽）", ms: 1800,
       okMsg: "回血順暢，顏色是暗紅色的全血。"},
@@ -1133,7 +1135,7 @@ LABS.push({id: "insert", icon: "📍", title: "Port-A 角針置放", items: [13,
         {t: "不行。回血顏色須為全血；可先請病人改變姿勢（坐起、該側上臂抬高）、深呼吸或咳嗽、減緩回抽速度再試", ok: true, why: "回血顏色須為全血，淡粉紅色不算通暢。"},
         {t: "可以，有回血就代表通暢", acc: ACC.extra},
         {t: "馬上拔出來，換一支角針重插", why: "先試改變姿勢、改變胸內壓（深呼吸、咳嗽）、減緩回抽速度。"}]},
-    {type: "rhythm", bg: "I16.jpg", after: "I17.jpg", item: 17, task: "測完回血，用 <b>10 mL NS</b> 以<b>推-停-推-停</b>方式將管壁沖洗乾淨。每按一次「推」＝推 1 mL。", n: 9, ml: 1, total: 10, beat: BEAT, beatRef: BEAT_REF, media: FLUSH_MEDIA,
+    {type: "rhythm", bg: "I16.jpg", after: "lab/L4-clamp.jpg", item: 17, task: "測完回血，用 <b>10 mL NS</b> 以<b>推-停-推-停</b>方式將管壁沖洗乾淨。每按一次「推」＝推 1 mL。", n: 9, ml: 1, total: 10, beat: BEAT, beatRef: BEAT_REF, media: FLUSH_MEDIA,
       twice: "推完要停一下再推——「推-停-推-停」，不是一直推。", okMsg: "以推-停-推-停方式把管壁沖洗乾淨了，注射器留 1 mL，下一步正壓封管用。"},
     {type: "mode", bg: "lab/L4-clamp.jpg", media: LOCK_MEDIA, task: "沖完管了，接著<b>正壓封管</b>。方法一、方法二擇一，選一個來做：", opts: [
         {id: "m1", t: "方法一：保留 NS 0.5–1 mL（勿全部推注完）", okMsg: "方法一：注射器裡的 NS 不要全部推完，保留 0.5–1 mL。"},
@@ -1142,9 +1144,9 @@ LABS.push({id: "insert", icon: "📍", title: "Port-A 角針置放", items: [13,
       start: 1, by: .5, keep: [.5, 1], zero: {acc: ACC.back}, okMsg: "保留 NS 0.5–1 mL，沒有全部推完，管內維持正壓。"},
     {type: "hold", bg: "lab/L4-clamp.jpg", silent: true, skipIf: S => S.mode !== "m2", task: "方法二：以<b>大拇指壓住針筒活塞</b>，維持正壓。",
       label: "按住＝大拇指壓住活塞", ms: 1500, early: "大拇指要一直壓住活塞，進度條跑滿才放手。", okMsg: "大拇指壓住針筒活塞，管內維持正壓。"},
-    {type: "taps", bg: "lab/L4-clamp.jpg", after: "I17.jpg", overlay: S => INSET(!S.ok, 296, 64, Z_CLAMP), spots: [{id: "clamp", x: Z_CLAMP.x, y: Z_CLAMP.y, label: "黃色管夾"}], order: ["clamp"],
+    {type: "taps", bg: "lab/L4-clamp.jpg", after: "lab/I17c.jpg", overlay: S => INSET(!S.ok, 296, 64, Z_CLAMP), spots: [{id: "clamp", x: Z_CLAMP.x, y: Z_CLAMP.y, label: "黃色管夾"}], order: ["clamp"],
       task: "維持正壓，<b>關閉管夾</b>（點黃色管夾）。", btns: [{t: "先把注射器拔掉，再關管夾", acc: ACC.back}], okMsg: "維持正壓的狀態下，關閉管夾。"},
-    {type: "hold", bg: "I17.jpg", after: "outcomes/A-O7.jpg", item: 18, task: "管夾關好了。<b>緩慢移除</b>針筒／注射器。",
+    {type: "hold", bg: "lab/I17c.jpg", after: "lab/A-O7-v2.jpg", item: 18, task: "管夾關好了。<b>緩慢移除</b>針筒／注射器。",
       label: "按住＝緩慢移除注射器", ms: 2000, early: "要「緩慢」移除，進度條跑滿才放手。", okMsg: "正壓封管完成：先維持正壓 → 關閉管夾 → 再緩慢移除注射器。"},
   ]});
 
@@ -1161,10 +1163,10 @@ LABS.push({id: "remove", icon: "🔚", title: "Port-A 角針移除", items: [19,
     {type: "drag", bg: "I15.jpg", task: "以 <b>70–75% 酒精棉</b>消毒 Port-A 接頭。",
       tray: ["S25", "S11"], zones: [{id: "cn", r: Z_CN, label: "Port-A 接頭"}], goal: [["S25", "cn"]],
       wrong: {S11: "紗布是拔針後加壓止血用的。消毒接頭要用 70–75% 酒精棉。"}, okMsg: "Port-A 接頭消毒好了。"},
-    {type: "drag", bg: "I15.jpg", after: "outcomes/C-O1.jpg", task: "採無菌技術接上 <b>NS 10 mL 注射器</b>。",
+    {type: "drag", bg: "I15.jpg", after: "lab/C-O1c.jpg", task: "採無菌技術接上 <b>NS 10 mL 注射器</b>。",
       tray: ["S33", "S15"], zones: [{id: "cn", r: Z_CN, label: "Port-A 接頭"}], goal: [["S33", "cn"]],
       wrong: {S15: "要用 NS 10 mL 注射器（或與 10 mL 注射器針筒管徑相同）。"}, okMsg: "接上 NS 10 mL 注射器了。"},
-    {type: "taps", bg: "outcomes/C-O1.jpg", after: "lab/C-O1-open.jpg", overlay: S => INSET(S.ok, 74, 160, Z_CLAMP5), spots: [{id: "clamp", x: Z_CLAMP5.x, y: Z_CLAMP5.y, label: "黃色管夾"}], order: ["clamp"],
+    {type: "taps", bg: "lab/C-O1c.jpg", after: "lab/C-O1-open.jpg", overlay: S => INSET(S.ok, 74, 160, Z_CLAMP5), spots: [{id: "clamp", x: Z_CLAMP5.x, y: Z_CLAMP5.y, label: "黃色管夾"}], order: ["clamp"],
       task: "要反抽測試了。先點<b>黃色管夾</b>，把管夾打開。", okMsg: "管夾打開了。"},
     {type: "hold", bg: "lab/C-O1-open.jpg", after: "lab/C-O1-blood.jpg", task: "<b>反抽</b>測試回血。", label: "按住＝往後拉活塞（反抽）", ms: 1500, okMsg: "有回血。"},
     {type: "rhythm", bg: "lab/C-O1-blood.jpg", after: "lab/C-O1-open.jpg", item: 19, task: "再以<b>推-停-推-停</b>方式將管壁沖洗乾淨。每按一次「推」＝推 1 mL。", n: 10, ml: 1, beat: BEAT, beatRef: BEAT_REF, media: FLUSH_MEDIA,
@@ -1179,7 +1181,7 @@ LABS.push({id: "remove", icon: "🔚", title: "Port-A 角針移除", items: [19,
       start: 3, by: .5, keep: [.4, .9], keepMsg: "要推到剩餘「小於 1 mL」才停。", zero: {acc: ACC.back}, okMsg: "推注到剩餘小於 1 mL，沒有全部推完，管內維持正壓。"},
     {type: "hold", bg: "lab/C-O1-open.jpg", silent: true, skipIf: S => S.mode !== "m2", task: "方法一：Heparinized saline 推注完畢，<b>大拇指持續壓住針筒活塞</b>。",
       label: "按住＝大拇指壓住活塞", ms: 1500, early: "大拇指要持續壓住活塞，進度條跑滿才放手。", okMsg: "大拇指持續壓住針筒活塞，管內維持正壓。"},
-    {type: "taps", bg: "lab/C-O1-open.jpg", after: "outcomes/C-O1.jpg", item: 20, overlay: S => INSET(!S.ok, 74, 160, Z_CLAMP5), spots: [{id: "clamp", x: Z_CLAMP5.x, y: Z_CLAMP5.y, label: "黃色管夾"}], order: ["clamp"],
+    {type: "taps", bg: "lab/C-O1-open.jpg", after: "lab/C-O1c.jpg", item: 20, overlay: S => INSET(!S.ok, 74, 160, Z_CLAMP5), spots: [{id: "clamp", x: Z_CLAMP5.x, y: Z_CLAMP5.y, label: "黃色管夾"}], order: ["clamp"],
       task: "維持正壓，<b>關閉管夾</b>（點黃色管夾）。", btns: [{t: "先放開活塞／把剩下的全部推完，再關管夾", acc: ACC.back}], okMsg: "注入 Heparinized saline 後，維持正壓夾住管夾。"},
     {type: "seq", bg: "outcomes/C-X2.jpg", task: "準備移除角針（BD 安全性賀伯注射針組）：依序點選。", opts: [
         {id: "l", t: "左手（非慣用手）大拇指、食指固定注射針座盤"}, {id: "r", t: "右手（慣用手）大拇指與食指緊握安全針具握柄"},
