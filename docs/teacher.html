@@ -69,12 +69,18 @@ details summary{cursor:pointer;color:var(--ink2);font-size:14px}
 <body>
 <main>
 <header>
-  <h1>化療給藥情境練習｜全班結果</h1>
+  <h1>化療給藥到職訓練｜開場對焦學習需求</h1>
   <input type="date" id="day" aria-label="上課日期">
   <select id="half" aria-label="時段"><option value="am">上午</option><option value="pm">下午</option><option value="all">全天</option></select>
   <button id="refresh">重新整理</button>
 </header>
 <div id="msg"></div>
+<div class="card" style="margin-bottom:14px"><h2>技術站自評：每一站需要老師協助的人數</h2>
+  <div class="sub">學員做完動手做技術站後填的自評（不顯示是誰）。<b id="labN">0</b> 位已填。</div>
+  <div class="leg"><span><i style="background:var(--g-known)"></i>自己做得到</span><span><i style="background:var(--g-unsure)"></i>需要老師提醒或示範</span><span><i style="background:var(--g-gap)"></i>還做不到，需要從頭教</span></div>
+  <div id="zpd"></div></div>
+<div class="card" style="margin-bottom:14px"><h2>學員寫的「最需要老師協助的步驟」</h2><div class="sub">自我介紹時請學員再說一次，老師逐一確認</div><div id="needs" class="gaps"></div></div>
+<details id="scen"><summary>情境練習結果（有做情境練習 index.html 才有資料）</summary>
 <div class="kpis" id="kpis"></div>
 <div class="grid2">
   <div class="card"><h2>「以為會」最多的題目</h2><div class="sub">該幕開始前選「很確定」、卻答錯的人數（前 10 題）</div><div id="over"></div></div>
@@ -83,6 +89,7 @@ details summary{cursor:pointer;color:var(--ink2);font-size:14px}
 <div class="card" style="margin-bottom:14px"><h2>各題答對率</h2><div class="sub">依三幕排列；滑過長條看人數</div><div id="rate"></div>
   <details><summary>表格檢視</summary><div id="rateTable"></div></details></div>
 <div class="card" style="margin-bottom:14px"><h2>學員寫的差距</h2><div class="sub">「哪一步原本以為會、結果不會」與「打算怎麼補」（不顯示是誰寫的）</div><div id="gaps" class="gaps"></div></div>
+</details>
 </main>
 <div id="tip"></div>
 <script>
@@ -92,6 +99,7 @@ const ENDPOINT = "https://script.google.com/macros/s/AKfycbzHpVJHrzP-dC0UWTtxjLV
 const REFRESH_SEC = 15;
 const qs = new URLSearchParams(location.search), DEMO = qs.has("demo");
 let D, timer;
+const LAB_ST = ["站 1｜組裝 CSTD","站 2｜給藥前準備","站 3｜換接相容輸液","站 4｜Port-A 角針置放","站 5｜Port-A 角針移除"];   // 與 eval.html LAB_ST 同順序
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
@@ -106,13 +114,14 @@ function span(){ const [y,m,d]=$("day").value.split("-").map(Number), h=$("half"
 async function load(){
   let rows;
   try{
-    if(DEMO) rows=demo();
+    if(DEMO){ rows=demo(); renderLab(demoLab()) }
     else{
       if(!ENDPOINT){ $("msg").innerHTML=`<div class="note">尚未設定資料來源（ENDPOINT）。網址加上 <b>?demo=1</b> 可看假資料預覽。</div>`; render([]); return }
       if(!$("day").value){ $("msg").innerHTML=`<div class="note">請先選上課日期。</div>`; return }
       const [a,b]=span(), u=`${ENDPOINT}?mode=summary&since=${encodeURIComponent(a.toISOString())}&until=${encodeURIComponent(b.toISOString())}`;
-      const j=await (await fetch(u,{cache:"no-store"})).json();
-      if(!j.ok) throw new Error(j.error);
+      const [j,jl]=await Promise.all([u, u.replace("mode=summary","mode=labsum")].map(x=>fetch(x,{cache:"no-store"}).then(r=>r.json())));
+      if(!j.ok) throw new Error(j.error); if(!jl.ok) throw new Error(jl.error);
+      renderLab(jl.rows);
       rows=j.rows;
     }
     $("msg").innerHTML = DEMO?`<div class="note">預覽模式：以下是假資料。</div>`:"";
@@ -123,6 +132,15 @@ async function load(){
 function bars(el,list,max,cls,fmt){
   if(!list.length){el.innerHTML=`<div class="empty">還沒有資料</div>`;return}
   el.innerHTML=list.map(x=>{const w=max?x.v/max*88:0;return `<div class="bar" data-tip="${esc(x.tip||"")}"><div class="lab">${esc(x.l)}</div><div class="trk"><div class="fill ${cls||""}" style="width:${w}%"></div><span class="val" style="left:${w}%">${fmt(x)}</span></div></div>`}).join("");
+}
+// 技術站自評：每站三種程度的人數（堆疊長條）＋需協助步驟
+function renderLab(rows){
+  const n=rows.length, col=["var(--g-known)","var(--g-unsure)","var(--g-gap)"], lab=["做得到","需提醒或示範","還做不到"];
+  $("labN").textContent=n;
+  $("zpd").innerHTML=n?LAB_ST.map((t,i)=>{ const c=[0,1,2].map(j=>rows.filter(r=>r.zpd[i]===j).length);
+    return `<div class="bar" data-tip="${esc(t)}：${c.map((v,j)=>lab[j]+" "+v+" 人").join("、")}"><div class="lab">${esc(t)}</div><div class="trk" style="display:flex;gap:2px">${c.map((v,j)=>v?`<div style="width:${v/n*78}%;background:${col[j]};border-radius:4px;color:#fff;font-size:12px;text-align:center;line-height:22px">${v}</div>`:"").join("")}<span style="margin-left:8px;font-size:13px;white-space:nowrap">需協助 <b>${c[1]+c[2]}</b> 人</span></div></div>` }).join(""):`<div class="empty">這個時段還沒有人填技術站自評</div>`;
+  const ns=rows.filter(r=>r.need);
+  $("needs").innerHTML=ns.length?ns.map(r=>`<div class="gap">${esc(r.need)}</div>`).join(""):`<div class="empty">還沒有資料</div>`;
 }
 function render(rows){
   const n=rows.length, items=D.items, title=id=>{const it=items.find(x=>x.id===id);return it?`${id} ${it.title}`:id};
@@ -157,6 +175,8 @@ const tip=$("tip");
 document.addEventListener("mousemove",e=>{const b=e.target.closest&&e.target.closest("[data-tip]");if(!b||!b.dataset.tip){tip.style.display="none";return}
   tip.textContent=b.dataset.tip;tip.style.display="block";tip.style.left=Math.min(e.clientX+14,innerWidth-330)+"px";tip.style.top=(e.clientY+14)+"px"});
 
+function demoLab(){ const t=["站 4 三指固定時盤面會滑動，角針角度抓不準","CSTD 戳入後怎麼確認沒有液體殘留","正壓封管兩種方法的差別",""];
+  return Array.from({length:12},(_,k)=>({zpd:[0,1,2,3,4].map(i=>((k*7+i*3)%10)<(i>=3?3:6)?0:(((k+i)%4)?1:2)),need:t[k%4]})) }
 function demo(){
   const r=s=>{let h=0;for(const c of s)h=(h*31+c.charCodeAt(0))>>>0;return()=>((h=(h*1664525+1013904223)>>>0)/4294967296)};
   const gapsT=["以為回血有出來就可以給，原來要確認是全血","不知道換上化療藥後要先脫外層手套","沖管量 35 和 70 搞混","條碼不符時以為人工核對就可以","角針長度不知道要看 Port 外觀選"];

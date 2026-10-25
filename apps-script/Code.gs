@@ -8,6 +8,7 @@
  * 訓練成效評估（eval.html，kind＝pre／post／check／lab）另存「eval」分頁：
  *   ?mode=evalpre&code=…  → 該代碼最近一次前測（後測頁做前後對照用）
  *   ?mode=eval&key=…      → 全部成效資料（老師結果頁）
+ *   ?mode=labsum&since=ISO&until=ISO → 技術站自評匿名彙總（只回各站程度＋需協助步驟，不含員工編號），給老師圖表頁開場對焦
  */
 var SHEET_NAME = 'responses';
 var HEAD = ['收到時間', '員工編號', '開始時間', '送出時間', '作答秒數', '答對', '題數', '不知道題數',
@@ -45,6 +46,7 @@ function doGet(e) {
   var mode = q.mode || 'ping';
   if (mode === 'ping') return json_({ ok: true, service: 'chemo-onboarding', time: new Date().toISOString() });
   if (mode === 'evalpre' || mode === 'eval') return evalGet_(mode, q);
+  if (mode === 'labsum') return labSum_(q);
   var detail = mode === 'detail';
   if (detail) {
     var key = PropertiesService.getScriptProperties().getProperty('TEACHER_KEY');
@@ -112,6 +114,22 @@ function extraCols_(sh, n, cols) {
     var v = cols[h];
     return v == null ? '' : (typeof v === 'string' && /^[=+\-@]/.test(v) ? "'" + v : v);   // 避免開放題被當成公式
   });
+}
+// 10/26 使用者：開場對焦用老師圖表頁（/t/）→ 依收到時間篩選上課時段，打亂順序、不回員工編號
+function labSum_(q) {
+  var since = q.since ? new Date(q.since) : new Date(Date.now() - 12 * 3600 * 1000);
+  var until = q.until ? new Date(q.until) : null;
+  var sh = evalSheet_(), last = sh.getLastRow(), rows = [];
+  if (last >= 2) {
+    var iRaw = EVAL_HEAD.indexOf('原始JSON');
+    sh.getRange(2, 1, last - 1, EVAL_HEAD.length).getValues().forEach(function (r) {
+      if (!(r[0] instanceof Date) || r[0] < since || (until && r[0] >= until)) return;
+      var p; try { p = JSON.parse(r[iRaw]); } catch (x) { return; }
+      if (p.kind === 'lab') rows.push({ zpd: p.zpd || [], need: p.need || '' });
+    });
+  }
+  shuffle_(rows);
+  return json_({ ok: true, rows: rows });
 }
 function evalGet_(mode, q) {
   var rows = evalRows_();
