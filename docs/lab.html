@@ -66,6 +66,10 @@ h3{font-size:1.05em;margin:18px 0 6px}
 .opts{display:grid;gap:8px;margin-top:10px}
 .opt{border:2px solid var(--line);background:var(--card);border-radius:14px;padding:10px 14px;text-align:left;font-weight:700;min-height:52px;display:flex;gap:10px;align-items:center}
 .opt img{width:96px;height:96px;object-fit:cover;border-radius:10px;flex:none}
+.met{margin-top:10px;padding:10px;border:1px dashed var(--line);border-radius:12px}
+.met select{max-width:100%;padding:6px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+.metdot{display:inline-block;width:16px;height:16px;border-radius:50%;background:var(--line)}
+.metdot.on{background:#ffb020}
 .opt svg{width:104px;height:104px;border-radius:10px;flex:none;background:#eef3f6}
 .opt.bad{border-color:var(--bad);background:var(--badbg)}
 .opt.ok{border-color:var(--ok);background:var(--okbg)}
@@ -265,7 +269,7 @@ function handCtl(card, o){
             btns [{t, acc}]：畫面下方的「偷吃步」按鈕，按了就出事
      taps   依序點畫面上的點：spots [{id, x, y, label}]、order [id]
      hold   按住不放：label、ms、after（完成後換的圖）
-     rhythm 推-停-推-停：n（推幾次）、ml（每次幾 mL）
+     rhythm 推-停-推-停：n（推幾次）、ml（每次幾 mL）、total（注射器總量，預設 n×ml）、beat [{bpm, t}]＋beatRef（節拍聲選項與文獻）
      choice 單選：q、opts [{t, ok, why, acc, pic}]
      seq    依序按按鈕：opts [{id, t}]、orders [[id…]]（任一條順序都可以）、why {id: 訊息或 {acc}}
      pump   幫浦設定 Rate → VTBI：order {rate, vtbi}；skipIf(S) 為真時直接「不適用」
@@ -422,9 +426,10 @@ function runStation(pane, L){
     }
     if(s.type === "hold") h = `<div class="bar"><i style="width:${Math.round(S.hp * 100)}%"></i></div><div class="row" style="margin-top:10px"><button class="btn" id="holdb"${S.ok ? " disabled" : ""}>✋ ${s.label}</button><span class="muted">按住不放，進度條跑滿才放手</span></div>`;
     if(s.type === "rhythm"){
-      const left = Math.max(0, s.n * s.ml - S.n * s.ml);
+      const left = Math.max(0, (s.total || s.n * s.ml) - S.n * s.ml);
       h = `<div class="readout" style="margin-top:8px;font-weight:800">注射器剩 ${left} mL　·　已推 ${S.n} / ${s.n} 次</div><div class="bar"><i style="width:${Math.round(S.n / s.n * 100)}%"></i></div>
         <div class="row" style="margin-top:10px"><button class="btn" data-b="r:push"${S.ok ? " disabled" : ""}>💉 推</button><button class="btn ghost" data-b="r:stop"${S.ok ? " disabled" : ""}>✋ 停</button></div>`;
+      if(s.beat && !S.ok) h += metHtml(s);
     }
     if(s.type === "pump" && !S.ok || (s.type === "pump" && S.pf.vtbi != null)){
       const f = k => S.pf[k] != null ? `<b>${S.pf[k]}</b>` : S.psel === k ? `<input id="pin" inputmode="decimal" placeholder="輸入數字">` : "— —";
@@ -438,6 +443,7 @@ function runStation(pane, L){
     $("#fb").innerHTML = S.fb;
     if(useSvg) wire(s);
     if(s.type === "manip" && !S.ok) wireManip(s);
+    if(s.beat && !S.ok) wireMet(); else stopMet();
     if(s.type === "hold" && !S.ok) wireHold(s);
     const pin = $("#pin"); if(pin) pin.focus();
   }
@@ -472,6 +478,7 @@ function runStation(pane, L){
       return bad((s.why || {})[v] || s.orderMsg || "順序不對，想想看這一步之前還要先做什麼。");
     }
     if(k === "r"){
+      if(v === "met"){ if(metT) stopMet(); else startMet(); return draw(); }
       if(v === "push"){ if(S.last === "push") return bad(s.twice || "推完要停一下，再推——要「推-停-推-停」。"); commit(() => { S.n++; S.last = "push"; S.fb = ""; }); beep(true, 520); }
       else { if(S.last !== "push") return bad("先推一下，再停。"); commit(() => { S.last = "stop"; if(S.n >= s.n){ finish(); if(s.after) S.img = s.after; } }); beep(true, 700); }
       return draw();
@@ -545,6 +552,25 @@ function runStation(pane, L){
       draw();
     };
   }
+  /* 推-停節拍聲：每一拍＝推一次；拍速記在瀏覽器 */
+  let metT = null, BPM = 120;
+  try{ BPM = +localStorage.getItem("chemo-lab-bpm") || 120; }catch(e){}
+  function stopMet(){ if(metT){ clearInterval(metT); metT = null; } }
+  function startMet(){
+    stopMet();
+    const tick = () => { if(ctl.paused) return; beep(true, 1250); const d = $("#metdot"); if(d){ d.classList.add("on"); setTimeout(() => d.classList.remove("on"), 140); } };
+    tick(); metT = setInterval(tick, 60000 / BPM);
+  }
+  const metHtml = s => `<div class="met"><div class="row"><button class="btn ghost" data-b="r:met">${metT ? "🔇 關掉節拍聲" : "🔊 播放節拍聲（跟著拍子推）"}</button><span id="metdot" class="metdot"></span><b id="bpmv">${BPM} 次/分</b></div>
+    <div class="row" style="margin-top:6px"><select id="bpmsel">${s.beat.map(b => `<option value="${b.bpm}"${b.bpm === BPM ? " selected" : ""}>${b.t}</option>`).join("")}<option value="0"${s.beat.some(b => b.bpm === BPM) ? "" : " selected"}>自訂（拉右邊滑桿）</option></select>
+    <input type="range" id="bpmr" min="40" max="180" step="5" value="${BPM}" aria-label="每分鐘推幾次"></div><div class="note">${s.beatRef}</div></div>`;
+  function wireMet(){
+    const sel = $("#bpmsel"), r = $("#bpmr"); if(!sel) return;
+    const set = v => { BPM = v; try{ localStorage.setItem("chemo-lab-bpm", v); }catch(e){} $("#bpmv").textContent = v + " 次/分"; r.value = v; if(metT) startMet(); };
+    sel.onchange = () => { if(+sel.value) set(+sel.value); };
+    r.oninput = () => { set(+r.value); sel.value = [...sel.options].some(o => +o.value === +r.value) ? r.value : "0"; };
+  }
+  window.addEventListener("hashchange", stopMet, {once: true});
   function tapNeed(s){ for(const g of s.order){ const rem = [].concat(g).filter(x => !S.taps.includes(x)); if(rem.length) return rem; } return []; }
   function stopHold(){ if(holdT){ clearInterval(holdT); holdT = null; } }
   function wireHold(s){
@@ -960,6 +986,11 @@ LABS.push({id: "swap", icon: "🔄", title: "換接相容輸液點滴", items: [
 /* ═════ 第 4 站 角針置放（評核表 13–18） ═════
    情境圖 I05：無菌洞巾上，Port-A 圓盤在洞口（約 205,105）；角針已排氣，接 10 mL 注射器，黃色管夾在左上
    I16：回抽後全血（評核表第 16 項）；A-X2：淡粉紅回血（錯誤示範） */
+/* 推-停-推-停（脈衝式沖洗）的節拍與文獻（10/25 使用者要求寫出處＋放節拍聲）
+   文獻只寫「每次 1 mL、兩次推注間停 0.4 秒」（Guiffant 2012）或「推 0.1 秒、停 0.9 秒」（Ferroni 2014），都是體外實驗、沒有「每分鐘幾次」；
+   120 次/分是「推 0.1 秒＋停 0.4 秒＝每拍 0.5 秒」換算；使用者記得的 150–180 次/分查無出處，留自訂滑桿可調 */
+const BEAT = [{bpm: 120, t: "推 1 mL、停 0.4 秒（Guiffant 2012）≈ 120 次/分"}, {bpm: 60, t: "推 0.1 秒、停 0.9 秒（Ferroni 2014）＝ 60 次/分"}];
+const BEAT_REF = "📚 文獻：脈衝式沖洗（push-pause）是每次推 1 mL、連續推 10 次，兩次推注之間停 0.4 秒，沖洗效果比停得更短或更長都好（Guiffant G, et al. Flushing of intravascular access devices (IVADs)—efficacy of pulsed and continuous infusions. <i>J Vasc Access</i>. 2012;13(1):75–78. doi:10.5301/JVA.2011.8487；整理於 Goossens GA. Flushing and locking of venous catheters: available evidence and evidence deficit. <i>Nurs Res Pract</i>. 2015;2015:985686. doi:10.1155/2015/985686）。同一研究團隊另一篇用「推 0.1 秒、停 0.9 秒」（Ferroni A, et al. <i>Med Devices (Auckl)</i>. 2014;7:379–383. doi:10.2147/MDER.S71217）。以上都是體外實驗，文獻沒有寫「每分鐘幾次」；120 次/分是用「推 0.1 秒＋停 0.4 秒」換算的，實際以院內規範為準。";
 LABS.push({id: "insert", icon: "📍", title: "Port-A 角針置放", items: [13, 14, 15, 16, 17, 18], finImg: "outcomes/A-O7.jpg",
   desc: "三點持針、固定圓盤、深呼吸垂直插入、反抽看全血、推-停沖管、正壓封管。",
   steps: [
@@ -991,8 +1022,8 @@ LABS.push({id: "insert", icon: "📍", title: "Port-A 角針置放", items: [13,
         {t: "不行。回血顏色須為全血；可先請病人改變姿勢（坐起、該側上臂抬高）、深呼吸或咳嗽、減緩回抽速度再試", ok: true, why: "回血顏色須為全血，淡粉紅色不算通暢。"},
         {t: "可以，有回血就代表通暢", acc: ACC.extra},
         {t: "馬上拔出來，換一支角針重插", why: "先試改變姿勢、改變胸內壓（深呼吸、咳嗽）、減緩回抽速度。"}]},
-    {type: "rhythm", bg: "I16.jpg", after: "outcomes/A-O5.jpg", item: 17, task: "測完回血，用 <b>10 mL NS</b> 以<b>推-停-推-停</b>方式將管壁沖洗乾淨。", n: 5, ml: 2,
-      twice: "推完要停一下再推——「推-停-推-停」，不是一直推。", okMsg: "10 mL NS 以推-停-推-停方式把管壁沖洗乾淨了。"},
+    {type: "rhythm", bg: "I16.jpg", after: "outcomes/A-O5.jpg", item: 17, task: "測完回血，用 <b>10 mL NS</b> 以<b>推-停-推-停</b>方式將管壁沖洗乾淨。每按一次「推」＝推 1 mL。", n: 9, ml: 1, total: 10, beat: BEAT, beatRef: BEAT_REF,
+      twice: "推完要停一下再推——「推-停-推-停」，不是一直推。", okMsg: "以推-停-推-停方式把管壁沖洗乾淨了，注射器留 1 mL，下一步正壓封管用。"},
     {type: "seq", bg: "outcomes/A-O5.jpg", after: "outcomes/A-O7.jpg", item: 18, task: "操作<b>正壓封管</b>（方法一或方法二擇一）：依序點選。", opts: [
         {id: "keep", t: "方法一：保留 NS 0.5–1 mL（勿全部推注完）"}, {id: "thumb", t: "方法二：以大拇指壓住針筒活塞"},
         {id: "clamp", t: "關閉管夾"}, {id: "rm", t: "（緩慢）移除針筒／注射器"}, {id: "all", t: "把 NS 全部推完"}],
@@ -1015,7 +1046,7 @@ LABS.push({id: "remove", icon: "🔚", title: "Port-A 角針移除", items: [19,
       tray: ["S33", "S15"], zones: [{id: "cn", r: Z_CN, label: "Port-A 接頭"}], goal: [["S33", "cn"]],
       wrong: {S15: "要用 NS 10 mL 注射器（或與 10 mL 注射器針筒管徑相同）。"}, okMsg: "接上 NS 10 mL 注射器了。"},
     {type: "hold", bg: "I15.jpg", task: "<b>反抽</b>測試回血。", label: "按住＝往後拉活塞（反抽）", ms: 1500, okMsg: "有回血。"},
-    {type: "rhythm", bg: "I15.jpg", item: 19, task: "再以<b>推-停-推-停</b>方式將管壁沖洗乾淨。", n: 5, ml: 2,
+    {type: "rhythm", bg: "I15.jpg", item: 19, task: "再以<b>推-停-推-停</b>方式將管壁沖洗乾淨。每按一次「推」＝推 1 mL。", n: 10, ml: 1, beat: BEAT, beatRef: BEAT_REF,
       okMsg: "以推-停-推-停方式將管壁沖洗乾淨。"},
     {type: "drag", bg: "I15.jpg", task: "接上 <b>prefill heparin saline 3–5 mL</b>。",
       tray: ["S34", "S08"], zones: [{id: "cn", r: Z_CN, label: "Port-A 接頭"}], goal: [["S34", "cn"]],
