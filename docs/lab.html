@@ -118,6 +118,24 @@ table.rec tr.ok td:first-child{color:var(--ok);font-weight:800}
 .cf{position:fixed;top:-12px;width:10px;height:14px;z-index:60;animation:cf 1.6s linear forwards}
 @keyframes cf{to{transform:translateY(105vh) rotate(540deg)}}
 details summary{cursor:pointer;font-weight:800}
+/* 版面：左右並排／上下排列＋分隔條拖曳調整寬高 */
+.laybar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:4px 0 0;font-size:.9em}
+.laybar .btn{min-height:36px;padding:6px 10px}
+.laybar .btn.on{background:var(--pri);color:#fff;border-color:var(--pri)}
+.laybar label{display:flex;align-items:center;gap:6px;font-weight:700;color:var(--sub)}
+.laybar input[type=range]{width:120px}
+#lpane.lr{display:flex;align-items:flex-start}
+#lpane.lr>.card{min-width:0}
+#lpane.lr>.sim{flex:0 0 var(--wA,60%)}
+#lpane.lr>.card:last-child{flex:1 1 0;position:sticky;top:64px;max-height:calc(100vh - 80px);overflow:auto}
+#lpane.tb>.sim{height:var(--hA,auto);overflow:auto}
+.split{flex:none;background:var(--line);border-radius:6px;touch-action:none;position:relative}
+.split::after{content:"";position:absolute;inset:0;margin:auto;border-radius:2px;background:var(--sub);opacity:.6}
+#lpane.lr>.split{width:12px;align-self:stretch;margin:16px 4px;cursor:col-resize}
+#lpane.lr>.split::after{width:3px;height:36px}
+#lpane.tb>.split{height:12px;margin:-6px 0;cursor:row-resize}
+#lpane.tb>.split::after{width:36px;height:3px}
+.split:hover,.split.drag{background:var(--pri)}
 </style>
 </head>
 <body>
@@ -1013,7 +1031,7 @@ LABS.push({id: "remove", icon: "🔚", title: "Port-A 角針移除", items: [19,
   ]});
 
 function home(){
-  $("#backlab").hidden = true;
+  $("#backlab").hidden = true; $("#app").style.maxWidth = $(".top .in").style.maxWidth = "";
   $("#pnum").textContent = `完成 ${LABS.filter(l => DONE[l.id]).length} / ${LABS.length} 站`;
   $("#app").innerHTML = `<header><div class="kicker">新進護理師到職訓練 · 動手做技術站</div><h1>🧪 化療靜脈給藥暨人工血管照護基礎技術</h1>
     <p class="muted">把用物拖到正確的位置（或先點用物、再點位置），照評核表一步一步做。做錯會出事——出事以後要先選對處理方法，才能回到出事前重做。每一站都有「⏸ 暫停」「↩ 上一步」「🔁 全部重來」，放錯的用物可以再拖回上排。</p></header>
@@ -1026,8 +1044,49 @@ function route(){
   window.scrollTo(0, 0);
   if(!L) return home();
   $("#backlab").hidden = false; $("#pnum").textContent = `評核表第 ${L.items[0]}–${L.items[L.items.length - 1]} 項`;
-  $("#app").innerHTML = `<header><div class="kicker">動手做技術站</div><h1>${L.icon} ${esc(L.title)}</h1></header><div id="lpane"></div>`;
+  $("#app").innerHTML = `<header><div class="kicker">動手做技術站</div><h1>${L.icon} ${esc(L.title)}</h1>
+    <div class="laybar"><button class="btn ghost" data-lay="lr">⬌ 左右並排</button><button class="btn ghost" data-lay="tb">⬍ 上下排列</button>
+      <label>頁面寬度 <input type="range" id="pw" min="360" max="2400" step="20"></label><button class="btn ghost" data-lay="reset">↺ 還原版面</button>
+      <span class="muted" id="layhint"></span></div></header><div id="lpane"></div>`;
   runStation($("#lpane"), L);
+  const p = $("#lpane"), sp = document.createElement("div");
+  sp.className = "split"; sp.title = "拖曳調整大小（點兩下還原）";
+  p.insertBefore(sp, p.children[1]);
+  sp.onpointerdown = e => {
+    e.preventDefault(); sp.setPointerCapture(e.pointerId); sp.classList.add("drag"); document.body.style.userSelect = "none";
+    const r = p.getBoundingClientRect(), top = p.firstElementChild.getBoundingClientRect().top;
+    sp.onpointermove = ev => {
+      if(LAY.mode === "lr") LAY.wA = Math.round(Math.max(25, Math.min(80, (ev.clientX - r.left) / r.width * 100)));
+      else LAY.hA = Math.round(Math.max(220, ev.clientY - top));
+      applyLay();
+    };
+    sp.onpointerup = sp.onpointercancel = () => { sp.onpointermove = null; sp.classList.remove("drag"); document.body.style.userSelect = ""; saveLay(); };
+  };
+  sp.ondblclick = () => { if(LAY.mode === "lr") LAY.wA = 60; else LAY.hA = 0; applyLay(); saveLay(); };
+  document.querySelectorAll("[data-lay]").forEach(b => b.onclick = () => {
+    const v = b.dataset.lay;
+    if(v === "reset") LAY = layDefault(); else LAY.mode = v;
+    applyLay(); saveLay();
+  });
+  $("#pw").oninput = e => { LAY.pw[LAY.mode] = +e.target.value; applyLay(); };
+  $("#pw").onchange = saveLay;
+  applyLay();
+}
+/* 版面設定記在瀏覽器（每位使用者自己的） */
+const LAY_KEY = "chemo-lab-layout";
+const layDefault = () => ({mode: innerWidth >= 900 ? "lr" : "tb", wA: 60, hA: 0, pw: {lr: Math.min(1400, innerWidth), tb: 820}});
+let LAY = layDefault();
+try{ const o = JSON.parse(localStorage.getItem(LAY_KEY)); if(o && o.pw) LAY = Object.assign(LAY, o); }catch(e){}
+function saveLay(){ try{ localStorage.setItem(LAY_KEY, JSON.stringify(LAY)); }catch(e){} }
+function applyLay(){
+  const p = $("#lpane"); if(!p) return;
+  p.className = LAY.mode;
+  p.style.setProperty("--wA", LAY.wA + "%");
+  p.style.setProperty("--hA", LAY.hA ? LAY.hA + "px" : "auto");
+  $("#app").style.maxWidth = $(".top .in").style.maxWidth = LAY.pw[LAY.mode] + "px";
+  $("#pw").value = LAY.pw[LAY.mode];
+  document.querySelectorAll("[data-lay]").forEach(b => b.classList.toggle("on", b.dataset.lay === LAY.mode));
+  $("#layhint").textContent = LAY.mode === "lr" ? "拖中間的分隔條，調整左右寬度" : "拖中間的分隔條，調整上方操作區的高度";
 }
 $("#backlab").onclick = () => { location.hash = ""; };
 window.addEventListener("hashchange", route); route();
