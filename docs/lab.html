@@ -330,7 +330,7 @@ const ITEMS = {
   CST: {img: "supplies/S22.jpg", name: "組好的 CSTD", crop: [0, .1, 1, .8]},
   CHB: {img: "lab/L09.png", name: "化療藥袋\n（在夾鏈袋內）"},  // ChatGPT 去背物件圖（依給藥影片 03:35）
   NDL: {img: "outcomes/C-O5.jpg", name: "拔出的角針", crop: [.2, .1, .7, .7]},
-  GRP: {img: "outcomes/C-O3.jpg", name: "右手握柄\n（往上拉）", crop: [.15, 0, .8, .8]},
+  GRP: {img: "lab/L5-ready.jpg", name: "右手握柄\n（往上拉）", crop: [.2, 0, .6, .6]},
 };
 const PIC = src => `<img src="images/${src}" alt="">`;
 const EMO = e => `<div class="emo">${e}</div>`;
@@ -1215,16 +1215,16 @@ LABS.push({id: "remove", icon: "🔚", title: "Port-A 角針移除", items: [19,
       label: "按住＝大拇指壓住活塞", ms: 1500, early: "大拇指要持續壓住活塞，進度條跑滿才放手。", okMsg: "大拇指持續壓住針筒活塞，管內維持正壓。"},
     {type: "taps", bg: "lab/C-O1-open.jpg", after: "lab/C-O1c.jpg", item: 20, overlay: S => INSET(!S.ok, 74, 160, Z_CLAMP5), spots: [{id: "clamp", x: Z_CLAMP5.x, y: Z_CLAMP5.y, label: "黃色管夾"}], order: ["clamp"],
       task: "維持正壓，<b>關閉管夾</b>（點黃色管夾）。", btns: [{t: "先放開活塞／把剩下的全部推完，再關管夾", acc: ACC.back}], okMsg: "注入 Heparinized saline 後，維持正壓夾住管夾。"},
-    {type: "seq", bg: "outcomes/C-X2.jpg", task: "準備移除角針（BD 安全性賀伯注射針組）：依序點選。", opts: [
+    {type: "seq", bg: "lab/L5-ready.jpg", task: "準備移除角針（BD 安全性賀伯注射針組）：依序點選。", opts: [
         {id: "l", t: "左手（非慣用手）大拇指、食指固定注射針座盤"}, {id: "r", t: "右手（慣用手）大拇指與食指緊握安全針具握柄"},
         {id: "br", t: "準備好，請病人深呼吸"}, {id: "one", t: "單手抓住握柄直接拔起來"}],
       orders: [["l", "r", "br"], ["r", "l", "br"]],
       why: {br: "雙手都就位（左手固定針座盤、右手握緊握柄）準備好了，才請病人深呼吸。", one: "要用左手（非慣用手）固定注射針座盤，不能單手拔。"},
       okMsg: "左手固定針座盤、右手握緊握柄，請病人深呼吸。"},
-    {type: "drag", bg: "I15.jpg", after: "outcomes/C-O3.jpg", task: "把握柄往哪個方向拉？",
-      tray: ["GRP"], zones: [{id: "up", r: [172, 34, 232, 96], label: "垂直向上拉起"}, {id: "side", r: [246, 66, 312, 116], label: "斜斜往旁邊拔"}], goal: [["GRP", "up"]],
+    {type: "drag", bg: "lab/L5-ready.jpg", after: "lab/L5-pulled.jpg", task: "把握柄往哪個方向拉？",
+      tray: ["GRP"], zones: [{id: "up", r: [186, 30, 246, 92], label: "垂直向上拉起"}, {id: "side", r: [262, 100, 334, 152], label: "斜斜往旁邊拔"}], goal: [["GRP", "up"]],
       wrong: {"@side": "要「垂直向上」拉起，直至感覺針尖卡住定位。"}, okMsg: "垂直向上拉起。"},
-    {type: "choice", bg: "outcomes/C-O3.jpg", item: 21, task: "拉到什麼程度才算完成？",
+    {type: "choice", bg: "lab/L5-pulled.jpg", item: 21, task: "拉到什麼程度才算完成？",
       q: "怎麼知道針尖已縮至底盤中的安全機制內？", opts: [
         {t: "感覺針尖卡住定位，並聽到「喀」一聲", ok: true, why: "聽到「喀」一聲，即表示針尖已縮至底盤中的安全機制內且安全機制已啟動。"},
         {t: "針一離開皮膚就算完成，直接拿去丟", acc: ACC.stick},
