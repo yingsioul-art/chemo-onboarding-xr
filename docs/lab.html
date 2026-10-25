@@ -1191,8 +1191,8 @@ LABS.push({id: "insert", icon: "📍", title: "Port-A 角針置放", items: [13,
       label: "按住＝大拇指壓住活塞", ms: 1500, early: "大拇指要一直壓住活塞，進度條跑滿才放手。", okMsg: "大拇指壓住針筒活塞，管內維持正壓。"},
     {type: "taps", bg: "lab/L4-clamp.jpg", after: "lab/I17c.jpg", overlay: S => INSET(!S.ok, 296, 64, Z_CLAMP), spots: [{id: "clamp", x: Z_CLAMP.x, y: Z_CLAMP.y, label: "黃色管夾"}], order: ["clamp"],
       task: "維持正壓，<b>關閉管夾</b>（點黃色管夾）。", btns: [{t: "先把注射器拔掉，再關管夾", acc: ACC.back}], okMsg: "維持正壓的狀態下，關閉管夾。"},
-    {type: "hold", bg: "lab/I17c.jpg", after: "lab/A-O7-v2.jpg", item: 18, task: "管夾關好了。<b>緩慢移除</b>針筒／注射器。",
-      label: "按住＝緩慢移除注射器", ms: 2000, early: "要「緩慢」移除，進度條跑滿才放手。", okMsg: "正壓封管完成：先維持正壓 → 關閉管夾 → 再緩慢移除注射器。"},
+    {type: "hold", bg: "lab/I17c.jpg", after: "lab/A-O7-v2.jpg", item: 18, task: "管夾關好了。<b>移除</b>針筒／注射器。",   /* 10/26 使用者：拿掉「緩慢」兩個字 */
+      label: "按住＝移除注射器", ms: 2000, early: "進度條跑滿才放手。", okMsg: "正壓封管完成：先維持正壓 → 關閉管夾 → 再移除注射器。"},
   ]});
 
 /* ═════ 第 5 站 角針移除（評核表 19–21） ═════
