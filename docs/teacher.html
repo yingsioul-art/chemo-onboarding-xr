@@ -90,7 +90,7 @@ details summary{cursor:pointer;color:var(--ink2);font-size:14px}
 <div id="tip"></div>
 <script>
 /* 老師圖表：讀 Apps Script（apps-script/Code.gs）的 doGet；ENDPOINT 與學員頁相同。網址加 ?demo=1 可看假資料預覽。 */
-const ENDPOINT = "";
+const ENDPOINT = "https://script.google.com/macros/s/AKfycbzHpVJHrzP-dC0UWTtxjLVG7BKCxPn28-WUCjH69VMhk4u8_SnFYLZkJcPTmvwgMsaA/exec";
 const REFRESH_SEC = 15;
 const qs = new URLSearchParams(location.search), DEMO = qs.has("demo");
 let D, mode = "proj", key = "", timer;
