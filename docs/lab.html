@@ -1118,25 +1118,36 @@ LABS.push({id: "insert", icon: "📍", title: "Port-A 角針置放", items: [13,
 /* ═════ 第 5 站 角針移除（評核表 19–21） ═════
    情境圖 I15：病人胸前 Port-A 角針（約 200,125），延長管接頭在左下（約 80,155），右下是尖銳物品收集器 */
 const Z_CN = [52, 128, 112, 182];
+/* 10/25 使用者：第 5 站「與第 4 站類似的片段都一樣作法」→ 接上注射器後先打開管夾、反抽看到回血、沖完導管變透明、
+   Heparin 正壓封管依移除影片 01:51–02:04 兩種方法（推完大拇指壓住活塞再關管夾／推到剩小於 1 mL 隨即關管夾）
+   C-O1：移除時接著注射器（管夾關）；lab/C-O1-open：管夾打開；lab/C-O1-blood：管夾打開、回血 */
+const Z_CLAMP5 = {x: 145, y: 105};
 LABS.push({id: "remove", icon: "🔚", title: "Port-A 角針移除", items: [19, 20, 21], finImg: "outcomes/C-O5.jpg",
   desc: "消毒接頭、反抽沖管、Heparin 封管、BD 安全針具「喀」一聲移除。",
   steps: [
     {type: "drag", bg: "I15.jpg", task: "以 <b>70–75% 酒精棉</b>消毒 Port-A 接頭。",
       tray: ["S25", "S11"], zones: [{id: "cn", r: Z_CN, label: "Port-A 接頭"}], goal: [["S25", "cn"]],
       wrong: {S11: "紗布是拔針後加壓止血用的。消毒接頭要用 70–75% 酒精棉。"}, okMsg: "Port-A 接頭消毒好了。"},
-    {type: "drag", bg: "I15.jpg", task: "採無菌技術接上 <b>NS 10 mL 注射器</b>。",
+    {type: "drag", bg: "I15.jpg", after: "outcomes/C-O1.jpg", task: "採無菌技術接上 <b>NS 10 mL 注射器</b>。",
       tray: ["S33", "S15"], zones: [{id: "cn", r: Z_CN, label: "Port-A 接頭"}], goal: [["S33", "cn"]],
       wrong: {S15: "要用 NS 10 mL 注射器（或與 10 mL 注射器針筒管徑相同）。"}, okMsg: "接上 NS 10 mL 注射器了。"},
-    {type: "hold", bg: "I15.jpg", task: "<b>反抽</b>測試回血。", label: "按住＝往後拉活塞（反抽）", ms: 1500, okMsg: "有回血。"},
-    {type: "rhythm", bg: "I15.jpg", item: 19, task: "再以<b>推-停-推-停</b>方式將管壁沖洗乾淨。每按一次「推」＝推 1 mL。", n: 10, ml: 1, beat: BEAT, beatRef: BEAT_REF,
+    {type: "taps", bg: "outcomes/C-O1.jpg", after: "lab/C-O1-open.jpg", spots: [{id: "clamp", x: Z_CLAMP5.x, y: Z_CLAMP5.y, label: "黃色管夾"}], order: ["clamp"],
+      task: "要反抽測試了。先點<b>黃色管夾</b>，把管夾打開。", okMsg: "管夾打開了。"},
+    {type: "hold", bg: "lab/C-O1-open.jpg", after: "lab/C-O1-blood.jpg", task: "<b>反抽</b>測試回血。", label: "按住＝往後拉活塞（反抽）", ms: 1500, okMsg: "有回血。"},
+    {type: "rhythm", bg: "lab/C-O1-blood.jpg", after: "lab/C-O1-open.jpg", item: 19, task: "再以<b>推-停-推-停</b>方式將管壁沖洗乾淨。每按一次「推」＝推 1 mL。", n: 10, ml: 1, beat: BEAT, beatRef: BEAT_REF,
       okMsg: "以推-停-推-停方式將管壁沖洗乾淨。"},
-    {type: "drag", bg: "I15.jpg", task: "接上 <b>prefill heparin saline 3–5 mL</b>。",
-      tray: ["S34", "S08"], zones: [{id: "cn", r: Z_CN, label: "Port-A 接頭"}], goal: [["S34", "cn"]],
+    {type: "drag", bg: "lab/C-O1-open.jpg", task: "換接上 <b>prefill heparin saline 3–5 mL</b>。",
+      tray: ["S34", "S08"], zones: [{id: "cn", r: [4, 70, 80, 120], label: "注射器接頭"}], goal: [["S34", "cn"]],
       wrong: {S08: "20 mL 生理食鹽水不是 heparin。這一步要接 prefill heparin saline 3–5 mL。"}, okMsg: "接上 prefill heparin saline 了。"},
-    {type: "seq", bg: "I15.jpg", after: "outcomes/C-O1.jpg", item: 20, task: "依序點選動作。", opts: [
-        {id: "inj", t: "注入 Heparinized saline"}, {id: "clamp", t: "夾住管夾"}],
-      orders: [["inj", "clamp"]], why: {clamp: "先注入 Heparinized saline，再夾住管夾。"},
-      okMsg: "注入 Heparinized saline 後夾住管夾。"},
+    {type: "mode", bg: "lab/C-O1-open.jpg", task: "注入 Heparinized saline，<b>正壓封管</b>。兩種方法擇一，選一個來做：", note: "兩種方法出自 Port-A 角針移除教學影片 01:51–02:04。", opts: [
+        {id: "m2", t: "方法一：靜脈推注完畢後，大拇指持續壓住針筒活塞", okMsg: "方法一：推注完畢後，大拇指持續壓住針筒活塞，接著關閉管夾。"},
+        {id: "m1", t: "方法二：靜脈推注到剩餘小於 1 mL 的液體，隨即關閉管夾", okMsg: "方法二：推注到剩餘小於 1 mL，隨即關閉管夾。"}]},
+    {type: "dose", bg: "lab/C-O1-open.jpg", silent: true, skipIf: S => S.mode !== "m1", task: "方法二：注射器裡有 3 mL Heparinized saline。推到剩多少就停？",
+      start: 3, by: .5, keep: [.4, .9], keepMsg: "要推到剩餘「小於 1 mL」才停。", zero: {acc: ACC.back}, okMsg: "推注到剩餘小於 1 mL，沒有全部推完，管內維持正壓。"},
+    {type: "hold", bg: "lab/C-O1-open.jpg", silent: true, skipIf: S => S.mode !== "m2", task: "方法一：Heparinized saline 推注完畢，<b>大拇指持續壓住針筒活塞</b>。",
+      label: "按住＝大拇指壓住活塞", ms: 1500, early: "大拇指要持續壓住活塞，進度條跑滿才放手。", okMsg: "大拇指持續壓住針筒活塞，管內維持正壓。"},
+    {type: "taps", bg: "lab/C-O1-open.jpg", after: "outcomes/C-O1.jpg", item: 20, spots: [{id: "clamp", x: Z_CLAMP5.x, y: Z_CLAMP5.y, label: "黃色管夾"}], order: ["clamp"],
+      task: "維持正壓，<b>關閉管夾</b>（點黃色管夾）。", btns: [{t: "先放開活塞／把剩下的全部推完，再關管夾", acc: ACC.back}], okMsg: "注入 Heparinized saline 後，維持正壓夾住管夾。"},
     {type: "seq", bg: "outcomes/C-X2.jpg", task: "準備移除角針（BD 安全性賀伯注射針組）：依序點選。", opts: [
         {id: "l", t: "左手（非慣用手）大拇指、食指固定注射針座盤"}, {id: "r", t: "右手（慣用手）大拇指與食指緊握安全針具握柄"},
         {id: "br", t: "準備好，請病人深呼吸"}, {id: "one", t: "單手抓住握柄直接拔起來"}],
