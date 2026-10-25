@@ -218,6 +218,12 @@ function evalCols(p){
   if(p.gain != null) c["心得"] = p.gain;
   (p.cs || []).forEach((v,i) => { c[`關鍵${i+1}_${CS[i].split(" ")[0]}`] = v });
   if(p.note != null) c["評核備註"] = p.note;
+  // 技術站自評（上課前）：每站 ZPD 記「1 自己做得到／2 需提醒或示範／3 還做不到」；使用感受 1–5 分
+  const ZS = ["1 自己做得到","2 需提醒或示範","3 還做不到"];
+  (p.zpd || []).forEach((v,i) => { c[`技術站${i+1}_ZPD`] = v == null ? "" : ZS[v] });
+  (p.ux || []).forEach((v,i) => { c[`技術站感受${i+1}${i<2?"_UMUX":""}`] = v });
+  if(p.need != null) c["需協助步驟"] = p.need;
+  if(p.improve != null) c["技術站想改"] = p.improve;
   return c;
 }
 
