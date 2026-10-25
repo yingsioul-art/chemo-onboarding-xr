@@ -348,9 +348,18 @@ function bindSel(){
 function preDone(local){
   $app.innerHTML = `<div class="card" style="text-align:center;padding:30px 16px">
     <div class="big" style="color:var(--ok)">✓</div><h1>前測已送出</h1>
-    <div class="sub">下一步：進入<b>動手做技術站</b>走一遍，做完回到本頁填<b>技術站自評</b>，寫下你需要老師協助的步驟。課程結束後再用<b>同一個員工編號</b>填後測。</div>
+    <div class="sub">下一步：進入<b>動手做技術站</b>。<b id="cd">5</b> 秒後自動前往。</div>
     ${local?`<div class="note">（測試版）尚未設定回傳網址，資料只存在這台裝置。</div>`:""}
-    <div class="row" style="justify-content:center"><a href="lab.html"><button class="pri">進入動手做技術站 →</button></a><button onclick="location.hash='labfb'">我做完了，填技術站自評</button></div></div>`;
+    <div class="row" style="justify-content:center"><a href="lab.html"><button class="pri">立即進入動手做技術站 →</button></a></div>
+    <div class="muted" style="margin-top:14px">技術站做完後填<a href="#labfb">技術站自評</a>；課程結束後用同一個員工編號填後測。</div></div>`;
+  // 課程安排：簽到 → 前測 → 動手做技術站，送出後倒數自動跳轉
+  let n = 5;
+  const t = setInterval(() => {
+    const el = document.getElementById("cd");
+    if(!el){ clearInterval(t); return }   // 學員已離開這個畫面
+    if(--n <= 0){ clearInterval(t); location.href = "lab.html"; return }
+    el.textContent = n;
+  }, 1000);
 }
 async function findPre(code){
   const local = LS.get("eval_local", []).filter(p => p.kind==="pre" && p.code===code);
