@@ -173,6 +173,26 @@ const L1 = [
 ];
 const L1_ANCHOR = ["非常不同意","不同意","尚可","同意","非常同意"];
 
+/* 試算表每題一欄（10/25 使用者：eval 分頁要看到每題作答）：送出時把每題整理成「欄位名稱 → 答案」，
+   後台遇到新欄位名稱會自動加在試算表最右邊。情境題記「選的字母＋選項原文」，另一欄對錯：1 對、0 錯、9 不確定 */
+const SE_SHORT = ["CSTD組裝","給藥前準備","換接","角針置放","角針移除"];
+function evalCols(p){
+  const c = {};
+  (p.se || []).forEach((v,i) => { c[`把握度${i+1}_${SE_SHORT[i]}`] = v });
+  (p.answers || []).forEach((v,i) => {
+    const k = `情境${i+1}(${KQ[i].step})`;
+    if(v == null) return;
+    if(v === -1){ c[k] = "E. 不確定"; c[k+"_對錯"] = 9 }
+    else { c[k] = `${"ABCD"[ORDER[i].indexOf(v)]}. ${KQ[i].o[v]}`; c[k+"_對錯"] = v === KQ[i].a ? 1 : 0 }
+  });
+  (p.l1 || []).forEach((v,i) => { c[`滿意度${i+1}`] = v });
+  if(p.suggest != null) c["建議"] = p.suggest;
+  if(p.gain != null) c["心得"] = p.gain;
+  (p.cs || []).forEach((v,i) => { c[`關鍵${i+1}_${CS[i].split(" ")[0]}`] = v });
+  if(p.note != null) c["評核備註"] = p.note;
+  return c;
+}
+
 /* ---------- 共用 ---------- */
 const $app = document.getElementById("app");
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -193,6 +213,7 @@ const pct = x => isNaN(x) ? "—" : Math.round(x*100)+"%";
 async function send(payload){
   payload.version = VERSION; payload.submitted_at = new Date().toISOString();
   payload.submission_id = payload.kind + "-" + Date.now() + "-" + Math.random().toString(36).slice(2,8);
+  payload.cols = evalCols(payload);
   const local = LS.get("eval_local", []); local.push(payload); LS.set("eval_local", local);   // 本機留底
   if(!ENDPOINT) return {ok:true, local:true};
   try{

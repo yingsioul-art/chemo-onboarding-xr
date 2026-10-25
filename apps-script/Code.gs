@@ -92,8 +92,20 @@ function evalPost_(p) {
     var ids = sh.getRange(2, col, last - 1, 1).getValues();
     for (var i = 0; i < ids.length; i++) if (String(ids[i][0]) === String(p.submission_id)) return json_({ ok: true, duplicate: true });
   }
-  sh.appendRow([new Date(), p.kind, "'" + String(p.code), p.session || '', p.know == null ? '' : p.know,
-    p.submission_id || '', p.version || '', JSON.stringify(p)]);
+  // 每題一欄（10/25）：網頁送來的 p.cols＝{欄位名稱: 答案}；表頭沒有的欄位名稱就加在最右邊
+  var head = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(String);
+  var cols = p.cols || {};
+  Object.keys(cols).forEach(function (k) {
+    if (head.indexOf(k) < 0) { head.push(k); sh.getRange(1, head.length).setValue(k).setFontWeight('bold'); }
+  });
+  var base = { '收到時間': new Date(), '類型': p.kind, '代碼': "'" + String(p.code), '梯次日期': p.session || '',
+               '知識答對': p.know == null ? '' : p.know, 'submission_id': p.submission_id || '', '版本': p.version || '',
+               '原始JSON': JSON.stringify(p) };
+  sh.appendRow(head.map(function (h) {
+    if (base.hasOwnProperty(h)) return base[h];
+    var v = cols[h];
+    return v == null ? '' : (typeof v === 'string' && /^[=+\-@]/.test(v) ? "'" + v : v);   // 避免開放題被當成公式
+  }));
   return json_({ ok: true, row: sh.getLastRow() });
 }
 function evalGet_(mode, q) {
