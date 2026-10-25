@@ -66,6 +66,11 @@ h3{font-size:1.05em;margin:18px 0 6px}
 .opts{display:grid;gap:8px;margin-top:10px}
 .opt{border:2px solid var(--line);background:var(--card);border-radius:14px;padding:10px 14px;text-align:left;font-weight:700;min-height:52px;display:flex;gap:10px;align-items:center}
 .opt img{width:96px;height:96px;object-fit:cover;border-radius:10px;flex:none}
+.ndl{animation:ndl 2.2s ease-in .3s both}
+@keyframes ndl{from{transform:translate(var(--dx),var(--dy))}to{transform:translate(0,0)}}
+.pad2{animation:pad2 .8s ease-out 2.7s both}
+@keyframes pad2{from{transform:translateY(0)}to{transform:translateY(18px)}}
+@media (prefers-reduced-motion:reduce){.ndl,.pad2{animation:none}}
 .met{margin-top:10px;padding:10px;border:1px dashed var(--line);border-radius:12px}
 .met select{max-width:100%;padding:6px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
 .metdot{display:inline-block;width:16px;height:16px;border-radius:50%;background:var(--line)}
@@ -267,12 +272,14 @@ function handCtl(card, o){
      drag   拖用物到位置：tray [用物 id]、zones [{id, r:[x1,y1,x2,y2], label}]、goal [[用物, 位置]]（或 S => 陣列）、
             ordered（要照 goal 順序）、tool（用物是工具，放完回到上排，例如條碼機）、judge(S, it, z) 回傳 null／錯誤訊息／{acc}
             btns [{t, acc}]：畫面下方的「偷吃步」按鈕，按了就出事
-     taps   依序點畫面上的點：spots [{id, x, y, label}]、order [id]
+     taps   依序點畫面上的點：spots [{id, x, y, label, need}]（need＝點過哪個點才出現）、order [id]、tapImg {點: 換的圖}
      hold   按住不放：label、ms、after（完成後換的圖）
      rhythm 推-停-推-停：n（推幾次）、ml（每次幾 mL）、total（注射器總量，預設 n×ml）、beat [{bpm, t}]＋beatRef（節拍聲選項與文獻）
      choice 單選：q、opts [{t, ok, why, acc, pic}]
      seq    依序按按鈕：opts [{id, t}]、orders [[id…]]（任一條順序都可以）、why {id: 訊息或 {acc}}
-     pump   幫浦設定 Rate → VTBI：order {rate, vtbi}；skipIf(S) 為真時直接「不適用」
+     pump   幫浦設定 Rate → VTBI：order {rate, vtbi}；skipIf(S) 為真時直接「不適用」（silent：直接跳過、不顯示這一步）
+     dose   推藥到剩多少：start（起始 mL）、by（每推幾 mL）、keep [最少, 最多]（停在這個範圍才對）、zero（推光了＝錯誤訊息或 {acc}）
+   okScene：做對以後畫面換成這段 SVG（例如動畫）
      manip  手動操作示意圖（推入、銜接、戳入）：start {零件: {x, y}}、render(S) 回傳 SVG（零件加 data-part）、
             move(S, 零件, x, y) 限制移動範圍、drop(S, 零件) 放手時判斷：true＝完成／字串＝提醒／{acc}＝出事／null＝沒事
    drag 可用 scene（自畫的 SVG 背景，取代 bg 照片；可以是 S => 字串）、fillPlace（放好的用物畫滿虛線框）、noCard（放好後不畫用物卡，由 scene 畫）
@@ -354,6 +361,7 @@ function runStation(pane, L){
     commit(() => {
       if(S.si + 1 >= ST.length){ S.fin = true; return; }
       S = fresh(S.si + 1, S);
+      while(st().silent && st().skipIf(S)){ if(S.si + 1 >= ST.length){ S.fin = true; return; } S = fresh(S.si + 1, S); }
       const s = st();
       if(s.skipIf && s.skipIf(S)){ S.ok = true; S.fb = say("➖ " + s.skipMsg, true); }
     });
@@ -391,11 +399,13 @@ function runStation(pane, L){
       const [x1, y1, x2, y2] = z.r, w = Math.min(x2 - x1, y2 - y1) - 10;
       g += s.fillPlace ? itemG(id, (x1 + x2 - w) / 2, (y1 + y2 - w) / 2, w, true) : itemG(id, x2 - 40, y1 + 3, 36, true);
     });
-    (after ? [] : s.spots || []).forEach(p => {
+    (after ? [] : (s.spots || []).filter(p => !p.need || S.taps.includes(p.need))).forEach(p => {
       const k = S.taps.indexOf(p.id);
+      /* 標籤位置 lp：下（預設）／up 上／left 左／right 右 */
+      const lw = p.label.length * 10 + 12, lc = p.lp === "left" ? [p.x - 15 - lw / 2, p.y - 7] : p.lp === "right" ? [p.x + 15 + lw / 2, p.y - 7] : p.lp === "up" ? [p.x, p.y - 30] : [p.x, p.y + 15];
       g += `<g data-spot="${p.id}"><circle cx="${p.x}" cy="${p.y}" r="13" fill="${k >= 0 ? "#1f9d55" : "rgba(255,176,32,.35)"}" stroke="${k >= 0 ? "#fff" : "#ffb020"}" stroke-width="2.5" class="${k >= 0 ? "" : "pulse"}"/>
         <text x="${p.x}" y="${p.y + 4}" font-size="11" text-anchor="middle" fill="#fff" font-weight="900">${k >= 0 ? k + 1 : "?"}</text>
-        <rect x="${p.x - p.label.length * 5 - 6}" y="${p.y + 15}" width="${p.label.length * 10 + 12}" height="15" rx="7" fill="rgba(20,30,35,.78)"/><text x="${p.x}" y="${p.y + 26}" font-size="9.5" text-anchor="middle" fill="#fff" font-weight="700">${esc(p.label)}</text></g>`;
+        <rect x="${lc[0] - lw / 2}" y="${lc[1]}" width="${lw}" height="15" rx="7" fill="rgba(20,30,35,.78)"/><text x="${lc[0]}" y="${lc[1] + 11}" font-size="9.5" text-anchor="middle" fill="#fff" font-weight="700">${esc(p.label)}</text></g>`;
     });
     return g + `</g></svg>`;
   }
@@ -412,6 +422,7 @@ function runStation(pane, L){
     const useSvg = ["drag", "taps"].includes(s.type);
     if(s.type === "manip" && !S.pos) S.pos = JSON.parse(JSON.stringify(s.start));
     v.innerHTML = useSvg ? svgView(s) : s.type === "manip" ? `<svg viewBox="${s.vb || "0 0 360 240"}" id="sv">${s.render(S)}</svg>`
+      : S.ok && s.okScene ? `<svg viewBox="0 0 360 240">${s.okScene}</svg>`
       : s.scene ? `<svg viewBox="${s.vb || "0 0 360 240"}">${scn(s)}</svg>` : imgView(s);
     let h = "";
     if(s.type === "mode") h = `<div class="opts">${s.opts.map(o => `<button class="opt" data-b="m:${o.id}"${S.ok ? " disabled" : ""}>${o.t}</button>`).join("")}</div>`;
@@ -436,6 +447,11 @@ function runStation(pane, L){
       h = `<div class="order">📄 <b>練習用醫囑</b>（虛構）：${s.drug}　流速 <b>${s.order.rate} mL/hr</b>　預輸注總量 <b>${s.order.vtbi} mL</b></div>
         <div class="pump"><div class="scr"><div class="fld"><span>Rate (mL/hr)</span><span>${f("rate")}</span></div><div class="fld"><span>VTBI (mL)</span><span>${f("vtbi")}</span></div></div>
         <div class="row" style="margin-top:10px"><button class="btn" data-b="p:rate"${S.ok ? " disabled" : ""}>設定 Rate</button><button class="btn" data-b="p:vtbi"${S.ok ? " disabled" : ""}>設定 VTBI</button>${S.psel ? `<button class="btn gold" data-b="p:ok">確定</button>` : ""}</div></div>`;
+    }
+    if(s.type === "dose"){
+      if(S.left == null) S.left = s.start;
+      h = `<div class="readout" style="margin-top:8px;font-weight:800">注射器剩 ${S.left} mL</div><div class="bar"><i style="width:${Math.round(S.left / s.start * 100)}%"></i></div>
+        <div class="row" style="margin-top:10px"><button class="btn" data-b="d:push"${S.ok ? " disabled" : ""}>💉 再推 ${s.by} mL</button><button class="btn ghost" data-b="d:stop"${S.ok ? " disabled" : ""}>✋ 停在這裡，保留下來</button></div>`;
     }
     if(s.btns && !S.ok) h += `<div class="row" style="margin-top:10px">${s.btns.map((b, i) => `<button class="btn warnb" data-b="x:${i}">${b.t}</button>`).join("")}</div>`;
     if(S.ok) h += `<div class="row" style="margin-top:12px"><button class="btn gold" data-b="next">${S.si + 1 >= ST.length ? "🏁 完成本站" : "下一步 ▶"}</button></div>`;
@@ -483,6 +499,15 @@ function runStation(pane, L){
       else { if(S.last !== "push") return bad("先推一下，再停。"); commit(() => { S.last = "stop"; if(S.n >= s.n){ finish(); if(s.after) S.img = s.after; } }); beep(true, 700); }
       return draw();
     }
+    if(k === "d"){
+      if(v === "push"){
+        const n = Math.round((S.left - s.by) * 10) / 10;
+        if(n <= 0){ return bad(s.zero); }
+        commit(() => { S.left = n; S.fb = ""; }); beep(true, 520); return draw();
+      }
+      if(S.left < s.keep[0] || S.left > s.keep[1]) return bad(s.keepMsg || "剩的量不對。");
+      commit(() => finish()); return draw();
+    }
     if(k === "p"){
       if(v === "ok"){
         const inp = $("#pin"), val = inp ? parseFloat(inp.value) : NaN, want = s.order[S.psel];
@@ -520,7 +545,7 @@ function runStation(pane, L){
       const p = e.target.closest("[data-spot]"); if(!p || ctl.paused || S.ok) return;
       const id = p.dataset.spot; if(S.taps.includes(id)) return;
       if(!tapNeed(s).includes(id)) return bad((s.why || {})[id] || s.orderMsg || "順序不對。");
-      commit(() => { S.taps.push(id); S.fb = ""; if(!tapNeed(s).length){ finish(); if(s.after) S.img = s.after; } });
+      commit(() => { S.taps.push(id); S.fb = ""; if(s.tapImg && s.tapImg[id]) S.img = s.tapImg[id]; if(!tapNeed(s).length){ finish(); if(s.after) S.img = s.after; } });
       beep(true, 660); draw();
     });
   }
@@ -1006,46 +1031,88 @@ LABS.push({id: "swap", icon: "🔄", title: "換接相容輸液點滴", items: [
    120 次/分是「推 0.1 秒＋停 0.4 秒＝每拍 0.5 秒」換算；使用者記得的 150–180 次/分查無出處，留自訂滑桿可調 */
 const BEAT = [{bpm: 120, t: "推 1 mL、停 0.4 秒（Guiffant 2012）≈ 120 次/分"}, {bpm: 60, t: "推 0.1 秒、停 0.9 秒（Ferroni 2014）＝ 60 次/分"}];
 const BEAT_REF = "📚 文獻：脈衝式沖洗（push-pause）是每次推 1 mL、連續推 10 次，兩次推注之間停 0.4 秒，沖洗效果比停得更短或更長都好（Guiffant G, et al. Flushing of intravascular access devices (IVADs)—efficacy of pulsed and continuous infusions. <i>J Vasc Access</i>. 2012;13(1):75–78. doi:10.5301/JVA.2011.8487；整理於 Goossens GA. Flushing and locking of venous catheters: available evidence and evidence deficit. <i>Nurs Res Pract</i>. 2015;2015:985686. doi:10.1155/2015/985686）。同一研究團隊另一篇用「推 0.1 秒、停 0.9 秒」（Ferroni A, et al. <i>Med Devices (Auckl)</i>. 2014;7:379–383. doi:10.2147/MDER.S71217）。以上都是體外實驗，文獻沒有寫「每分鐘幾次」；120 次/分是用「推 0.1 秒＋停 0.4 秒」換算的，實際以院內規範為準。";
+/* 10/25 使用者修改第 4 站：持針三張圖（ChatGPT 依置放影片 03:53）、入針剖面動畫（同 MAKAR 情境頁 portSection）、
+   觸摸圓盤邊緣後換成「非慣用手三指固定」圖、插入後墊片下壓動畫、點管夾後換「管夾打開」圖、反抽用插好針的 I17、
+   淡粉紅回血用 I16 改色（lab/I16-pink.jpg）、沖完換導管透明的 I17、正壓封管依方法一／方法二各走一條流程 */
+/* Port-A 圓盤剖面（示意圖、非實際比例），x／y／w 是放在 360×240 畫面上的位置與寬度 */
+const PSEC_BG = `<rect x="0" y="0" width="300" height="250" fill="#fbfaf8"/>
+    <path d="M0 52 Q150 34 300 52 L300 70 Q150 52 0 70Z" fill="#e9b89c"/>
+    <path d="M0 70 Q150 52 300 70 L300 205 L0 205Z" fill="#f6e2b3"/>
+    <rect x="0" y="205" width="300" height="45" fill="#df9d92"/>
+    <path d="M86 186 L96 104 L204 104 L214 186 Z" fill="url(#ptg)" stroke="#6f7884" stroke-width="1.5"/>
+    <rect x="104" y="98" width="92" height="30" rx="8" fill="#e8eef3" stroke="#9aa6b2"/>
+    <rect x="116" y="130" width="68" height="48" rx="4" fill="#bfe0f2" stroke="#7aa9c4"/>
+    <rect x="212" y="150" width="88" height="12" rx="6" fill="#d9e6ee" stroke="#9aa6b2"/>
+    <rect x="116" y="176" width="68" height="4" fill="#5f6873"/>
+    <text x="8" y="64" font-size="11" fill="#7a5a4a">皮膚</text><text x="8" y="100" font-size="11" fill="#8a7440">皮下組織</text>
+    <text x="226" y="145" font-size="11" fill="#5b6b7a">導管</text>
+    <text x="120" y="122" font-size="10" fill="#5b6b7a">矽膠膜</text><text x="124" y="160" font-size="10" fill="#3f6f8c">儲液槽</text>`;
+const PSEC_DEF = `<defs><linearGradient id="ptg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#c9ced6"/><stop offset="1" stop-color="#8d96a3"/></linearGradient></defs>`;
+function portSec(deg, x, y, w){
+  const cx = 150, tip = deg === 90 ? {x: cx, y: 176} : {x: 178, y: 128};
+  const len = deg === 90 ? 170 : 150, rad = deg * Math.PI / 180;
+  const sx = tip.x - Math.cos(rad) * len * (deg === 90 ? 0 : 1), sy = tip.y - Math.sin(rad) * len;
+  const dx = tip.x - sx, dy = tip.y - sy;
+  return `<svg x="${x}" y="${y}" width="${w}" height="${w * 250 / 300}" viewBox="0 0 300 250">${PSEC_BG}
+    <g class="ndl" style="--dx:${(-dx * .9).toFixed(1)}px;--dy:${(-dy * .9).toFixed(1)}px">
+      <line x1="${sx.toFixed(1)}" y1="${sy.toFixed(1)}" x2="${tip.x}" y2="${tip.y}" stroke="#4a5563" stroke-width="3.5" stroke-linecap="round"/>
+      <circle cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" r="9" fill="#fff" stroke="#4a5563" stroke-width="2"/></g>
+    <text x="150" y="240" text-anchor="middle" font-size="17" font-weight="700" fill="#14171c">${deg} 度</text></svg>`;
+}
+/* 插入角針後：針先垂直到底，墊片再下壓平貼皮膚（動畫） */
+const PAD_SCENE = `<rect width="360" height="240" fill="#fbfaf8"/>${PSEC_DEF}<svg x="30" y="0" width="300" height="250" viewBox="0 0 300 250">${PSEC_BG}
+    <g class="ndl" style="--dx:0px;--dy:-110px">
+      <line x1="150" y1="20" x2="150" y2="176" stroke="#4a5563" stroke-width="3.5" stroke-linecap="round"/>
+      <rect x="136" y="0" width="28" height="18" rx="5" fill="#fff" stroke="#4a5563" stroke-width="2"/>
+      <g class="pad2"><rect x="106" y="17" width="88" height="8" rx="3" fill="#e2eef5" stroke="#7aa9c4" stroke-width="1.5"/></g></g>
+    <text x="150" y="240" text-anchor="middle" font-size="14" font-weight="700" fill="#14171c">垂直插到底 → 墊片下壓平貼皮膚</text></svg>`;
+const Z_CLAMP = {x: 195, y: 94};   // I17／L4-clamp 圖上黃色管夾的位置
 LABS.push({id: "insert", icon: "📍", title: "Port-A 角針置放", items: [13, 14, 15, 16, 17, 18], finImg: "outcomes/A-O7.jpg",
   desc: "三點持針、固定圓盤、深呼吸垂直插入、反抽看全血、推-停沖管、正壓封管。",
   steps: [
-    {type: "choice", bg: "I05.jpg", task: "慣用手拿握 <b>Port-A 角針握柄</b>，用什麼方法持針？",
+    {type: "choice", bg: "I06.jpg", task: "慣用手拿握 <b>Port-A 角針握柄</b>，用什麼方法持針？",
       q: "持角針的方法？", opts: [
-        {t: "三點持針法：拇指、食指、中指拿握角針握柄", ok: true, why: "以三點（拇指、食指、中指）持針法持針，下針時才穩、才垂直。"},
-        {t: "兩根手指捏住針頭附近", why: "要用三點（拇指、食指、中指）拿握「握柄」，不是捏針頭。"},
-        {t: "握住延長管，比較好施力", why: "握延長管無法控制角度，要用三點持針法拿握角針握柄。"}]},
-    {type: "drag", bg: "I05.jpg", item: 13, task: "使角針與 Port-A 盤面呈<b>垂直</b>，對準<b>圓盤下針處</b>。",
-      tray: ["S10", "S15"], zones: [{id: "ctr", r: [184, 84, 226, 126], label: "圓盤下針處（垂直對準）"}, {id: "edge", r: [234, 66, 270, 100], label: "圓盤邊緣斜斜對準"}],
-      goal: [["S10", "ctr"]],
-      wrong: {"S10@edge": "角針要與 Port-A 盤面呈「垂直」，對準「圓盤下針處」，不是斜斜對著邊緣。", S15: "5 mL 注射器不是這一步的用物。這一步要拿 Port-A 角針。"},
-      okMsg: "角針垂直對準圓盤下針處。"},
+        {pic: "lab/L4-1.jpg", t: "三點式握法：慣用手大拇指與中指握住注射座底盤兩側，食指頂住把手上方", ok: true, why: "持針法可採三點式握法：以慣用手大拇指與中指握住注射座底盤兩側，並以食指頂住把手上方，下針時才穩、才垂直。"},
+        {pic: "lab/L4-2.jpg", t: "兩根手指捏住針頭附近", why: "要用三點式握法拿握注射座底盤和把手，不是捏針頭。"},
+        {pic: "lab/L4-3.jpg", t: "握住延長管，比較好施力", why: "握延長管無法控制角度，角針會歪；要用三點式握法。"}]},
+    {type: "drag", item: 13, task: "使角針與 Port-A 盤面呈<b>垂直</b>，對準<b>圓盤下針處</b>。看兩段剖面動畫，把角針拖到正確的那一段。",
+      scene: `<rect width="360" height="240" fill="#fbfaf8"/>${PSEC_DEF}${portSec(90, 4, 46, 172)}${portSec(45, 184, 46, 172)}`,
+      tray: ["S10", "S15"], zones: [{id: "v90", r: [4, 46, 176, 190], label: "這樣插入"}, {id: "v45", r: [184, 46, 356, 190], label: "這樣插入 "}],
+      goal: [["S10", "v90"]],
+      wrong: {"S10@v45": "45 度斜插，針尖會停在矽膠膜或側壁，到不了圓盤底部。角針要與盤面呈「垂直」。", S15: "5 mL 注射器不是這一步的用物。這一步要拿 Port-A 角針。"},
+      okMsg: "角針與盤面垂直（90 度），針尖才會到達圓盤底部。"},
     {type: "taps", bg: "I05.jpg", item: 14, task: "先<b>觸摸 Port-A 圓盤邊緣</b>，再用<b>非慣用手</b>的拇指、食指、中指固定盤面（依序點畫面上的圓圈）。",
-      spots: [{id: "edge", x: 206, y: 58, label: "觸摸圓盤邊緣"}, {id: "th", x: 152, y: 104, label: "拇指"}, {id: "ix", x: 262, y: 104, label: "食指"}, {id: "md", x: 206, y: 158, label: "中指"}],
+      tapImg: {edge: "lab/L4-fix.jpg"},
+      spots: [{id: "edge", x: 186, y: 114, label: "觸摸圓盤邊緣", lp: "left"}, {id: "th", x: 197, y: 93, label: "拇指", need: "edge", lp: "left"}, {id: "ix", x: 228, y: 131, label: "食指", need: "edge"}, {id: "md", x: 254, y: 140, label: "中指", need: "edge", lp: "right"}],
       order: ["edge", ["th", "ix", "md"]], why: {th: "先觸摸 Port-A 圓盤邊緣，確認圓盤在哪裡，再用三指固定。", ix: "先觸摸 Port-A 圓盤邊緣，確認圓盤在哪裡，再用三指固定。", md: "先觸摸 Port-A 圓盤邊緣，確認圓盤在哪裡，再用三指固定。"},
       okMsg: "非慣用手大拇指、食指、中指用力固定盤面，盤面不會滑動。"},
-    {type: "seq", bg: "I05.jpg", item: 15, task: "插入角針：依序點選動作。", opts: [
+    {type: "seq", bg: "lab/L4-fix.jpg", okScene: PAD_SCENE, item: 15, task: "插入角針：依序點選動作。", opts: [
         {id: "br", t: "請病人深呼吸"}, {id: "in", t: "將角針垂直快速插入圓盤底部"}, {id: "pad", t: "墊片下壓並平貼皮膚"}, {id: "press", t: "插到底後再用力壓一下，確認真的到底"}],
       orders: [["br", "in", "pad"]],
       why: {in: "先請病人深呼吸，再將角針垂直快速插入。", pad: "角針插入圓盤底部以後，墊片才下壓平貼皮膚。", press: "角針插入至底部後，勿再用力強壓，避免角針前端變鈍。"},
       okMsg: "請病人深呼吸 → 垂直快速插入圓盤底部 → 墊片下壓平貼皮膚。"},
-    {type: "taps", bg: "I05.jpg", task: "要反抽測試了。先點<b>黃色管夾</b>，把管夾打開。",
-      spots: [{id: "clamp", x: 76, y: 86, label: "打開管夾"}], order: ["clamp"], okMsg: "管夾打開了。"},
-    {type: "hold", bg: "I05.jpg", after: "I16.jpg", task: "以 <b>10 mL 注射器反抽</b>，測試是否通暢及回血。", label: "按住＝往後拉活塞（反抽）", ms: 1800,
+    {type: "taps", bg: "I17.jpg", after: "lab/L4-clamp.jpg", spots: [{id: "clamp", x: Z_CLAMP.x, y: Z_CLAMP.y, label: "黃色管夾"}], order: ["clamp"], okMsg: "管夾打開了。",
+      task: "要反抽測試了。先點<b>黃色管夾</b>，把管夾打開。"},
+    {type: "hold", bg: "lab/L4-clamp.jpg", after: "I16.jpg", task: "以 <b>10 mL 注射器反抽</b>，測試是否通暢及回血。", label: "按住＝往後拉活塞（反抽）", ms: 1800,
       okMsg: "回血順暢，顏色是暗紅色的全血。"},
-    {type: "choice", bg: "outcomes/A-X2.jpg", item: 16, task: "想一想：如果反抽回來是<b>淡粉紅色</b>（像上圖）呢？",
+    {type: "choice", bg: "lab/I16-pink.jpg", item: 16, task: "想一想：如果反抽回來是<b>淡粉紅色</b>（像上圖）呢？",
       q: "反抽回來是淡粉紅色，可以開始給藥嗎？", note: "改善回血的方法出自 Port-A 角針置放查核表（15700-4-041710）認知題 1。", opts: [
         {t: "不行。回血顏色須為全血；可先請病人改變姿勢（坐起、該側上臂抬高）、深呼吸或咳嗽、減緩回抽速度再試", ok: true, why: "回血顏色須為全血，淡粉紅色不算通暢。"},
         {t: "可以，有回血就代表通暢", acc: ACC.extra},
         {t: "馬上拔出來，換一支角針重插", why: "先試改變姿勢、改變胸內壓（深呼吸、咳嗽）、減緩回抽速度。"}]},
-    {type: "rhythm", bg: "I16.jpg", after: "outcomes/A-O5.jpg", item: 17, task: "測完回血，用 <b>10 mL NS</b> 以<b>推-停-推-停</b>方式將管壁沖洗乾淨。每按一次「推」＝推 1 mL。", n: 9, ml: 1, total: 10, beat: BEAT, beatRef: BEAT_REF,
+    {type: "rhythm", bg: "I16.jpg", after: "I17.jpg", item: 17, task: "測完回血，用 <b>10 mL NS</b> 以<b>推-停-推-停</b>方式將管壁沖洗乾淨。每按一次「推」＝推 1 mL。", n: 9, ml: 1, total: 10, beat: BEAT, beatRef: BEAT_REF,
       twice: "推完要停一下再推——「推-停-推-停」，不是一直推。", okMsg: "以推-停-推-停方式把管壁沖洗乾淨了，注射器留 1 mL，下一步正壓封管用。"},
-    {type: "seq", bg: "outcomes/A-O5.jpg", after: "outcomes/A-O7.jpg", item: 18, task: "操作<b>正壓封管</b>（方法一或方法二擇一）：依序點選。", opts: [
-        {id: "keep", t: "方法一：保留 NS 0.5–1 mL（勿全部推注完）"}, {id: "thumb", t: "方法二：以大拇指壓住針筒活塞"},
-        {id: "clamp", t: "關閉管夾"}, {id: "rm", t: "（緩慢）移除針筒／注射器"}, {id: "all", t: "把 NS 全部推完"}],
-      orders: [["keep", "clamp", "rm"], ["thumb", "clamp", "rm"]],
-      why: {clamp: "關管夾之前，要先做好「保留 NS 0.5–1 mL」或「大拇指壓住活塞」，管內才有正壓。", rm: {acc: ACC.back},
-        all: "方法一要保留 NS 0.5–1 mL，勿全部推注完。", keep: "方法一、方法二擇一做就好。", thumb: "方法一、方法二擇一做就好。"},
-      okMsg: "正壓封管完成：先維持正壓 → 關閉管夾 → 再移除注射器。"},
+    {type: "mode", bg: "lab/L4-clamp.jpg", task: "沖完管了，接著<b>正壓封管</b>。方法一、方法二擇一，選一個來做：", opts: [
+        {id: "m1", t: "方法一：保留 NS 0.5–1 mL（勿全部推注完）", okMsg: "方法一：注射器裡的 NS 不要全部推完，保留 0.5–1 mL。"},
+        {id: "m2", t: "方法二：以大拇指壓住針筒活塞", okMsg: "方法二：大拇指壓住針筒活塞，維持管內正壓。"}]},
+    {type: "dose", bg: "lab/L4-clamp.jpg", silent: true, skipIf: S => S.mode !== "m1", task: "方法一：注射器裡還有 1 mL NS。要推到剩多少就停？",
+      start: 1, by: .5, keep: [.5, 1], zero: {acc: ACC.back}, okMsg: "保留 NS 0.5–1 mL，沒有全部推完，管內維持正壓。"},
+    {type: "hold", bg: "lab/L4-clamp.jpg", silent: true, skipIf: S => S.mode !== "m2", task: "方法二：以<b>大拇指壓住針筒活塞</b>，維持正壓。",
+      label: "按住＝大拇指壓住活塞", ms: 1500, early: "大拇指要一直壓住活塞，進度條跑滿才放手。", okMsg: "大拇指壓住針筒活塞，管內維持正壓。"},
+    {type: "taps", bg: "lab/L4-clamp.jpg", after: "I17.jpg", spots: [{id: "clamp", x: Z_CLAMP.x, y: Z_CLAMP.y, label: "黃色管夾"}], order: ["clamp"],
+      task: "維持正壓，<b>關閉管夾</b>（點黃色管夾）。", btns: [{t: "先把注射器拔掉，再關管夾", acc: ACC.back}], okMsg: "維持正壓的狀態下，關閉管夾。"},
+    {type: "hold", bg: "I17.jpg", after: "outcomes/A-O7.jpg", item: 18, task: "管夾關好了。<b>緩慢移除</b>針筒／注射器。",
+      label: "按住＝緩慢移除注射器", ms: 2000, early: "要「緩慢」移除，進度條跑滿才放手。", okMsg: "正壓封管完成：先維持正壓 → 關閉管夾 → 再緩慢移除注射器。"},
   ]});
 
 /* ═════ 第 5 站 角針移除（評核表 19–21） ═════
