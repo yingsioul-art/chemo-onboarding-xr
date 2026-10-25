@@ -66,6 +66,7 @@ h3{font-size:1.05em;margin:18px 0 6px}
 .opts{display:grid;gap:8px;margin-top:10px}
 .opt{border:2px solid var(--line);background:var(--card);border-radius:14px;padding:10px 14px;text-align:left;font-weight:700;min-height:52px;display:flex;gap:10px;align-items:center}
 .opt img{width:72px;height:72px;object-fit:cover;border-radius:10px;flex:none}
+.opt svg{width:104px;height:104px;border-radius:10px;flex:none;background:#eef3f6}
 .opt.bad{border-color:var(--bad);background:var(--badbg)}
 .opt.ok{border-color:var(--ok);background:var(--okbg)}
 .opt:disabled{cursor:default}
@@ -250,6 +251,10 @@ function handCtl(card, o){
      choice 單選：q、opts [{t, ok, why, acc, pic}]
      seq    依序按按鈕：opts [{id, t}]、orders [[id…]]（任一條順序都可以）、why {id: 訊息或 {acc}}
      pump   幫浦設定 Rate → VTBI：order {rate, vtbi}；skipIf(S) 為真時直接「不適用」
+     manip  手動操作示意圖（推入、銜接、戳入）：start {零件: {x, y}}、render(S) 回傳 SVG（零件加 data-part）、
+            move(S, 零件, x, y) 限制移動範圍、drop(S, 零件) 放手時判斷：true＝完成／字串＝提醒／{acc}＝出事／null＝沒事
+   drag 可用 scene（自畫的 SVG 背景，取代 bg 照片）、fillPlace（放好的用物畫滿虛線框）
+   choice 的選項可帶 svg（自畫的小圖，viewBox 0 0 120 120）；manip／choice 可用 vb 改畫面範圍（放大局部）、choice 可用 scene 取代 bg
    錯誤訊息若是 {acc: {title, cause, q, opts, lesson, pic}} 就出事（handAccident），答對處理題才回到出事前 */
 
 /* 用物卡：img 是 images/ 底下的檔名；crop＝[x, y, w, h]（0～1，取圖的一部分） */
@@ -266,6 +271,7 @@ const ITEMS = {
   S19: {img: "supplies/S19.jpg", name: "護目鏡／面罩"},
   S23: {img: "supplies/S23.jpg", name: "輸液套管"},
   S24: {img: "supplies/S24.jpg", name: "相容輸液點滴袋"},
+  NSB: {img: "supplies/S24.jpg", name: "生理食鹽水\n點滴袋"},
   S25: {img: "supplies/S25.jpg", name: "酒精棉片"},
   S26: {img: "supplies/S26.jpg", name: "條碼機"},
   S31: {img: "supplies/S31.jpg", name: "布質隔離衣"},
@@ -273,8 +279,8 @@ const ITEMS = {
   S33: {img: "supplies/S33.jpg", name: "NS 10 mL 注射器"},
   S34: {img: "supplies/S34.jpg", name: "Prefill heparin"},
   S35: {img: "supplies/S35.jpg", name: "感染性垃圾桶"},
-  SPK: {img: "supplies/S22.jpg", name: "CSTD 的 Spike", crop: [0, .28, .56, .56]},
-  ADP: {img: "supplies/S22.jpg", name: "CSTD 的 Adapter", crop: [.44, .1, .56, .62]},
+  SPK: {img: "supplies/S22.jpg", name: "CSTD 的\nSpike", crop: [0, .28, .56, .56]},
+  ADP: {img: "supplies/S22.jpg", name: "CSTD 的\nAdapter", crop: [.44, .1, .56, .62]},
   CST: {img: "supplies/S22.jpg", name: "組好的 CSTD", crop: [0, .1, 1, .8]},
   CHB: {img: "video/V-zipbag.jpg", name: "化療藥袋\n（在夾鏈袋內）", crop: [.25, .35, .72, .65]},  // 給藥影片 03:35 截圖
   NDL: {img: "outcomes/C-O5.jpg", name: "拔出的角針", crop: [.2, .1, .7, .7]},
@@ -291,7 +297,7 @@ function checkTable(nums, done, cur){
 function runStation(pane, L){
   const ST = L.steps;
   let S, accN = 0, holdT = null;
-  const fresh = (si, keep) => ({si, ok: false, fb: "", placed: {}, hit: [], taps: [], seq: [], bad: [], n: 0, last: "", hp: 0, pf: {rate: null, vtbi: null}, psel: "", mode: keep ? keep.mode : null, fin: false});
+  const fresh = (si, keep) => ({si, ok: false, fb: "", placed: {}, hit: [], taps: [], seq: [], bad: [], n: 0, last: "", hp: 0, pf: {rate: null, vtbi: null}, psel: "", pos: null, mode: keep ? keep.mode : null, fin: false});
   S = fresh(0);
   pane.innerHTML = `<div class="card sim hand">
     <p class="muted" style="margin:0">${L.intro || "把上排用物<b>拖到畫面上的虛線框</b>（或先點用物、再點虛線框）。放錯了可以把用物拖回上排。"}</p>
@@ -349,7 +355,7 @@ function runStation(pane, L){
       const row = Math.floor(i / 5), inRow = Math.min(5, s.tray.length - row * 5), col = i % 5;
       g += itemG(id, 180 - inRow * 36 + col * 72 + 7, 6 + row * 92, 58);
     });
-    g += `<g transform="translate(0 ${th})"><image href="images/${S.img || s.bg}" x="0" y="0" width="360" height="240" preserveAspectRatio="xMidYMid slice"/>`;
+    g += `<g transform="translate(0 ${th})">` + (s.scene || `<image href="images/${S.img || s.bg}" x="0" y="0" width="360" height="240" preserveAspectRatio="xMidYMid slice"/>`);
     const after = S.ok && s.after;
     (after ? [] : s.zones || []).forEach(z => {
       const [x1, y1, x2, y2] = z.r, hit = s.tool ? S.hit.includes(z.id) : Object.values(S.placed).includes(z.id);
@@ -358,7 +364,11 @@ function runStation(pane, L){
       g += `<g class="zone${hit ? " hit" : ""}"><rect class="z${hit ? "" : " pulse"}" x="${x1}" y="${y1}" width="${x2 - x1}" height="${y2 - y1}" rx="8"/>
         <rect x="${lx}" y="${ly}" width="${lw}" height="16" rx="8" fill="${hit ? "#1f9d55" : "rgba(20,30,35,.78)"}"/><text x="${lx + lw / 2}" y="${ly + 12}" font-size="10" text-anchor="middle" fill="#fff" font-weight="700">${hit ? "✓ " : ""}${esc(z.label)}</text></g>`;
     });
-    if(!s.tool && !after) Object.entries(S.placed).forEach(([id, zid]) => { const z = s.zones.find(q => q.id === zid); if(z) g += itemG(id, z.r[2] - 40, z.r[1] + 3, 36, true); });
+    if(!s.tool && !after) Object.entries(S.placed).forEach(([id, zid]) => {
+      const z = s.zones.find(q => q.id === zid); if(!z) return;
+      const [x1, y1, x2, y2] = z.r, w = Math.min(x2 - x1, y2 - y1) - 10;
+      g += s.fillPlace ? itemG(id, (x1 + x2 - w) / 2, (y1 + y2 - w) / 2, w, true) : itemG(id, x2 - 40, y1 + 3, 36, true);
+    });
     (after ? [] : s.spots || []).forEach(p => {
       const k = S.taps.indexOf(p.id);
       g += `<g data-spot="${p.id}"><circle cx="${p.x}" cy="${p.y}" r="13" fill="${k >= 0 ? "#1f9d55" : "rgba(255,176,32,.35)"}" stroke="${k >= 0 ? "#fff" : "#ffb020"}" stroke-width="2.5" class="${k >= 0 ? "" : "pulse"}"/>
@@ -377,12 +387,14 @@ function runStation(pane, L){
     $("#task").innerHTML = `第 ${S.si + 1} / ${ST.length} 步　${s.task}`;
     const v = $("#view"), c = $("#ctrls");
     const useSvg = ["drag", "taps"].includes(s.type);
-    v.innerHTML = useSvg ? svgView(s) : imgView(s);
+    if(s.type === "manip" && !S.pos) S.pos = JSON.parse(JSON.stringify(s.start));
+    v.innerHTML = useSvg ? svgView(s) : s.type === "manip" ? `<svg viewBox="${s.vb || "0 0 360 240"}" id="sv">${s.render(S)}</svg>`
+      : s.scene ? `<svg viewBox="${s.vb || "0 0 360 240"}">${s.scene}</svg>` : imgView(s);
     let h = "";
     if(s.type === "mode") h = `<div class="opts">${s.opts.map(o => `<button class="opt" data-b="m:${o.id}"${S.ok ? " disabled" : ""}>${o.t}</button>`).join("")}</div>`;
     if(s.type === "choice"){
       S.ord = S.ord || shuffle(s.opts.map((_, i) => i));
-      h = `<p style="margin:10px 0 0;font-weight:800">${s.q}</p><div class="opts">${S.ord.map(i => { const o = s.opts[i]; const cls = S.bad.includes(i) ? "bad" : S.ok && o.ok ? "ok" : ""; return `<button class="opt ${cls}" data-b="c:${i}"${S.ok || S.bad.includes(i) ? " disabled" : ""}>${o.pic ? `<img src="images/${o.pic}" alt="">` : ""}<span>${o.t}</span></button>`; }).join("")}</div>`;
+      h = `<p style="margin:10px 0 0;font-weight:800">${s.q}</p><div class="opts">${S.ord.map(i => { const o = s.opts[i]; const cls = S.bad.includes(i) ? "bad" : S.ok && o.ok ? "ok" : ""; return `<button class="opt ${cls}" data-b="c:${i}"${S.ok || S.bad.includes(i) ? " disabled" : ""}>${o.pic ? `<img src="images/${o.pic}" alt="">` : ""}${o.svg ? `<svg viewBox="0 0 120 120">${o.svg}</svg>` : ""}<span>${o.t}</span></button>`; }).join("")}</div>`;
     }
     if(s.type === "seq"){
       S.ord = S.ord || shuffle(s.opts.map((_, i) => i));
@@ -406,6 +418,7 @@ function runStation(pane, L){
     handBtns(c, h, act);
     $("#fb").innerHTML = S.fb;
     if(useSvg) wire(s);
+    if(s.type === "manip" && !S.ok) wireManip(s);
     if(s.type === "hold" && !S.ok) wireHold(s);
     const pin = $("#pin"); if(pin) pin.focus();
   }
@@ -484,6 +497,34 @@ function runStation(pane, L){
       commit(() => { S.taps.push(id); S.fb = ""; if(!tapNeed(s).length){ finish(); if(s.after) S.img = s.after; } });
       beep(true, 660); draw();
     });
+  }
+  /* manip：按住零件拖動，只重畫 SVG 內容；放手交給 s.drop 判斷 */
+  function wireManip(s){
+    const svg = $("#sv");
+    const pt = e => { const p = svg.createSVGPoint(); p.x = e.clientX; p.y = e.clientY; return p.matrixTransform(svg.getScreenCTM().inverse()); };
+    let dr = null;
+    svg.onpointerdown = e => {
+      const el = e.target.closest("[data-part]"); if(!el || ctl.paused || S.ok) return;
+      e.preventDefault(); svg.setPointerCapture(e.pointerId);
+      const id = el.dataset.part, p = pt(e);
+      dr = {id, snap: cur(), dx: S.pos[id].x - p.x, dy: S.pos[id].y - p.y};
+    };
+    svg.onpointermove = e => {
+      if(!dr) return;
+      const p = pt(e);
+      s.move(S, dr.id, p.x + dr.dx, p.y + dr.dy);
+      svg.innerHTML = s.render(S);
+    };
+    svg.onpointerup = svg.onpointercancel = () => {
+      if(!dr) return;
+      const d = dr; dr = null;
+      const r = s.drop(S, d.id);
+      if(r && r.acc){ S = JSON.parse(d.snap); return bad(r); }
+      hist.push(d.snap); ctl.upd();
+      if(r === true){ finish(); beep(true, 660); }
+      else if(r){ beep(false); S.fb = say("⚠️ " + r); }
+      draw();
+    };
   }
   function tapNeed(s){ for(const g of s.order){ const rem = [].concat(g).filter(x => !S.taps.includes(x)); if(rem.length) return rem; } return []; }
   function stopHold(){ if(holdT){ clearInterval(holdT); holdT = null; } }
@@ -596,33 +637,139 @@ const ACC = {
 };
 
 /* ═════ 第 1 站 組裝密閉系統藥品轉移裝置（評核表 1–3） ═════
-   情境圖 I08：工作車上有生理食鹽水袋（左）、輸液套管（中）、CSTD 的 Spike 與 Adapter（右，分兩包） */
-const Z_ADP = [232, 112, 348, 174], Z_NS = [28, 136, 108, 194];
+   10/25 使用者修改：工作台畫面不放任何物品，用物從上排拖到有標示的虛線框；
+   推入、銜接、戳入改成自畫示意圖、手動操作（零件外觀依〈12_CSTD構造描述〉與 CSTD 實物照片）
+   零件都先畫成「尖端朝左」，直立時用 rotate(90) 轉成尖端朝上 */
+const C1 = {line: "#5b6b75", wh: "#fdfdfd", lav: "#c7b4f0", lavS: "#7d66c4", yel: "#f2c230", tube: "rgba(170,215,240,.45)", tubeS: "#6f9fbd", blue: "#2f6fd6", txt: "#24323a"};
+const GRAB = (x, y, w, h) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#000" fill-opacity="0"/>`;
+/* 標籤寬度：中文字約 10、英數約 6 */
+const TW = t => [...t].reduce((w, c) => w + (c.charCodeAt(0) > 255 ? 10 : 6), 0);
+const TAG = (x, y, t, fill) => `<g><rect x="${x - TW(t) / 2 - 7}" y="${y - 11}" width="${TW(t) + 14}" height="16" rx="8" fill="${fill || "rgba(20,30,35,.78)"}"/><text x="${x}" y="${y + 1}" font-size="10" text-anchor="middle" fill="#fff" font-weight="700">${t}</text></g>`;
+const HINT = (t, x = 180, y = 18) => `<text x="${x}" y="${y}" font-size="11" text-anchor="middle" fill="${C1.txt}" font-weight="800">${t}</text>`;
+/* 輸液套管：Spike 尖端在 (x, y)；白色桿身長 78 → 白色本體＋藍色排氣蓋 → 透明滴室 → 管路 */
+const IV_L = 78;
+const ivSet = (x, y) => `<g transform="translate(${x} ${y})">
+  <path d="M152 0 C 190 0, 200 34, 240 34 S 330 26, 440 30" fill="none" stroke="${C1.tubeS}" stroke-width="4"/>
+  <rect x="102" y="-16" width="52" height="32" rx="6" fill="${C1.tube}" stroke="${C1.tubeS}" stroke-width="1.5"/>
+  <ellipse cx="118" cy="-2" rx="3" ry="4.5" fill="#7fb6e6"/>
+  <rect x="78" y="-11" width="26" height="22" rx="3" fill="${C1.wh}" stroke="${C1.line}" stroke-width="1.5"/>
+  <rect x="85" y="-20" width="12" height="9" rx="3" fill="${C1.blue}"/>
+  <path d="M80 -5 L10 -4 L0 0 L10 4 L80 5 Z" fill="${C1.wh}" stroke="${C1.line}" stroke-width="1.5"/></g>`;
+/* CSTD 的 Adapter：淡紫色接頭（接頭面在 x）→ 黃環 → 透明軟管（開口在 x＋130） */
+const ADP_L = 130;
+const adapter = (x, y) => `<g transform="translate(${x} ${y})">
+  <rect x="0" y="-14" width="28" height="28" rx="4" fill="${C1.lav}" fill-opacity=".85" stroke="${C1.lavS}" stroke-width="1.5"/>
+  <rect x="5" y="-9" width="18" height="18" rx="2" fill="#fff" opacity=".35"/>
+  <rect x="28" y="-10" width="7" height="20" fill="${C1.yel}" stroke="#b8901a"/>
+  <rect x="35" y="-8" width="95" height="16" rx="2" fill="${C1.tube}" stroke="${C1.tubeS}" stroke-width="1.5"/></g>`;
+/* CSTD 的 Spike：白色尖頭（x）→ 白色方形本體＋排氣蓋 → 白霧半透明小接頭（接頭面在 x＋105） */
+const SPK_L = 105;
+const cSpike = (x, y) => `<g transform="translate(${x} ${y})">
+  <path d="M0 0 L12 -5 L56 -5 L56 5 L12 5 Z" fill="${C1.wh}" stroke="${C1.line}" stroke-width="1.5"/>
+  <rect x="55" y="-13" width="30" height="26" rx="3" fill="${C1.wh}" stroke="${C1.line}" stroke-width="1.5"/>
+  <rect x="64" y="-20" width="10" height="7" rx="2" fill="${C1.wh}" stroke="${C1.line}"/>
+  <rect x="85" y="-9" width="20" height="18" rx="3" fill="#e9eef2" fill-opacity=".9" stroke="#9aa6ae" stroke-width="1.5"/></g>`;
+/* 組好的一組（尖端在 x）：CSTD Spike → Adapter → 輸液套管（Spike 完全沒入軟管） */
+const assembled = (x, y) => ivSet(x + SPK_L + ADP_L - IV_L, y) + adapter(x + SPK_L, y) + cSpike(x, y);
+/* 生理食鹽水軟袋（頸部出口＋橡皮塞），中心 x＝180 */
+const NS = {port: [80, 104], stop: [102, 116]};
+const nsBag = `<line x1="180" y1="0" x2="180" y2="8" stroke="${C1.line}" stroke-width="2"/>
+  <path d="M132 10 Q180 2 228 10 L232 66 Q180 84 128 66 Z" fill="#eaf4fb" stroke="#8fb3c9" stroke-width="1.5"/>
+  <path d="M136 30 Q180 26 224 30 L228 64 Q180 80 132 64 Z" fill="rgba(150,200,235,.45)"/>
+  <rect x="150" y="20" width="60" height="26" rx="3" fill="#fff" stroke="#b9c7d0"/>
+  <text x="180" y="31" font-size="7.5" text-anchor="middle" fill="${C1.txt}" font-weight="700">生理食鹽水</text>
+  <text x="180" y="41" font-size="7" text-anchor="middle" fill="${C1.txt}">0.9%　250 mL</text>`;
+const nsNeck = pierced => `<rect x="171" y="${NS.port[0] - 4}" width="18" height="${NS.port[1] - NS.port[0] + 4}" rx="2" fill="#f4f7f9" fill-opacity=".75" stroke="#9aa6ae" stroke-width="1.5"/>
+  <rect x="167" y="${NS.stop[0]}" width="26" height="${NS.stop[1] - NS.stop[0]}" rx="3" fill="#8f9aa3" stroke="#5f6a72" stroke-width="1.5"/>
+  ${pierced ? `<line x1="180" y1="${NS.stop[0] + 1}" x2="180" y2="${NS.stop[1] - 1}" stroke="#3b444a" stroke-width="3"/>` : ""}`;
+/* 第 5 步：軟袋頸部（橡皮塞）下方特寫，wet＝有液體殘留 */
+const neckSvg = wet => `<rect x="50" y="0" width="20" height="40" fill="#f4f7f9" stroke="#9aa6ae" stroke-width="1.5"/>
+  <rect x="55" y="0" width="10" height="40" fill="#fff" stroke="#c4ccd2"/>
+  <rect x="42" y="38" width="36" height="18" rx="3" fill="#8f9aa3" stroke="#5f6a72" stroke-width="1.5"/>
+  <rect x="40" y="56" width="40" height="38" rx="3" fill="#fff" stroke="${C1.line}" stroke-width="1.5"/>
+  <rect x="48" y="94" width="24" height="26" rx="3" fill="#e9eef2" stroke="#9aa6ae" stroke-width="1.5"/>
+  <text x="104" y="51" font-size="8" text-anchor="middle" fill="${C1.txt}">橡皮塞</text><line x1="79" y1="47" x2="90" y2="47" stroke="${C1.txt}"/>
+  ${wet ? `<path d="M46 56 Q60 66 76 56 L76 60 Q60 72 46 60 Z" fill="#4f9be0" opacity=".75"/>
+    <path d="M70 57 q4 7 0 10 q-4 -3 0 -10" fill="#3d8bd6"/><path d="M52 64 q4 8 0 11 q-4 -3 0 -11" fill="#3d8bd6"/>
+    <path d="M62 76 q4 8 0 11 q-4 -3 0 -11" fill="#3d8bd6"/><ellipse cx="60" cy="93" rx="13" ry="2.5" fill="#4f9be0" opacity=".6"/>` : ""}`;
+
+/* 第 1 步工作台：鋪單面防水吸水紙，上面沒有任何物品 */
+const BENCH = `<rect width="360" height="240" fill="#e8eef1"/><rect x="0" y="22" width="360" height="218" fill="#cfd8de"/>
+  <rect x="8" y="28" width="344" height="206" rx="6" fill="#fbfdff" stroke="#c9d3d9" stroke-width="1.5"/>
+  <text x="346" y="229" font-size="9" text-anchor="end" fill="#8a99a3">工作台（已鋪單面防水吸水紙）</text>`;
+const FIT_A = {x: 8, y: 130}, FIT_OPEN = FIT_A.x + ADP_L, FIT_FULL = FIT_OPEN - IV_L;
+const JOIN_SNAP = 16, PIERCE_FULL = NS.stop[1] - 55;
+
 LABS.push({id: "cstd", icon: "🔗", title: "組裝密閉系統藥品轉移裝置（CSTD）", items: [1, 2, 3], finImg: "outcomes/B-O3.jpg",
-  desc: "輸液套管接 Adapter、Spike 接 Adapter、Spike 戳入點滴袋橡皮塞。",
+  desc: "準備用物、輸液套管推入 Adapter、Spike 接 Adapter、Spike 戳入點滴袋橡皮塞。",
   steps: [
-    {type: "drag", bg: "I08.jpg", task: "把<b>輸液套管</b>的 Spike 接到 <b>CSTD 的 Adapter</b> 透明軟管。",
-      tray: ["S23", "S15", "S25"], zones: [{id: "adp", r: Z_ADP, label: "CSTD Adapter 透明軟管"}], goal: [["S23", "adp"]],
-      wrong: {S15: "注射器不是接在 Adapter 上的。這一步要接的是「輸液套管」的 Spike。", S25: "酒精棉片不是這一步的用物。這一步要把「輸液套管」的 Spike 接到 Adapter。"},
-      okMsg: "輸液套管的 Spike 對準了 Adapter 的透明軟管。"},
-    {type: "choice", bg: "I08.jpg", item: 1, task: "輸液套管的 Spike 要插多深？",
-      q: "輸液套管的 Spike 插進 Adapter 的透明軟管，要插到什麼程度？", opts: [
-        {t: "完全沒入透明軟管", ok: true, why: "Spike 要完全沒入 Adapter 的透明軟管，避免化療滴注過程滲漏發生。"},
-        {t: "插進一半、卡住就好", acc: ACC.leak},
-        {t: "碰到軟管口就好，滴的時候會自己吸緊", acc: ACC.leak}]},
-    {type: "drag", bg: "I08.jpg", item: 2, task: "取 <b>CSTD 的 Spike</b>，和 <b>CSTD 的 Adapter</b> 相互銜接。",
-      tray: ["SPK", "S13"], zones: [{id: "adp", r: Z_ADP, label: "CSTD Adapter"}], goal: [["SPK", "adp"]],
-      wrong: {S13: "注射帽是 Port-A 角針用的，不是 CSTD 的零件。這一步要拿「CSTD 的 Spike」。"},
-      okMsg: "CSTD 的 Spike 和 Adapter 銜接好了（輸液套管→Adapter→Spike 連成一組）。"},
-    {type: "drag", bg: "I08.jpg", task: "把組好的 CSTD，用 <b>Spike 的尖端</b>戳入<b>生理食鹽水點滴袋的橡皮塞</b>。",
-      tray: ["CST", "S08"], zones: [{id: "ns", r: Z_NS, label: "點滴袋橡皮塞"}], goal: [["CST", "ns"]],
-      wrong: {S08: "20 mL 生理食鹽水小瓶是置放角針時抽 NS 用的。這一步要戳入生理食鹽水（或相容輸液）「點滴袋」的橡皮塞。"},
-      okMsg: "Spike 尖端戳入點滴袋的橡皮塞了。"},
-    {type: "choice", bg: "I08.jpg", item: 3, task: "戳入橡皮塞之後，還要確認什麼？",
-      q: "Spike 戳入點滴袋的橡皮塞以後，評核表要求一定要確認的是？", opts: [
-        {t: "橡皮塞下方無液體殘留", ok: true, why: "戳入後須確認橡皮塞下方無液體殘留，才算完成。"},
-        {t: "點滴袋的有效期限", why: "效期當然要看，但這一步評核表要求確認的是「橡皮塞下方無液體殘留」。"},
-        {t: "不用確認，直接進行下一步", why: "戳入之後還有一個確認動作：橡皮塞下方無液體殘留。"}]},
+    {type: "drag", scene: BENCH, fillPlace: true, task: "準備用物：把上排的用物拖到工作台上<b>有標示的虛線框</b>裡（有些不是這一站的用物）。",
+      tray: ["NSB", "S23", "ADP", "SPK", "S15", "S13"],
+      zones: [{id: "ns", r: [20, 48, 170, 128], label: "生理食鹽水點滴袋"}, {id: "iv", r: [190, 48, 340, 128], label: "輸液套管"},
+              {id: "adp", r: [20, 152, 170, 216], label: "CSTD 的 Adapter"}, {id: "spk", r: [190, 152, 340, 216], label: "CSTD 的 Spike"}],
+      goal: [["NSB", "ns"], ["S23", "iv"], ["ADP", "adp"], ["SPK", "spk"]],
+      wrong: {S15: "5 mL 注射器不是組裝 CSTD 的用物。", S13: "注射帽是 Port-A 角針用的，不是 CSTD 的零件。"},
+      okMsg: "用物備齊：生理食鹽水點滴袋、輸液套管、CSTD 的 Adapter 和 Spike（Spike 與 Adapter 分成兩個包裝）。"},
+    {type: "manip", item: 1, task: "把<b>輸液套管</b>的 Spike 推進 <b>CSTD 的 Adapter</b> 透明軟管。要推到哪裡？",
+      vb: "0 64 270 135", start: {iv: {x: FIT_OPEN + 14, y: FIT_A.y}},
+      move(S, id, x){ S.pos.iv.x = Math.max(FIT_FULL, Math.min(250, x)); },
+      render(S){
+        const x = S.pos.iv.x, dep = Math.max(0, Math.min(1, (FIT_OPEN - x) / IV_L)), y = FIT_A.y;
+        const marks = [[FIT_OPEN, "碰到軟管口", 0], [FIT_OPEN - IV_L / 2, "插進一半", 1], [FIT_FULL, "完全沒入", 0]];
+        return `<rect width="360" height="240" fill="#eef3f6"/>` + HINT(S.ok ? "✓ 輸液套管的 Spike 完全沒入透明軟管" : "按住白色的 Spike，往左推進透明軟管 ⬅", 135, 80)
+          + marks.map(([mx, t, k]) => `<line x1="${mx}" y1="${y - 22}" x2="${mx}" y2="${y + 18 + k * 16}" stroke="#e08a00" stroke-width="1.5" stroke-dasharray="3 3"/><text x="${mx}" y="${y + 30 + k * 16}" font-size="9.5" text-anchor="middle" fill="#a35f00" font-weight="800">${t}</text>`).join("")
+          + `<g data-part="iv">${ivSet(x, y)}${GRAB(x - 6, y - 30, 170, 60)}</g>` + adapter(FIT_A.x, y)
+          + TAG(FIT_A.x + 52, y - 28, "CSTD 的 Adapter") + TAG(Math.min(230, x + 92), y - 30, "輸液套管")
+          + `<text x="135" y="192" font-size="11" text-anchor="middle" fill="${C1.txt}" font-weight="800">插入深度：${Math.round(dep * 100)}%</text>`;
+      },
+      drop(S){
+        const x = S.pos.iv.x;
+        if(x <= FIT_FULL + 4){ S.pos.iv.x = FIT_FULL; return true; }
+        if(x >= FIT_OPEN - 2) return "Spike 還沒插進透明軟管。按住白色的 Spike，往左推進去。";
+        return {acc: ACC.leak};
+      },
+      okMsg: "輸液套管的 Spike 完全沒入 Adapter 的透明軟管，避免化療滴注過程滲漏發生。"},
+    {type: "manip", item: 2, task: "取 <b>CSTD 的 Spike</b>，和 <b>CSTD 的 Adapter</b>（後面已接好輸液套管）相互銜接：把兩邊的接頭拖在一起。",
+      vb: "0 40 340 180", start: {a: {x: 120, y: 172}, b: {x: 16, y: 112}},
+      move(S, id, x, y){ S.pos[id] = {x: Math.max(-40, Math.min(320, x)), y: Math.max(76, Math.min(206, y))}; },
+      render(S){
+        const {a, b} = S.pos, done = S.ok;
+        const ring = (x, y) => done ? "" : `<circle cx="${x}" cy="${y}" r="9" fill="none" stroke="#ffb020" stroke-width="2.5" class="pulse"/>`;
+        return `<rect width="360" height="240" fill="#eef3f6"/>` + HINT(done ? "✓ CSTD 的 Spike 和 Adapter 銜接好了" : "拖動任一邊，讓兩個橘圈（接頭）對在一起", 170, 58)
+          + `<g data-part="a">${ivSet(a.x + ADP_L - IV_L, a.y)}${adapter(a.x, a.y)}${GRAB(a.x - 4, a.y - 26, 200, 52)}</g>`
+          + `<g data-part="b">${cSpike(b.x, b.y)}${GRAB(b.x - 4, b.y - 26, SPK_L + 8, 52)}</g>`
+          + ring(a.x, a.y) + ring(b.x + SPK_L, b.y)
+          + (done ? "" : TAG(b.x + 55, b.y - 30, "CSTD 的 Spike") + TAG(a.x + 90, a.y - 30, "Adapter＋輸液套管"));
+      },
+      drop(S){
+        const {a, b} = S.pos;
+        if(Math.abs(b.x + SPK_L - a.x) < JOIN_SNAP && Math.abs(b.y - a.y) < JOIN_SNAP){ S.pos.b = {x: a.x - SPK_L, y: a.y}; return true; }
+        return null;
+      },
+      okMsg: "CSTD 的 Spike 和 Adapter 相互銜接好了：Spike → Adapter → 輸液套管，連成一組。"},
+    {type: "manip", task: "把組好的 CSTD，用 <b>Spike 的尖端</b>往上戳入<b>生理食鹽水點滴袋的橡皮塞</b>。",
+      vb: "30 0 280 240", start: {c: {x: 180, y: 150}},
+      move(S, id, x, y){ S.pos.c.y = Math.max(PIERCE_FULL, Math.min(200, y)); },
+      render(S){
+        const y = S.pos.c.y, inStop = y < NS.stop[1], through = y < NS.stop[0];
+        return `<rect width="360" height="240" fill="#eef3f6"/>` + nsBag
+          + `<g data-part="c"><g transform="translate(180 ${y}) rotate(90)">${assembled(0, 0)}</g>${GRAB(160, y - 4, 40, 240)}</g>`
+          + nsNeck(through) + TAG(266, NS.stop[0] + 8, "橡皮塞")
+          + `<line x1="252" y1="${NS.stop[0] + 8}" x2="196" y2="${NS.stop[0] + 8}" stroke="${C1.txt}" stroke-width="1"/>`
+          + (S.ok ? TAG(100, 150, "✓ 整支戳入", "#1f9d55") : through ? TAG(100, 150, "戳穿了！再推到底 ⬆", "#c26a00") : inStop ? TAG(100, 150, "尖端進入橡皮塞…", "#c26a00") : TAG(100, 150, "按住 CSTD 往上推 ⬆"));
+      },
+      drop(S){
+        const y = S.pos.c.y;
+        if(y <= PIERCE_FULL + 3){ S.pos.c.y = PIERCE_FULL; return true; }
+        if(y >= NS.stop[1]) return "Spike 尖端還沒碰到橡皮塞。按住 CSTD，往上把尖端戳入點滴袋的橡皮塞。";
+        return "已經戳進橡皮塞，但還沒插到底。繼續往上推，讓 Spike 整支戳入。";
+      },
+      okMsg: "CSTD 的 Spike 尖端戳入生理食鹽水點滴袋的橡皮塞了。"},
+    {type: "choice", vb: "30 0 280 240", scene: `<rect width="360" height="240" fill="#eef3f6"/>${nsBag}<g transform="translate(180 ${PIERCE_FULL}) rotate(90)">${assembled(0, 0)}</g>${nsNeck(true)}<circle cx="180" cy="${NS.stop[1] + 14}" r="24" fill="none" stroke="#e08a00" stroke-width="2.5" stroke-dasharray="5 4"/>${TAG(258, NS.stop[1] + 14, "看這裡：橡皮塞下方", "#c26a00")}`, item: 3, task: "戳入橡皮塞之後，看一下<b>點滴袋頸部、橡皮塞下方</b>。",
+      q: "Spike 戳入點滴袋的橡皮塞以後，評核表要求一定要確認的是？哪一個可以往下做？", opts: [
+        {svg: neckSvg(false), t: "橡皮塞下方乾的、無液體殘留 → 可以往下做", ok: true, why: "戳入後須確認橡皮塞下方無液體殘留，才算完成。"},
+        {svg: neckSvg(true), t: "橡皮塞下方有一點液體 → 擦乾就可以往下做", why: "評核表要求「橡皮塞下方無液體殘留」。看到有液體，就不能直接往下做。"},
+        {t: "不用看，直接進行下一步", why: "戳入之後還有一個確認動作：橡皮塞下方無液體殘留。"}]},
   ]});
 
 /* ═════ 第 2 站 主護護理師執行給藥前準備（評核表 4–10） ═════
