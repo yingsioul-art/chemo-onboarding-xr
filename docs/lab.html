@@ -66,11 +66,6 @@ h3{font-size:1.05em;margin:18px 0 6px}
 .opts{display:grid;gap:8px;margin-top:10px}
 .opt{border:2px solid var(--line);background:var(--card);border-radius:14px;padding:10px 14px;text-align:left;font-weight:700;min-height:52px;display:flex;gap:10px;align-items:center}
 .opt img{width:96px;height:96px;object-fit:cover;border-radius:10px;flex:none}
-.ndl{animation:ndl 2.2s ease-in .3s both}
-@keyframes ndl{from{transform:translate(var(--dx),var(--dy))}to{transform:translate(0,0)}}
-.pad2{animation:pad2 .8s ease-out 2.7s both}
-@keyframes pad2{from{transform:translateY(0)}to{transform:translateY(22px)}}
-@media (prefers-reduced-motion:reduce){.ndl,.pad2{animation:none}}
 .media{margin-top:12px;padding:10px;border-radius:12px;background:color-mix(in srgb,var(--pri) 6%,var(--card))}
 .vids{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
 .vids figure{margin:0}
@@ -82,9 +77,9 @@ h3{font-size:1.05em;margin:18px 0 6px}
 .popsteps{margin:10px 0 0;padding-left:0;list-style:none;display:grid;gap:6px}
 .popsteps li{padding:8px 10px;border-radius:10px;background:color-mix(in srgb,var(--pri) 6%,var(--card));opacity:.35;animation:popon .3s ease-out both}
 @keyframes popon{to{opacity:1;background:color-mix(in srgb,#1f9d55 14%,var(--card))}}
-.t2{opacity:0;animation:fadein .4s ease-out 2.5s both}.t3{opacity:0;animation:fadein .3s ease-out 2.7s both}.t4{opacity:0;animation:fadein .4s ease-out 3.5s both}
 @keyframes fadein{to{opacity:1}}
-@media (prefers-reduced-motion:reduce){.t2,.t3,.t4,.popsteps li{animation:none;opacity:1}}
+/* 插入角針、90／45 度動畫改用 SVG 原生動畫（st_2_port.js MV／FADE），不受減少動態效果影響 */
+@media (prefers-reduced-motion:reduce){.popsteps li{animation:none;opacity:1}}
 .met{margin-top:10px;padding:10px;border:1px dashed var(--line);border-radius:12px}
 .met select{max-width:100%;padding:6px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
 .metdot{display:inline-block;width:16px;height:16px;border-radius:50%;background:var(--line)}
@@ -343,7 +338,7 @@ function checkTable(nums, done, cur){
 /* 說明視窗：點背景或「知道了」關閉；「再播一次」重新放動畫（重建內容讓 CSS 動畫重跑） */
 function showPop(p){
   const d = document.createElement("div"); d.className = "pop";
-  const body = () => `<div class="box"><h3 style="margin:0 0 8px">${p.title}</h3><svg viewBox="0 0 360 240" class="popsvg">${p.svg}</svg>
+  const body = () => `<div class="box"><h3 style="margin:0 0 8px">${p.title}</h3><svg viewBox="0 0 360 252" class="popsvg">${p.svg}</svg>
     <ol class="popsteps">${p.steps.map((t, i) => `<li style="animation-delay:${p.at[i]}s">${t}</li>`).join("")}</ol>
     <div class="row" style="margin-top:10px"><button class="btn ghost" data-p="re">▶ 再播一次</button><button class="btn gold" data-p="x">知道了</button></div></div>`;
   d.innerHTML = body();
@@ -1104,27 +1099,31 @@ const PSEC_BG = `<rect x="0" y="0" width="300" height="250" fill="#fbfaf8"/>
     <text x="226" y="145" font-size="11" fill="#5b6b7a">導管</text>
     <text x="120" y="122" font-size="10" fill="#5b6b7a">矽膠膜</text><text x="124" y="160" font-size="10" fill="#3f6f8c">儲液槽</text>`;
 const PSEC_DEF = `<defs><linearGradient id="ptg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#c9ced6"/><stop offset="1" stop-color="#8d96a3"/></linearGradient></defs>`;
+/* 10/26 使用者：手機看不到插入角針動畫 → 原本用 CSS 動畫，手機開「減少動態效果」（或省電模式）就整個停掉；
+   改用 SVG 原生動畫（SMIL）：MV 平移、FADE 淡入，所有手機瀏覽器都會播，畫面重畫時自動重播 */
+const MV = (from, to, begin, dur, ease) => `<animateTransform attributeName="transform" type="translate" values="${from};${to}" begin="${begin}s" dur="${dur}s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines="${ease === "out" ? "0 0 .58 1" : ".42 0 1 1"}"/>`;
+const FADE = (begin, dur) => `opacity="0"><animate attributeName="opacity" values="0;1" begin="${begin}s" dur="${dur}s" fill="freeze"/`;
 function portSec(deg, x, y, w){
   const cx = 150, tip = deg === 90 ? {x: cx, y: 176} : {x: 178, y: 128};
   const len = deg === 90 ? 170 : 150, rad = deg * Math.PI / 180;
   const sx = tip.x - Math.cos(rad) * len * (deg === 90 ? 0 : 1), sy = tip.y - Math.sin(rad) * len;
   const dx = tip.x - sx, dy = tip.y - sy;
   return `<svg x="${x}" y="${y}" width="${w}" height="${w * 250 / 300}" viewBox="0 0 300 250">${PSEC_BG}
-    <g class="ndl" style="--dx:${(-dx * .9).toFixed(1)}px;--dy:${(-dy * .9).toFixed(1)}px">
+    <g transform="translate(${(-dx * .9).toFixed(1)} ${(-dy * .9).toFixed(1)})">${MV(`${(-dx * .9).toFixed(1)} ${(-dy * .9).toFixed(1)}`, "0 0", .3, 2.2)}
       <line x1="${sx.toFixed(1)}" y1="${sy.toFixed(1)}" x2="${tip.x}" y2="${tip.y}" stroke="#4a5563" stroke-width="3.5" stroke-linecap="round"/>
       <circle cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" r="9" fill="#fff" stroke="#4a5563" stroke-width="2"/></g>
     <text x="150" y="240" text-anchor="middle" font-size="17" font-weight="700" fill="#14171c">${deg} 度</text></svg>`;
 }
 /* 插入角針後：針先垂直到底，墊片再下壓平貼皮膚（動畫） */
 const PAD_SCENE = `<rect width="360" height="240" fill="#fbfaf8"/>${PSEC_DEF}<svg x="30" y="0" width="300" height="250" viewBox="0 0 300 250">${PSEC_BG}
-    <g class="ndl" style="--dx:0px;--dy:-110px">
+    <g transform="translate(0 -110)">${MV("0 -110", "0 0", .3, 2.2)}
       <line x1="150" y1="20" x2="150" y2="176" stroke="#4a5563" stroke-width="3.5" stroke-linecap="round"/>
       <rect x="136" y="0" width="28" height="18" rx="5" fill="#fff" stroke="#4a5563" stroke-width="2"/>
-      <g class="pad2"><rect x="106" y="17" width="88" height="8" rx="3" fill="#e2eef5" stroke="#7aa9c4" stroke-width="1.5"/>
+      <g>${MV("0 0", "0 22", 2.7, .8, "out")}<rect x="106" y="17" width="88" height="8" rx="3" fill="#e2eef5" stroke="#7aa9c4" stroke-width="1.5"/>
         <line x1="194" y1="21" x2="222" y2="21" stroke="#2f6f8f" stroke-width="1.2"/><text x="226" y="25" font-size="12" font-weight="800" fill="#2f6f8f">墊片</text></g></g>
-    <g class="t2"><line x1="154" y1="176" x2="222" y2="192" stroke="#b03030" stroke-width="1.2"/><text x="224" y="196" font-size="11" font-weight="800" fill="#b03030">針尖到底</text></g>
-    <g class="t3"><path d="M128 4 v12 m-5 -5 l5 5 l5 -5 M172 4 v12 m-5 -5 l5 5 l5 -5" stroke="#e08a00" stroke-width="2.2" fill="none"/><text x="70" y="14" font-size="11" font-weight="800" fill="#c26a00">下壓</text></g>
-    <g class="t4"><rect x="60" y="226" width="180" height="20" rx="10" fill="#1f9d55"/><text x="150" y="240" text-anchor="middle" font-size="12" font-weight="800" fill="#fff">✓ 墊片平貼皮膚、沒有空隙</text></g></svg>`;
+    <g ${FADE(2.5, .4)}><line x1="154" y1="176" x2="222" y2="192" stroke="#b03030" stroke-width="1.2"/><text x="224" y="196" font-size="11" font-weight="800" fill="#b03030">針尖到底</text></g>
+    <g ${FADE(2.7, .3)}><path d="M128 4 v12 m-5 -5 l5 5 l5 -5 M172 4 v12 m-5 -5 l5 5 l5 -5" stroke="#e08a00" stroke-width="2.2" fill="none"/><text x="70" y="14" font-size="11" font-weight="800" fill="#c26a00">下壓</text></g>
+    <g ${FADE(3.5, .4)}><rect x="60" y="226" width="180" height="20" rx="10" fill="#1f9d55"/><text x="150" y="240" text-anchor="middle" font-size="12" font-weight="800" fill="#fff">✓ 墊片平貼皮膚、沒有空隙</text></g></svg>`;
 /* 插入角針做完跳出的說明視窗：動畫＋三個動作的文字，播到哪一步就亮哪一步（at＝第幾秒亮） */
 const PAD_POP = {title: "🎬 插入角針：看動畫的重點", svg: PAD_SCENE, at: [0, .3, 2.7], steps: [
   "① 請病人<b>深呼吸</b>。",
