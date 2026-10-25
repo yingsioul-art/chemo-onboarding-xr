@@ -306,7 +306,7 @@ function handCtl(card, o){
 /* 用物卡：img 是 images/ 底下的檔名；crop＝[x, y, w, h]（0～1，取圖的一部分） */
 const ITEMS = {
   S01: {img: "supplies/S01.jpg", name: "外科口罩"},
-  S08: {img: "supplies/S08.jpg", name: "20 mL 生理食鹽水"},
+  S08: {img: "supplies/S08.jpg", name: "20 mL\n生理食鹽水"},
   S10: {img: "supplies/S10.jpg", name: "Port-A 安全角針"},
   S11: {img: "supplies/S11.jpg", name: "4\"×4\" 紗布"},
   S13: {img: "supplies/S13.jpg", name: "注射帽"},
@@ -323,7 +323,7 @@ const ITEMS = {
   S31: {img: "supplies/S31.jpg", name: "布質隔離衣"},
   S32: {img: "supplies/S32.jpg", name: "尖銳物收集器"},
   S33: {img: "supplies/S33.jpg", name: "NS 10 mL 注射器"},
-  S34: {img: "supplies/S34.jpg", name: "Prefill heparin"},
+  S34: {img: "supplies/S34.jpg", name: "Prefill\nheparin saline"},
   S35: {img: "supplies/S35.jpg", name: "感染性垃圾桶"},
   SPK: {img: "supplies/S22-SPK.jpg", name: "CSTD 的\nSpike"},
   ADP: {img: "supplies/S22-ADP.jpg", name: "CSTD 的\nAdapter"},
@@ -401,8 +401,11 @@ function runStation(pane, L){
   const trayRows = s => s.tray ? Math.ceil(s.tray.length / 5) : 0;
   function itemG(id, x, y, w, small){
     const it = ITEMS[id], c = it.crop || [0, 0, 1, 1], lines = it.name.split("\n");
-    const lab = small ? "" : lines.map((t, i) => `<text x="${w / 2}" y="${w + 12 + i * 11}" font-size="10.5" text-anchor="middle" fill="var(--ink)" font-weight="700">${esc(t)}</text>`).join("");
-    return `<g data-it="${id}" transform="translate(${x} ${y})"><rect x="-2" y="-2" width="${w + 4}" height="${w + 4 + (small ? 0 : 10 + lines.length * 11)}" rx="8" fill="var(--card)" stroke="var(--line)" stroke-width="1.5"/>
+    /* 名稱要在卡片框內：卡片比圖寬一點，字太長就縮小字體（中文字約 1 字寬、英數約 0.56 字寬） */
+    const pad = small ? 2 : 6, tw = t => [...t].reduce((n, ch) => n + (ch.charCodeAt(0) > 255 ? 1 : .56), 0);
+    const fs = Math.min(10.5, (w + pad * 2 - 4) / Math.max(1, ...lines.map(tw)));
+    const lab = small ? "" : lines.map((t, i) => `<text x="${w / 2}" y="${w + 12 + i * (fs + 1)}" font-size="${fs.toFixed(1)}" text-anchor="middle" fill="var(--ink)" font-weight="700">${esc(t)}</text>`).join("");
+    return `<g data-it="${id}" transform="translate(${x} ${y})"><rect x="${-pad}" y="-2" width="${w + pad * 2}" height="${w + 4 + (small ? 0 : 8 + lines.length * (fs + 1))}" rx="8" fill="var(--card)" stroke="var(--line)" stroke-width="1.5"/>
       <svg width="${w}" height="${w}" viewBox="${c[0]} ${c[1]} ${c[2]} ${c[3]}" preserveAspectRatio="xMidYMid meet"><image href="images/${it.img}" x="0" y="0" width="1" height="1" preserveAspectRatio="none"/></svg>${lab}</g>`;
   }
   function svgView(s){
@@ -411,7 +414,7 @@ function runStation(pane, L){
     (s.tray || []).forEach((id, i) => {
       if(!s.tool && S.placed[id]) return;
       const row = Math.floor(i / 5), inRow = Math.min(5, s.tray.length - row * 5), col = i % 5;
-      g += itemG(id, 180 - inRow * 36 + col * 72 + 7, 6 + row * 92, 58);
+      g += itemG(id, 180 - inRow * (inRow <= 3 ? 46 : 36) + col * (inRow <= 3 ? 92 : 72) + (inRow <= 3 ? 17 : 7), 6 + row * 92, 58);
     });
     g += `<g transform="translate(0 ${th})">` + (scn(s) || `<image href="images/${S.img || s.bg}" x="0" y="0" width="360" height="240" preserveAspectRatio="xMidYMid slice"/>`);
     if(s.overlay) g += s.overlay(S);
