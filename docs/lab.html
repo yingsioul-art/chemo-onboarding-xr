@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>動手做技術站｜化療給藥暨人工血管</title>
+<!--
+  到職訓練｜化療靜脈給藥暨人工血管照護基礎技術　動手做技術站（lab.html）
+  原始檔：D:\Zettelkasten\20_教學\Makar\40_新進護理師到職訓練XR\50_動手做技術站\lab_src.html＋engine.js＋st_*.js
+  產生：python _build_lab.py（內嵌 _共用\handlab.js，輸出到 C:\dev\chemo-onboarding-xr\docs\lab.html）
+  localStorage key：chemo-lab-v1（只記哪些站做完）
+  步驟照技術評核表〈到職訓練-化療靜脈給藥暨人工血管照護基礎技術〉21 項；圖片沿用到職訓練 XR 圖卡（docs/images）
+-->
+<style>
+:root{
+  --bg:#eef6f6; --card:#ffffff; --ink:#1c2b33; --sub:#5a6b74; --line:#d5e4e6;
+  --pri:#0f7c86; --ok:#1f9d55; --okbg:#e3f7ea; --bad:#d64545; --badbg:#fde8e8; --gold:#f5a524;
+  --shadow:0 4px 0 rgba(15,70,80,.10), 0 8px 24px rgba(15,70,80,.07); --r:18px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#10201f; --card:#1b2f30; --ink:#eaf6f6; --sub:#a9c2c4; --line:#2f4a4c;
+    --pri:#4fc3cc; --okbg:#173b27; --badbg:#47202a; --shadow:0 4px 0 rgba(0,0,0,.35), 0 8px 24px rgba(0,0,0,.25);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#10201f; --card:#1b2f30; --ink:#eaf6f6; --sub:#a9c2c4; --line:#2f4a4c;
+  --pri:#4fc3cc; --okbg:#173b27; --badbg:#47202a; --shadow:0 4px 0 rgba(0,0,0,.35), 0 8px 24px rgba(0,0,0,.25);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.7 "Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif}
+button{font:inherit;color:inherit;cursor:pointer}
+.wrap{max-width:820px;margin:0 auto;padding:0 16px 96px}
+.top{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.top .in{max-width:820px;margin:0 auto;padding:8px 16px;display:flex;align-items:center;gap:10px;min-height:56px}
+.top a,.top button{border:2px solid var(--line);background:var(--card);border-radius:14px;font-weight:800;padding:6px 14px;min-height:44px;text-decoration:none;color:var(--ink);display:inline-flex;align-items:center}
+.top b{flex:1;text-align:right;font-size:.9em;color:var(--sub)}
+header{padding:28px 0 8px}
+.kicker{font-size:13px;letter-spacing:.2em;color:var(--pri);font-weight:800}
+h1{font-size:1.7em;margin:6px 0;line-height:1.3}
+h2{font-size:1.25em;margin:8px 0;line-height:1.35}
+h3{font-size:1.05em;margin:18px 0 6px}
+.muted{color:var(--sub);font-size:.9em}
+.card{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:20px;margin:16px 0}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+@media (max-width:560px){.grid{grid-template-columns:1fr}.card{padding:14px}}
+.xp{border:0;text-align:left;background:var(--card);border-radius:18px;padding:14px 16px;box-shadow:var(--shadow);display:flex;gap:12px;align-items:center;min-height:96px;border-left:7px solid var(--c,var(--pri))}
+.xp .ic{font-size:34px;flex:none}
+.xp b{display:block}
+.xp small{color:var(--sub);display:block;line-height:1.45}
+.xp .done{color:var(--ok);font-weight:800}
+.btn{border:0;border-radius:14px;padding:12px 20px;font-weight:800;background:var(--pri);color:#fff;box-shadow:0 4px 0 color-mix(in srgb,var(--pri) 60%,#000);min-height:48px}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 color-mix(in srgb,var(--pri) 60%,#000)}
+.btn.ghost{background:var(--card);color:var(--pri);border:2px solid var(--pri);box-shadow:none}
+.btn.gold{background:var(--gold);color:#3b2300;box-shadow:0 4px 0 #b97300}
+.btn.warnb{background:var(--card);color:var(--bad);border:2px dashed var(--bad);box-shadow:none;font-weight:700}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.ex{background:color-mix(in srgb,var(--ok) 14%,transparent);border-radius:14px;padding:12px 14px;margin-top:8px}
+.warn{background:var(--badbg);border-radius:12px;padding:10px 12px;margin-top:8px;font-size:.95em}
+.note{font-size:.85em;color:var(--sub);margin-top:6px}
+.sim{position:relative}
+.simview{background:color-mix(in srgb,var(--pri) 6%,var(--card));border-radius:16px;padding:8px;margin-top:10px;text-align:center}
+.simview svg{width:100%;height:auto;display:block}
+.simview img.scene{width:100%;aspect-ratio:3/2;object-fit:cover;border-radius:12px;display:block}
+.opts{display:grid;gap:8px;margin-top:10px}
+.opt{border:2px solid var(--line);background:var(--card);border-radius:14px;padding:10px 14px;text-align:left;font-weight:700;min-height:52px;display:flex;gap:10px;align-items:center}
+.opt img{width:72px;height:72px;object-fit:cover;border-radius:10px;flex:none}
+.opt.bad{border-color:var(--bad);background:var(--badbg)}
+.opt.ok{border-color:var(--ok);background:var(--okbg)}
+.opt:disabled{cursor:default}
+.seqline{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;min-height:36px}
+.seqline span{background:color-mix(in srgb,var(--ok) 18%,var(--card));border-radius:999px;padding:4px 12px;font-size:.9em;font-weight:700}
+table.rec{border-collapse:collapse;width:100%;font-size:.92em;margin-top:6px}
+table.rec th,table.rec td{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+table.rec th{background:color-mix(in srgb,var(--pri) 10%,var(--card));white-space:nowrap}
+table.rec tr.now td{background:color-mix(in srgb,var(--gold) 16%,var(--card))}
+table.rec tr.ok td:first-child{color:var(--ok);font-weight:800}
+.order{border:2px solid var(--pri);border-radius:12px;padding:8px 12px;margin-top:8px;background:color-mix(in srgb,var(--pri) 8%,var(--card))}
+.pump{background:#e9f3ef;border-radius:16px;padding:12px;margin-top:10px;color:#1c2b33}
+.pump .scr{background:#cfe6f5;border:3px solid #7aa3b8;border-radius:10px;padding:10px;font-family:ui-monospace,Consolas,monospace;font-size:1.05em}
+.pump .fld{display:flex;justify-content:space-between;gap:8px;padding:4px 0;border-bottom:1px dashed #7aa3b8}
+.pump input{font:inherit;width:110px;padding:6px 8px;border-radius:8px;border:2px solid #7aa3b8}
+.bar{height:16px;border-radius:999px;background:var(--line);overflow:hidden;margin-top:8px}
+.bar i{display:block;height:100%;background:var(--pri);transition:width .1s}
+/* 動手做：拖曳用物、出事＋急救（與國中自然站同一套 handlab.js） */
+.hand svg{touch-action:none;user-select:none;-webkit-user-select:none}
+.hand [data-it]{cursor:grab}
+.hand [data-it].sel{filter:drop-shadow(0 0 5px var(--gold)) drop-shadow(0 0 2px var(--gold))}
+.hand [data-spot]{cursor:pointer}
+.zone rect.z{fill:rgba(255,255,255,.18);stroke:#ffb020;stroke-width:2.5;stroke-dasharray:6 4}
+.zone.hit rect.z{stroke:#1f9d55;stroke-dasharray:none;fill:rgba(31,157,85,.18)}
+.pulse{animation:pulse 1.4s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.45}}
+.htask{background:color-mix(in srgb,var(--pri) 10%,var(--card));border-left:5px solid var(--pri);border-radius:12px;padding:8px 12px;margin-top:10px;font-weight:700}
+.htask small{display:block;font-weight:600;color:var(--sub)}
+.acc{position:absolute;inset:0;z-index:6;border-radius:var(--r);background:rgba(42,10,5,.94);color:#fff;padding:72px 16px 16px;overflow:auto}
+.acc h2{color:#ffd23f;margin:4px 0}
+.accpic img{width:100%;max-height:190px;object-fit:cover;border-radius:12px}
+.accpic .emo{font-size:64px;text-align:center;line-height:1.3}
+.acc .ao{display:block;width:100%;text-align:left;border:2px solid rgba(255,255,255,.4);background:rgba(255,255,255,.08);color:#fff;border-radius:12px;padding:10px 12px;margin:6px 0;min-height:48px;font-weight:700}
+.acc .ao.bad{border-color:#ff8a8a;background:rgba(255,77,77,.25)}
+.acc .ao.ok{border-color:#7be3a1;background:rgba(31,157,85,.35)}
+.accnote{background:rgba(255,255,255,.12);border-radius:10px;padding:8px 12px;margin-top:8px}
+.accnote.ok{background:rgba(31,157,85,.35)}
+.hctl{position:sticky;top:64px;z-index:9;display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;padding:6px;border-radius:14px;background:color-mix(in srgb,var(--card) 92%,transparent)}
+.hctl .btn{flex:1;min-width:0;padding:8px 6px;font-size:.88em;min-height:44px}
+.hpause{position:absolute;inset:0;z-index:8;border-radius:var(--r);background:color-mix(in srgb,var(--bg) 80%,transparent);backdrop-filter:blur(3px);text-align:center;font-size:1.4em;font-weight:900;color:var(--ink);padding-top:230px}
+.hpause>div{position:sticky;top:260px;background:var(--card);border-radius:16px;padding:12px;margin:0 16px;box-shadow:var(--shadow)}
+.hpause small{font-size:.6em;font-weight:700;color:var(--sub)}
+.paused .pulse{animation-play-state:paused}
+.shake{animation:shake .45s 2}
+@keyframes shake{0%,100%{transform:none}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+@media (prefers-reduced-motion:reduce){.pulse,.shake{animation:none}}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(120px);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;font-weight:700;transition:transform .25s;z-index:50;max-width:90vw;text-align:center}
+#toast.on{transform:translateX(-50%) translateY(0)}
+.cf{position:fixed;top:-12px;width:10px;height:14px;z-index:60;animation:cf 1.6s linear forwards}
+@keyframes cf{to{transform:translateY(105vh) rotate(540deg)}}
+details summary{cursor:pointer;font-weight:800}
+</style>
+</head>
+<body>
+<div class="top"><div class="in"><a href="index.html">← 首頁</a><button id="backlab" hidden>← 技術站清單</button><b id="pnum"></b></div></div>
+<div class="wrap" id="app"></div>
+<div id="toast"></div>
+<script>
+const $ = s => document.querySelector(s);
+function toast(m){ const t = $("#toast"); t.textContent = m; t.classList.add("on"); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove("on"), 2400); }
+let AC; function beep(ok, f){ try{ AC = AC || new (window.AudioContext || window.webkitAudioContext)(); const o = AC.createOscillator(), g = AC.createGain(); o.frequency.value = f || (ok ? 880 : 220); g.gain.value = .06; o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime + (ok ? .12 : .25)); }catch(e){} }
+function shuffle(a){ a = a.slice(); for(let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function confetti(){ const C = ["#0f7c86", "#f5a524", "#1f9d55", "#e84393", "#2f80ed"]; for(let i = 0; i < 40; i++){ const d = document.createElement("i"); d.className = "cf"; d.style.left = Math.random() * 100 + "vw"; d.style.background = C[i % 5]; d.style.animationDelay = Math.random() * .5 + "s"; document.body.appendChild(d); setTimeout(() => d.remove(), 2400); } }
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
+const say = (t, ok) => `<div class="${ok ? "ex" : "warn"}">${t}</div>`;
+const KEY = "chemo-lab-v1";
+let DONE = {}; try{ DONE = JSON.parse(localStorage.getItem(KEY)) || {}; }catch(e){ DONE = {}; }
+function labDone(id){ if(!DONE[id]){ DONE[id] = Date.now(); try{ localStorage.setItem(KEY, JSON.stringify(DONE)); }catch(e){} } }
+/* 每一站：LABS.push({id, icon, title, items:[評核表項次], desc, steps:[…]})，由 engine.js 的 runStation 執行 */
+const LABS = [];
+/* ═══ 動手做實驗引擎（七上生物站 sims3.js、八上自然 lab.html 共用；build 時內嵌） ═══
+   提供：handDnd 拖曳／點選放置、handAccident 出事＋急救關卡、handCtl 暫停／上一步／全部重來、flameP 火焰
+   頁面需先提供：toast(msg)、beep(ok)、shuffle(arr)、confetti() */
+/* 共用：拖曳或「先點器材、再點目的地」；cb.drop(id, x, y) 用 SVG 座標；cb.tap(id) 回傳 true 表示已當成動作處理 */
+function handDnd(svg, cb){
+  let sel = null;
+  const pt = e => { const p = svg.createSVGPoint(); p.x = e.clientX; p.y = e.clientY; return p.matrixTransform(svg.getScreenCTM().inverse()); };
+  const mark = () => svg.querySelectorAll("[data-it]").forEach(x => x.classList.toggle("sel", x.dataset.it === sel));
+  svg.addEventListener("pointerdown", e => {
+    const g = e.target.closest("[data-it]");
+    if(!g){ if(sel){ const id = sel, p = pt(e); sel = null; cb.drop(id, p.x, p.y); } return; }
+    e.preventDefault();
+    const p0 = pt(e), base = g.getAttribute("transform") || ""; let moved = false;
+    svg.setPointerCapture(e.pointerId);
+    g.parentNode.appendChild(g);
+    const mv = ev => { const p = pt(ev), dx = p.x - p0.x, dy = p.y - p0.y; if(Math.hypot(dx, dy) > 5) moved = true; if(moved) g.setAttribute("transform", `translate(${dx} ${dy}) ${base}`); };
+    const up = ev => {
+      svg.removeEventListener("pointermove", mv); svg.removeEventListener("pointerup", up); svg.removeEventListener("pointercancel", up);
+      const id = g.dataset.it;
+      if(moved){ sel = null; g.setAttribute("transform", base); const p = pt(ev); cb.drop(id, p.x, p.y); return; }
+      if(sel && sel !== id){ const s0 = sel, p = pt(ev); sel = null; cb.drop(s0, p.x, p.y); return; }
+      if(cb.tap && cb.tap(id) === true){ sel = null; return; }
+      sel = sel === id ? null : id; mark();
+      if(sel && cb.name) toast(`已拿起「${cb.name(sel)}」，再點要放的位置`);
+    };
+    svg.addEventListener("pointermove", mv); svg.addEventListener("pointerup", up); svg.addEventListener("pointercancel", up);
+  });
+}
+/* 按鈕列：內容變了才重建，點擊用事件委派。
+   畫面每秒重畫好幾次（倒液體、冒氣泡）時，按到一半的按鈕才不會被換掉而點不到 */
+function handBtns(box, html, act){
+  if(box._h !== html){ box._h = html; box.innerHTML = html; }
+  box.onclick = e => { const b = e.target.closest("[data-b]"); if(b && !b.disabled) act(b.dataset.b); };
+}
+const inR = (x, y, r) => x >= r[0] && x <= r[2] && y >= r[1] && y <= r[3];
+
+/* 火焰：(x, y) 是火焰底部中心 */
+function flameP(x, y, h, w, c1, c2, d){
+  const P = (H, W) => `M${x} ${y} C${x - W} ${y - H * .4} ${x - W * .25} ${y - H * .75} ${x} ${y - H} C${x + W * .25} ${y - H * .75} ${x + W} ${y - H * .4} ${x} ${y} Z`;
+  return `<g class="flame" style="animation-delay:${d || 0}s"><path d="${P(h, w)}" fill="${c1}"/><path d="${P(h * .55, w * .5)}" fill="${c2}"/></g>`;
+}
+const FIRE_SVG = `<svg viewBox="0 0 240 110"><rect x="0" y="92" width="240" height="18" rx="4" fill="#6b4a2f"/>
+  ${flameP(40, 94, 48, 20, "#ff6a1f", "#ffd23f", .1)}${flameP(80, 94, 78, 28, "#ff4d1f", "#ffcf3a", 0)}${flameP(122, 94, 96, 32, "#ff5a1f", "#ffe066", .15)}
+  ${flameP(165, 94, 70, 26, "#ff4d1f", "#ffcf3a", .05)}${flameP(205, 94, 44, 18, "#ff6a1f", "#ffd23f", .2)}</svg>`;
+const BREAK_SVG = `<svg viewBox="0 0 240 110"><rect x="0" y="92" width="240" height="18" rx="4" fill="#6b4a2f"/>
+  <ellipse cx="120" cy="92" rx="95" ry="7" fill="#8ecdf0" opacity=".8"/>
+  <path d="M85 92 l10 -40 l14 8 l-6 32 z M125 92 l4 -34 l16 6 l-4 28z M150 90 l18 -18 l8 10 l-12 10z M70 90 l-14 -10 l6 -6 l14 12z" fill="#dfe8ef" stroke="#fff" stroke-width="2" opacity=".9"/>
+  <g stroke="#fff" stroke-width="2" opacity=".7"><path d="M60 40 q6 -10 0 -20"/><path d="M120 34 q6 -10 0 -20"/><path d="M180 40 q6 -10 0 -20"/></g></svg>`;
+
+/* 出事畫面＋急救關卡：答對急救題才能回去重做 */
+function handAccident(card, cfg, onBack){
+  const el = document.createElement("div"); el.className = "acc";
+  const opts = shuffle(cfg.opts);
+  el.innerHTML = `<div class="accpic">${cfg.pic || FIRE_SVG}</div>
+    <h2>${cfg.title}</h2><p style="margin:0">${cfg.cause}</p>
+    <p style="margin:8px 0 0;font-weight:800">🚨 ${cfg.q}</p>
+    <div>${opts.map((o, i) => `<button class="ao" data-i="${i}">${o.t}</button>`).join("")}</div><div class="accfb"></div>`;
+  card.appendChild(el); card.classList.remove("shake"); void card.offsetWidth; card.classList.add("shake"); beep(false);
+  el.scrollIntoView({block: "nearest", behavior: "smooth"});
+  el.querySelectorAll(".ao").forEach(b => b.onclick = () => {
+    const o = opts[+b.dataset.i], fb = el.querySelector(".accfb");
+    if(!o.ok){ b.classList.add("bad"); b.disabled = true; beep(false); fb.innerHTML = `<div class="accnote">❌ ${o.why}</div>`; return; }
+    b.classList.add("ok"); beep(true);
+    el.querySelectorAll(".ao").forEach(x => x.disabled = true);
+    el.querySelectorAll(".flame").forEach(f => f.classList.add("out"));
+    fb.innerHTML = `<div class="accnote ok">✅ ${o.why}</div><div class="accnote">🔴 出事原因：${cfg.lesson}</div>
+      <button class="btn gold" style="margin-top:8px" data-back>🔁 回到出事前，再做一次</button>`;
+    fb.querySelector("[data-back]").onclick = () => { el.remove(); onBack(); };
+  });
+}
+const FIRE_Q = {q: "桌上起火了！你第一步要怎麼做？", opts: [
+  {t: "用濕抹布蓋住火焰，並大聲報告老師", ok: true, why: "蓋住火焰隔絕氧氣，火就會熄滅；同時報告老師處理。"},
+  {t: "趕快拿水潑上去", why: "酒精起火時潑水，燒著的酒精可能隨水流到處擴散，火反而變大。"},
+  {t: "用嘴用力把火吹熄", why: "吹氣會送進更多氧氣，還可能把火吹向自己。"},
+  {t: "把酒精燈拿起來丟進水槽", why: "拿起燃燒中的燈會燙傷，酒精灑出來火勢更大。"}]};
+
+/* 共用控制列：暫停／上一步／全部重來；o = {canUndo, undo, reset}
+   ctl.wait(ms, fn)：暫停時不倒數；按上一步或重來後，還沒到時間的動作一律作廢 */
+function handCtl(card, o){
+  const ctl = {paused: false, gen: 0};
+  const bar = document.createElement("div"); bar.className = "hctl";
+  bar.innerHTML = `<button class="btn ghost" data-c="pause">⏸ 暫停</button><button class="btn ghost" data-c="undo">↩ 上一步</button><button class="btn ghost" data-c="reset">🔁 全部重來</button>`;
+  card.insertBefore(bar, card.querySelector(".htask"));
+  const pz = document.createElement("div"); pz.className = "hpause";
+  pz.innerHTML = `<div>⏸ 已暫停<br><small>按上方「▶ 繼續」回到實驗</small></div>`;
+  const pb = bar.querySelector("[data-c=pause]");
+  const setPause = v => { ctl.paused = v; card.classList.toggle("paused", v); pb.textContent = v ? "▶ 繼續" : "⏸ 暫停"; if(v) card.appendChild(pz); else pz.remove(); };
+  bar.onclick = e => {
+    const b = e.target.closest("[data-c]"); if(!b) return;
+    if(b.dataset.c === "pause") return setPause(!ctl.paused);
+    setPause(false); ctl.gen++;
+    const acc = card.querySelector(".acc"); if(acc) acc.remove();
+    b.dataset.c === "undo" ? o.undo() : o.reset();
+  };
+  ctl.wait = (ms, fn) => { const g = ctl.gen; let left = ms; const t = setInterval(() => { if(g !== ctl.gen){ clearInterval(t); return; } if(ctl.paused) return; left -= 100; if(left <= 0){ clearInterval(t); fn(); } }, 100); };
+  ctl.upd = () => { bar.querySelector("[data-c=undo]").disabled = !o.canUndo(); };
+  return ctl;
+}
+
+
+/* ═══ 技術站引擎：每一站＝一串步驟（steps），依序執行 ═══
+   步驟共用欄位：type、task（上方任務列）、bg（情境圖，3:2）、item（這一步做完，評核表第幾項打勾；分好幾步的項目只寫在最後一步）、
+                 okMsg（做對後的說明）、note（教學補充，畫面另標）
+   type：
+     mode   選情境（連線／非連線幫浦）：opts [{id, t}]
+     drag   拖用物到位置：tray [用物 id]、zones [{id, r:[x1,y1,x2,y2], label}]、goal [[用物, 位置]]（或 S => 陣列）、
+            ordered（要照 goal 順序）、tool（用物是工具，放完回到上排，例如條碼機）、judge(S, it, z) 回傳 null／錯誤訊息／{acc}
+            btns [{t, acc}]：畫面下方的「偷吃步」按鈕，按了就出事
+     taps   依序點畫面上的點：spots [{id, x, y, label}]、order [id]
+     hold   按住不放：label、ms、after（完成後換的圖）
+     rhythm 推-停-推-停：n（推幾次）、ml（每次幾 mL）
+     choice 單選：q、opts [{t, ok, why, acc, pic}]
+     seq    依序按按鈕：opts [{id, t}]、orders [[id…]]（任一條順序都可以）、why {id: 訊息或 {acc}}
+     pump   幫浦設定 Rate → VTBI：order {rate, vtbi}；skipIf(S) 為真時直接「不適用」
+   錯誤訊息若是 {acc: {title, cause, q, opts, lesson, pic}} 就出事（handAccident），答對處理題才回到出事前 */
+
+/* 用物卡：img 是 images/ 底下的檔名；crop＝[x, y, w, h]（0～1，取圖的一部分） */
+const ITEMS = {
+  S01: {img: "supplies/S01.jpg", name: "外科口罩"},
+  S08: {img: "supplies/S08.jpg", name: "20 mL 生理食鹽水"},
+  S10: {img: "supplies/S10.jpg", name: "Port-A 安全角針"},
+  S11: {img: "supplies/S11.jpg", name: "4\"×4\" 紗布"},
+  S13: {img: "supplies/S13.jpg", name: "注射帽"},
+  S14: {img: "supplies/S14.jpg", name: "清潔手套"},
+  S15: {img: "supplies/S15.jpg", name: "5 mL 注射器"},
+  S17: {img: "supplies/S17.jpg", name: "防水隔離衣"},
+  S18: {img: "supplies/S18.jpg", name: "雙層丁腈手套"},
+  S19: {img: "supplies/S19.jpg", name: "護目鏡／面罩"},
+  S23: {img: "supplies/S23.jpg", name: "輸液套管"},
+  S24: {img: "supplies/S24.jpg", name: "相容輸液點滴袋"},
+  S25: {img: "supplies/S25.jpg", name: "酒精棉片"},
+  S26: {img: "supplies/S26.jpg", name: "條碼機"},
+  S31: {img: "supplies/S31.jpg", name: "布質隔離衣"},
+  S32: {img: "supplies/S32.jpg", name: "尖銳物收集器"},
+  S33: {img: "supplies/S33.jpg", name: "NS 10 mL 注射器"},
+  S34: {img: "supplies/S34.jpg", name: "Prefill heparin"},
+  S35: {img: "supplies/S35.jpg", name: "感染性垃圾桶"},
+  SPK: {img: "supplies/S22.jpg", name: "CSTD 的 Spike", crop: [0, .28, .56, .56]},
+  ADP: {img: "supplies/S22.jpg", name: "CSTD 的 Adapter", crop: [.44, .1, .56, .62]},
+  CST: {img: "supplies/S22.jpg", name: "組好的 CSTD", crop: [0, .1, 1, .8]},
+  CHB: {img: "outcomes/B-O2.jpg", name: "化療藥袋\n（在夾鏈袋內）"},
+  NDL: {img: "outcomes/C-O5.jpg", name: "拔出的角針", crop: [.2, .1, .7, .7]},
+  GRP: {img: "outcomes/C-O3.jpg", name: "右手握柄\n（往上拉）", crop: [.15, 0, .8, .8]},
+};
+const PIC = src => `<img src="images/${src}" alt="">`;
+const EMO = e => `<div class="emo">${e}</div>`;
+const CHK_NO = n => `<span class="note">（評核表第 ${n} 項）</span>`;
+
+function checkTable(nums, done, cur){
+  return `<table class="rec"><tr><th>項</th><th>評核表原文</th></tr>${nums.map(n => `<tr class="${done.has(n) ? "ok" : n === cur ? "now" : ""}"><td>${done.has(n) ? "✅" : n === cur ? "▶" : "○"} ${n}</td><td>${CHECK[n - 1]}</td></tr>`).join("")}</table>`;
+}
+
+function runStation(pane, L){
+  const ST = L.steps;
+  let S, accN = 0, holdT = null;
+  const fresh = (si, keep) => ({si, ok: false, fb: "", placed: {}, hit: [], taps: [], seq: [], bad: [], n: 0, last: "", hp: 0, pf: {rate: null, vtbi: null}, psel: "", mode: keep ? keep.mode : null, fin: false});
+  S = fresh(0);
+  pane.innerHTML = `<div class="card sim hand">
+    <p class="muted" style="margin:0">${L.intro || "把上排用物<b>拖到畫面上的虛線框</b>（或先點用物、再點虛線框）。放錯了可以把用物拖回上排。"}</p>
+    <div class="htask" id="task"></div>
+    <div class="simview" id="view"></div>
+    <div id="ctrls"></div>
+    <div id="fb"></div></div>
+    <div class="card"><h3 style="margin-top:0">📋 本站評核表</h3><div id="chk"></div></div>`;
+  const card = pane.querySelector(".hand");
+  const hist = [], cur = () => JSON.stringify(S);
+  const commit = fn => { hist.push(cur()); fn(); ctl.upd(); };
+  const ctl = handCtl(card, {
+    canUndo: () => hist.length > 0,
+    undo(){ stopHold(); const o = hist.pop(); if(o){ S = JSON.parse(o); S.fb = say("↩ 回到上一步。", true); draw(); } ctl.upd(); },
+    reset(){ stopHold(); hist.length = 0; accN = 0; S = fresh(0); S.fb = say("🔁 全部重來。", true); draw(); ctl.upd(); }});
+  const st = () => ST[S.si];
+  const goals = s => typeof s.goal === "function" ? s.goal(S) : (s.goal || []);
+  const doneItems = () => new Set(ST.slice(0, S.si + (S.ok ? 1 : 0)).flatMap(s => s.item ? [].concat(s.item) : []));
+  const curItem = () => { for(let i = S.si; i < ST.length; i++) if(ST[i].item) return [].concat(ST[i].item)[0]; return 0; };
+
+  /* 做錯：一般訊息只提醒；{acc} 會出事 */
+  function bad(w){
+    if(w && w.acc){ accN++; handAccident(card, Object.assign({pic: EMO("⚠️")}, w.acc), () => { S.fb = say("回到出事前，再做一次。", true); draw(); }); return; }
+    beep(false); S.fb = say("⚠️ " + (w || "這樣不對，再想想看。")); draw();
+  }
+  function finish(){
+    S.ok = true; beep(true);
+    const s = st();
+    S.fb = say("✅ " + (s.okMsg || "做對了！") + (s.item ? CHK_NO([].concat(s.item).join("、")) : ""), true) + (s.note ? `<div class="note">📝 教學補充：${s.note}</div>` : "");
+  }
+  function next(){
+    commit(() => {
+      if(S.si + 1 >= ST.length){ S.fin = true; return; }
+      S = fresh(S.si + 1, S);
+      const s = st();
+      if(s.skipIf && s.skipIf(S)){ S.ok = true; S.fb = say("➖ " + s.skipMsg, true); }
+    });
+    window.scrollTo({top: pane.getBoundingClientRect().top + scrollY - 70, behavior: "smooth"});
+    draw();
+  }
+
+  /* ── 畫面 ── */
+  const trayRows = s => s.tray ? Math.ceil(s.tray.length / 5) : 0;
+  function itemG(id, x, y, w, small){
+    const it = ITEMS[id], c = it.crop || [0, 0, 1, 1], lines = it.name.split("\n");
+    const lab = small ? "" : lines.map((t, i) => `<text x="${w / 2}" y="${w + 12 + i * 11}" font-size="10.5" text-anchor="middle" fill="var(--ink)" font-weight="700">${esc(t)}</text>`).join("");
+    return `<g data-it="${id}" transform="translate(${x} ${y})"><rect x="-2" y="-2" width="${w + 4}" height="${w + 4 + (small ? 0 : 10 + lines.length * 11)}" rx="8" fill="var(--card)" stroke="var(--line)" stroke-width="1.5"/>
+      <svg width="${w}" height="${w}" viewBox="${c[0]} ${c[1]} ${c[2]} ${c[3]}" preserveAspectRatio="xMidYMid meet"><image href="images/${it.img}" x="0" y="0" width="1" height="1" preserveAspectRatio="none"/></svg>${lab}</g>`;
+  }
+  function svgView(s){
+    const th = trayRows(s) * 92, H = th + 240;
+    let g = `<svg viewBox="0 0 360 ${H}" id="sv">`;
+    (s.tray || []).forEach((id, i) => {
+      if(!s.tool && S.placed[id]) return;
+      const row = Math.floor(i / 5), inRow = Math.min(5, s.tray.length - row * 5), col = i % 5;
+      g += itemG(id, 180 - inRow * 36 + col * 72 + 7, 6 + row * 92, 58);
+    });
+    g += `<g transform="translate(0 ${th})"><image href="images/${S.img || s.bg}" x="0" y="0" width="360" height="240" preserveAspectRatio="xMidYMid slice"/>`;
+    const after = S.ok && s.after;
+    (after ? [] : s.zones || []).forEach(z => {
+      const [x1, y1, x2, y2] = z.r, hit = s.tool ? S.hit.includes(z.id) : Object.values(S.placed).includes(z.id);
+      const lw = Math.min(150, z.label.length * 10 + 14), lx = Math.max(2, Math.min(358 - lw, (x1 + x2) / 2 - lw / 2)), ly = y1 > 22 ? y1 - 19 : y2 + 3;
+      if(z.pic) g += `<image href="images/${z.pic}" x="${x1}" y="${y1}" width="${x2 - x1}" height="${y2 - y1}" preserveAspectRatio="xMidYMid slice"/>`;
+      g += `<g class="zone${hit ? " hit" : ""}"><rect class="z${hit ? "" : " pulse"}" x="${x1}" y="${y1}" width="${x2 - x1}" height="${y2 - y1}" rx="8"/>
+        <rect x="${lx}" y="${ly}" width="${lw}" height="16" rx="8" fill="${hit ? "#1f9d55" : "rgba(20,30,35,.78)"}"/><text x="${lx + lw / 2}" y="${ly + 12}" font-size="10" text-anchor="middle" fill="#fff" font-weight="700">${hit ? "✓ " : ""}${esc(z.label)}</text></g>`;
+    });
+    if(!s.tool && !after) Object.entries(S.placed).forEach(([id, zid]) => { const z = s.zones.find(q => q.id === zid); if(z) g += itemG(id, z.r[2] - 40, z.r[1] + 3, 36, true); });
+    (after ? [] : s.spots || []).forEach(p => {
+      const k = S.taps.indexOf(p.id);
+      g += `<g data-spot="${p.id}"><circle cx="${p.x}" cy="${p.y}" r="13" fill="${k >= 0 ? "#1f9d55" : "rgba(255,176,32,.35)"}" stroke="${k >= 0 ? "#fff" : "#ffb020"}" stroke-width="2.5" class="${k >= 0 ? "" : "pulse"}"/>
+        <text x="${p.x}" y="${p.y + 4}" font-size="11" text-anchor="middle" fill="#fff" font-weight="900">${k >= 0 ? k + 1 : "?"}</text>
+        <rect x="${p.x - p.label.length * 5 - 6}" y="${p.y + 15}" width="${p.label.length * 10 + 12}" height="15" rx="7" fill="rgba(20,30,35,.78)"/><text x="${p.x}" y="${p.y + 26}" font-size="9.5" text-anchor="middle" fill="#fff" font-weight="700">${esc(p.label)}</text></g>`;
+    });
+    return g + `</g></svg>`;
+  }
+  const imgView = s => `<img class="scene" src="images/${S.img || s.bg}" alt="">`;
+
+  function draw(){
+    const done = doneItems();
+    $("#chk").innerHTML = checkTable(L.items, done, S.fin ? 0 : curItem());
+    if(S.fin) return drawFin();
+    const s = st();
+    $("#task").innerHTML = `第 ${S.si + 1} / ${ST.length} 步　${s.task}`;
+    const v = $("#view"), c = $("#ctrls");
+    const useSvg = ["drag", "taps"].includes(s.type);
+    v.innerHTML = useSvg ? svgView(s) : imgView(s);
+    let h = "";
+    if(s.type === "mode") h = `<div class="opts">${s.opts.map(o => `<button class="opt" data-b="m:${o.id}"${S.ok ? " disabled" : ""}>${o.t}</button>`).join("")}</div>`;
+    if(s.type === "choice"){
+      S.ord = S.ord || shuffle(s.opts.map((_, i) => i));
+      h = `<p style="margin:10px 0 0;font-weight:800">${s.q}</p><div class="opts">${S.ord.map(i => { const o = s.opts[i]; const cls = S.bad.includes(i) ? "bad" : S.ok && o.ok ? "ok" : ""; return `<button class="opt ${cls}" data-b="c:${i}"${S.ok || S.bad.includes(i) ? " disabled" : ""}>${o.pic ? `<img src="images/${o.pic}" alt="">` : ""}<span>${o.t}</span></button>`; }).join("")}</div>`;
+    }
+    if(s.type === "seq"){
+      S.ord = S.ord || shuffle(s.opts.map((_, i) => i));
+      h = `<div class="seqline">${S.seq.length ? S.seq.map((id, i) => `<span>${i + 1}. ${s.opts.find(o => o.id === id).t}</span>`).join("") : `<span style="background:none;color:var(--sub)">依序點下面的動作 👇</span>`}</div>
+        <div class="opts">${S.ord.map(i => { const o = s.opts[i]; return `<button class="opt${S.seq.includes(o.id) ? " ok" : ""}" data-b="s:${o.id}"${S.ok || S.seq.includes(o.id) ? " disabled" : ""}>${o.t}</button>`; }).join("")}</div>`;
+    }
+    if(s.type === "hold") h = `<div class="bar"><i style="width:${Math.round(S.hp * 100)}%"></i></div><div class="row" style="margin-top:10px"><button class="btn" id="holdb"${S.ok ? " disabled" : ""}>✋ ${s.label}</button><span class="muted">按住不放，進度條跑滿才放手</span></div>`;
+    if(s.type === "rhythm"){
+      const left = Math.max(0, s.n * s.ml - S.n * s.ml);
+      h = `<div class="readout" style="margin-top:8px;font-weight:800">注射器剩 ${left} mL　·　已推 ${S.n} / ${s.n} 次</div><div class="bar"><i style="width:${Math.round(S.n / s.n * 100)}%"></i></div>
+        <div class="row" style="margin-top:10px"><button class="btn" data-b="r:push"${S.ok ? " disabled" : ""}>💉 推</button><button class="btn ghost" data-b="r:stop"${S.ok ? " disabled" : ""}>✋ 停</button></div>`;
+    }
+    if(s.type === "pump" && !S.ok || (s.type === "pump" && S.pf.vtbi != null)){
+      const f = k => S.pf[k] != null ? `<b>${S.pf[k]}</b>` : S.psel === k ? `<input id="pin" inputmode="decimal" placeholder="輸入數字">` : "— —";
+      h = `<div class="order">📄 <b>練習用醫囑</b>（虛構）：${s.drug}　流速 <b>${s.order.rate} mL/hr</b>　預輸注總量 <b>${s.order.vtbi} mL</b></div>
+        <div class="pump"><div class="scr"><div class="fld"><span>Rate (mL/hr)</span><span>${f("rate")}</span></div><div class="fld"><span>VTBI (mL)</span><span>${f("vtbi")}</span></div></div>
+        <div class="row" style="margin-top:10px"><button class="btn" data-b="p:rate"${S.ok ? " disabled" : ""}>設定 Rate</button><button class="btn" data-b="p:vtbi"${S.ok ? " disabled" : ""}>設定 VTBI</button>${S.psel ? `<button class="btn gold" data-b="p:ok">確定</button>` : ""}</div></div>`;
+    }
+    if(s.btns && !S.ok) h += `<div class="row" style="margin-top:10px">${s.btns.map((b, i) => `<button class="btn warnb" data-b="x:${i}">${b.t}</button>`).join("")}</div>`;
+    if(S.ok) h += `<div class="row" style="margin-top:12px"><button class="btn gold" data-b="next">${S.si + 1 >= ST.length ? "🏁 完成本站" : "下一步 ▶"}</button></div>`;
+    handBtns(c, h, act);
+    $("#fb").innerHTML = S.fb;
+    if(useSvg) wire(s);
+    if(s.type === "hold" && !S.ok) wireHold(s);
+    const pin = $("#pin"); if(pin) pin.focus();
+  }
+  function drawFin(){
+    labDone(L.id); confetti();
+    $("#task").innerHTML = "🎉 本站完成！";
+    $("#view").innerHTML = `<img class="scene" src="images/${L.finImg || ST[ST.length - 1].bg}" alt="">`;
+    handBtns($("#ctrls"), `<div class="row" style="margin-top:12px"><button class="btn" data-b="again">🔁 再做一次</button><button class="btn ghost" data-b="list">← 回技術站清單</button></div>`, b => { if(b === "again"){ hist.length = 0; accN = 0; S = fresh(0); draw(); ctl.upd(); } else location.hash = ""; });
+    $("#fb").innerHTML = say(`做完評核表第 ${L.items[0]}–${L.items[L.items.length - 1]} 項。這一站出事 <b>${accN}</b> 次${accN ? "——出事的地方，就是實際操作時要特別留意的地方。" : "，很棒！"}`, true);
+  }
+
+  /* ── 動作 ── */
+  function act(b){
+    if(ctl.paused) return;
+    const s = st(), [k, v] = b.split(":");
+    if(b === "next") return next();
+    if(S.ok) return;
+    if(k === "x") return bad(s.btns[+v]);
+    if(k === "m"){ commit(() => { S.mode = v; finish(); S.fb = say("✅ " + s.opts.find(o => o.id === v).okMsg, true); }); return draw(); }
+    if(k === "c"){
+      const o = s.opts[+v];
+      if(!o.ok){ if(o.acc) return bad({acc: o.acc}); commit(() => S.bad.push(+v)); beep(false); S.fb = say("⚠️ " + o.why); return draw(); }
+      commit(() => { finish(); S.fb = say("✅ " + o.why + (s.item ? CHK_NO([].concat(s.item).join("、")) : ""), true) + (s.note ? `<div class="note">📝 教學補充：${s.note}</div>` : ""); if(s.after) S.img = s.after; });
+      return draw();
+    }
+    if(k === "s"){
+      const cand = S.seq.concat(v);
+      if(s.orders.some(o => cand.every((x, i) => o[i] === x))){
+        commit(() => { S.seq.push(v); if(s.orders.some(o => o.length === cand.length)){ finish(); if(s.after) S.img = s.after; } });
+        beep(true, 660); return draw();
+      }
+      return bad((s.why || {})[v] || s.orderMsg || "順序不對，想想看這一步之前還要先做什麼。");
+    }
+    if(k === "r"){
+      if(v === "push"){ if(S.last === "push") return bad(s.twice || "推完要停一下，再推——要「推-停-推-停」。"); commit(() => { S.n++; S.last = "push"; S.fb = ""; }); beep(true, 520); }
+      else { if(S.last !== "push") return bad("先推一下，再停。"); commit(() => { S.last = "stop"; if(S.n >= s.n){ finish(); if(s.after) S.img = s.after; } }); beep(true, 700); }
+      return draw();
+    }
+    if(k === "p"){
+      if(v === "ok"){
+        const inp = $("#pin"), val = inp ? parseFloat(inp.value) : NaN, want = s.order[S.psel];
+        if(val !== want) return bad(`輸入的數字和醫囑不同：醫囑的 ${S.psel === "rate" ? "Rate 是 " + want + " mL/hr" : "VTBI 是 " + want + " mL"}。`);
+        commit(() => { S.pf[S.psel] = val; S.psel = ""; S.fb = ""; if(S.pf.rate != null && S.pf.vtbi != null) finish(); });
+        return draw();
+      }
+      if(v === "vtbi" && S.pf.rate == null) return bad("設定順序為：Rate → Volume to be infusion (VTBI)，先設 Rate。");
+      if(S.pf[v] != null) return;
+      S.psel = v; return draw();
+    }
+  }
+  function wire(s){
+    const svg = $("#sv"), th = trayRows(s) * 92;
+    handDnd(svg, {name: id => ITEMS[id].name.replace("\n", ""), drop(id, x, y){
+      if(ctl.paused || S.ok) return;
+      y -= th;
+      const z = (s.zones || []).find(q => inR(x, y, q.r));
+      if(!z){ if(S.placed[id]){ commit(() => delete S.placed[id]); S.fb = say("已把用物拿回上排。", true); draw(); } else draw(); return; }
+      const G = goals(s), hit = G.find(g => g[0] === id && g[1] === z.id);
+      const jw = s.judge ? s.judge(S, id, z.id) : undefined;
+      if(jw) return bad(jw);
+      if(!hit){ const W = s.wrong || {}; return bad(W[id + "@" + z.id] || W[id] || W["@" + z.id] || `「${ITEMS[id].name.replace("\n", "")}」不是放在「${z.label}」。`); }
+      if(s.ordered){ const i = G.indexOf(hit); if(!G.slice(0, i).every(g => s.tool ? S.hit.includes(g[1]) : S.placed[g[0]] === g[1])) return bad(s.orderMsg || "順序不對。"); }
+      if(s.tool ? S.hit.includes(z.id) : false) return draw();
+      commit(() => {
+        if(s.tool) S.hit.push(z.id); else S.placed[id] = z.id;
+        S.fb = "";
+        if(s.mid && s.mid[z.id]) S.img = s.mid[z.id];
+        if(G.every(g => s.tool ? S.hit.includes(g[1]) : S.placed[g[0]] === g[1])){ finish(); if(s.after) S.img = s.after; }
+      });
+      beep(true, 660); draw();
+    }});
+    svg.addEventListener("click", e => {
+      const p = e.target.closest("[data-spot]"); if(!p || ctl.paused || S.ok) return;
+      const id = p.dataset.spot; if(S.taps.includes(id)) return;
+      if(!tapNeed(s).includes(id)) return bad((s.why || {})[id] || s.orderMsg || "順序不對。");
+      commit(() => { S.taps.push(id); S.fb = ""; if(!tapNeed(s).length){ finish(); if(s.after) S.img = s.after; } });
+      beep(true, 660); draw();
+    });
+  }
+  function tapNeed(s){ for(const g of s.order){ const rem = [].concat(g).filter(x => !S.taps.includes(x)); if(rem.length) return rem; } return []; }
+  function stopHold(){ if(holdT){ clearInterval(holdT); holdT = null; } }
+  function wireHold(s){
+    const b = $("#holdb"); if(!b) return;
+    const start = e => { e.preventDefault(); if(S.ok || ctl.paused || holdT) return; holdT = setInterval(() => {
+      if(ctl.paused) return;
+      S.hp = Math.min(1, S.hp + 50 / s.ms); const bar = $("#view").parentNode.querySelector(".bar i"); if(bar) bar.style.width = Math.round(S.hp * 100) + "%";
+      if(S.hp >= 1){ stopHold(); commit(() => { finish(); if(s.after) S.img = s.after; }); draw(); }
+    }, 50); };
+    const end = () => { if(!holdT) return; stopHold(); if(!S.ok){ S.hp = 0; bad(s.early || "放手太早了，要按住到進度條跑滿。"); } };
+    b.onpointerdown = start; b.onpointerup = b.onpointerleave = b.onpointercancel = end;
+    b.oncontextmenu = e => e.preventDefault();
+  }
+  draw(); ctl.upd();
+}
+
+/* ═════ 技術評核表〈到職訓練-化療靜脈給藥暨人工血管照護基礎技術〉21 項原文 ═════
+   來源：腫瘤品管共用夾 @訓練班\…\115年 化療給藥單位新進護理師到職訓練課程\到職訓練_化療靜脈給藥暨人工血管照護基礎技術.pdf（掃描檔，人工轉錄）
+   分段：組裝密閉系統藥品轉移裝置 1–3｜主護護理師執行給藥前準備 4–10｜換接相容輸液點滴 11–12｜角針置放 13–18｜角針移除 19–21 */
+const CHECK = [
+  "將【輸液套管(infusion set)】的Spike完全沒入【CSTD的Adapter】透明軟管。",
+  "取【CSTD的Spike】和【CSTD的Adapter】與相互銜接。",
+  "將【CSTD的Spike】尖端戳入生理食鹽水或相容輸液點滴的橡皮塞，且須確認橡皮塞下方無液體殘留。",
+  "穿戴個人防護裝備如下：(1)防水隔離衣(後開式、長袖、袖口可束緊) (2)雙層丁腈膠或乳膠手套，需套住袖口 (3)外科口罩 (4)護目鏡(或防護面罩)",
+  "進行病人辨識。",
+  "條碼檢核 (1)輸液幫浦連線功能情境：以條碼機掃描幫浦條碼、病人手圈條碼及化療藥品點滴袋的標籤條碼。(2)非輸液幫浦連線功能情境：以條碼機掃描病人手圈條碼及化療藥品點滴袋的標籤條碼。",
+  "將相容輸液點滴袋放置低於眼睛，旋開CSTD的Spike與Adapter，移除相容輸液點滴袋。",
+  "不將化療藥品從塑膠夾鏈袋取出，僅露出化療藥品點滴袋上【CSTD的Spike】，與【CSTD的Adapter】相互銜接，再將化療藥品掛上點滴架上。",
+  "脫除外層手套(因上述操作步驟可能有化療藥品殘留在手套上)。",
+  "(採非連線操作流程適用) 設定輸液點滴幫浦，設定順序為：Rate→Volume to be infusion (VTBI)。",
+  "將化療點滴藥袋放置低於眼睛，旋開CSTD的Spike與Adapter，移除化療點滴藥袋。",
+  "將相容輸液點滴袋上CSTD的Spike與Adapter銜接，掛上點滴架。",
+  "慣用手拿握Port-A角針握柄，以三點(拇指、食指、中指)持針法持針，使角針與Port-A盤面呈垂直對準圓盤下針處。",
+  "觸摸Port-A圓盤邊緣，並以非慣用手大拇指、食指、中指用力固定盤面使盤面不致滑動。",
+  "請病人深呼吸，將角針垂直快速插入圓盤底部，墊片下壓並平貼皮膚。(角針插入至底部後，勿再用力強壓，避免角針前端變鈍)",
+  "打開管夾以10mL注射器反抽，測試是否通暢及回血，回血顏色須為全血。",
+  "測完回血，用10mL NS以推-停-推-停方式將管壁沖洗乾淨。",
+  "操作正壓封管：方法一：保留NS 0.5-1mL(勿全部推注完，接著關閉管夾且緩慢移除針筒)。方法二：以大拇指壓住針筒活塞後，接著關閉管夾，再移除注射器。",
+  "以70-75%酒精棉消毒Port-A接頭，採無菌技術以NS 10 mL注射器(或與10mL注射器針筒管徑相同)反抽測試回血後，再以推-停-推-停方式將管壁沖洗乾淨。",
+  "接上prefill heparin saline 3-5mL，注入Heparinized saline後夾住管夾。",
+  "移除方式依各家廠牌使用方式操作，以下為BD安全性賀伯注射針組操作方式：以左手(非慣用手)大拇指、食指固定注射針座盤，以右手(慣用手)大拇指與食指緊握安全針具握柄，準備好即請病人深呼吸，垂直向上拉起直至感覺針尖卡住定位，並聽到「喀」一聲，即表示針尖已縮至底盤中的安全機制內且安全機制已啟動。",
+];
+
+/* ═════ 出事情境＋處理題（🔴 教學補充，非評核表原文，待使用者審） ═════
+   依據：化療靜脈給藥 52 項表（15700-4-041224）第 15–16、22、38 項；外滲 XR 教材院內原則（不拔針＝保留回抽路徑）；
+   危害藥品皮膚／眼睛暴露、針扎處理採一般職安原則（肥皂清水沖洗、洗眼 15 分鐘、立即通報），以院內規範為準 */
+const ACC = {
+  leak: {title: "💧 接頭滲漏了！", pic: EMO("💧🛏️"),
+    cause: "輸液套管的 Spike 沒有完全沒入 Adapter 的透明軟管。開始滴化療藥以後，接頭慢慢滲出藥液，滴到床單上。",
+    q: "發現化療藥從接頭滲漏，第一步要怎麼做？", opts: [
+      {t: "立即停止輸注（暫停幫浦、關閉管夾），穿戴防護裝備，依單位化療藥品溢灑處理流程清理並通報", ok: true, why: "先止住藥液繼續流出，再在防護下用溢灑處理用物清理，並依規定通報。"},
+      {t: "用衛生紙擦乾，把 Spike 再推進去一點，繼續滴", why: "化療藥是危害藥品，一般衛生紙擦拭會讓自己和環境暴露；滲漏也要依規定通報。"},
+      {t: "先去跟家屬解釋，回來再處理", why: "每多等一分鐘，藥液就繼續流出，污染範圍越來越大。"},
+      {t: "拿酒精棉片把接頭擦一擦就好", why: "擦拭不能止住滲漏，也沒有處理已經滴到床單的藥液。"}],
+    lesson: "評核表第 1 項：Spike 要「完全沒入」Adapter 的透明軟管，避免化療滴注過程滲漏發生。"},
+  skin: {title: "🧤 藥液沾到手腕！", pic: EMO("🧤💧"),
+    cause: "手套塞進隔離衣袖口裡面，手套和袖口之間留了縫。操作時藥液沿著手套流進袖口，沾到手腕皮膚。",
+    q: "皮膚沾到化療藥，第一步？", opts: [
+      {t: "立即脫除污染的手套與隔離衣，用肥皂和大量清水沖洗皮膚，並依規定通報", ok: true, why: "盡快把藥從皮膚上洗掉，越快越好；暴露事件要通報。"},
+      {t: "用酒精棉片擦一擦", why: "酒精擦拭不能取代肥皂和大量清水沖洗。"},
+      {t: "先把藥給完，再去洗手", why: "藥液停留在皮膚上越久，暴露越多。"},
+      {t: "直接戴上新手套繼續做", why: "沒有清洗，藥液還留在皮膚上。"}],
+    lesson: "評核表第 4 項：雙層丁腈膠或乳膠手套，需「套住袖口」。"},
+  scan: {title: "❌ 條碼沒核對就給藥！", pic: PIC("I19.jpg"),
+    cause: "條碼還沒核對通過，就先把化療藥掛上去。萬一這袋藥不是這位病人的，或劑量、時間不對，藥一滴進去就收不回來。",
+    q: "條碼機讀不到、或核對沒有通過時，怎麼做？", opts: [
+      {t: "暫停、不給藥；重新核對病人、醫囑與藥品，排除讀不到的原因後再掃，核對通過才給藥", ok: true, why: "條碼檢核就是最後一道關卡，沒通過就不給藥。"},
+      {t: "手動輸入條碼號碼，讓系統過關", why: "跳過掃描等於沒有核對。"},
+      {t: "先掛上去開始滴，等一下再補掃", why: "補掃不能讓已經滴進去的藥收回來。"}],
+    lesson: "評核表第 6 項：以條碼機掃描病人手圈條碼及化療藥品點滴袋的標籤條碼（連線情境還要掃幫浦條碼）。"},
+  zip: {title: "☣️ 藥袋表面的藥沾得到處都是！", pic: PIC("outcomes/B-X1.jpg"),
+    cause: "藥劑部配置後的化療藥袋「表面」屬於化療藥品污染區域。把藥袋從夾鏈袋拿出來，手套、工作車、點滴架都可能沾到藥。",
+    q: "已經把藥袋拿出夾鏈袋了，現在先做什麼？", opts: [
+      {t: "把藥袋放回夾鏈袋，放在鋪有單面防水吸水紙（吸水面朝上）的檯面；更換外層手套，碰過的地方依規定清潔", ok: true, why: "先把污染源包回去，再處理已經被碰到的手套和環境。"},
+      {t: "沒關係，反正等一下就要掛上去", why: "藥袋表面的藥會一路沾到你碰過的每個地方。"},
+      {t: "把藥袋先放在病人床上，去拿點滴架", why: "化療藥袋不宜直接接觸工作檯面或病人床旁設備。"}],
+    lesson: "評核表第 8 項：不將化療藥品從塑膠夾鏈袋取出，僅露出 CSTD 的 Spike 與 Adapter 銜接。（另見 52 項表第 15–16 項）"},
+  eye: {title: "💦 藥液噴到眼睛！", pic: EMO("💦👁️"),
+    cause: "化療藥袋還掛在高處，就直接旋開 Spike 與 Adapter。接頭殘留的藥液往下噴濺，濺進眼睛。",
+    q: "眼睛被化療藥噴到，第一步？", opts: [
+      {t: "立即用洗眼器或大量清水沖洗眼睛（至少 15 分鐘），再就醫並通報", ok: true, why: "馬上用大量清水沖洗，把藥沖掉，再就醫評估、通報。"},
+      {t: "用手揉一揉、多眨眨眼", why: "揉眼會讓藥液擴散，還可能傷到角膜。"},
+      {t: "用紗布擦乾就好", why: "擦不掉已經進到眼睛裡的藥，一定要沖洗。"},
+      {t: "先把管路接好，再去洗", why: "眼睛暴露要立刻沖洗，不能等。"}],
+    lesson: "評核表第 11 項：先將化療點滴藥袋放置「低於眼睛」，再旋開 CSTD 的 Spike 與 Adapter。"},
+  extra: {title: "🔥 注射部位紅、腫、痛！", pic: PIC("outcomes/A-X2.jpg"),
+    cause: "回血是淡粉紅色就當作通暢，開始滴化療藥。角針其實沒有在正確位置，藥液滲到皮下組織，病人說打針的地方又紅又腫又痛。",
+    q: "化療滴注中，注射部位紅、腫、痛，第一步？", opts: [
+      {t: "立即停止輸注，先不要拔角針，通知醫師並依外滲處理流程處理", ok: true, why: "停止輸注，避免更多藥液滲出；先不拔針，保留回抽殘留藥液的路徑。"},
+      {t: "把流速調快，趕快滴完", why: "流速越快，滲出去的藥越多。"},
+      {t: "先把角針拔掉再說", why: "先拔針就失去回抽殘留藥液的路徑。"},
+      {t: "冰敷一下，繼續滴", why: "要先停止輸注；冷敷或熱敷要依藥品種類決定。"}],
+    lesson: "評核表第 16 項：回血顏色須為「全血」。淡粉紅色不算通暢。"},
+  back: {title: "🩸 血液倒流進角針！", pic: EMO("🩸"),
+    cause: "還沒關管夾就先移除注射器，管內失去正壓，血液倒流進角針和管路，時間一久可能凝固、阻塞。",
+    q: "發現血液倒流到管路裡，怎麼辦？", opts: [
+      {t: "重新接上 NS 注射器，以推-停-推-停方式沖淨管路，再照正壓封管步驟（先關管夾、再移除注射器）重做", ok: true, why: "先把血沖乾淨，再用正確順序封管。"},
+      {t: "沒關係，下次要用的時候再沖", why: "血液留在管內會凝固，可能造成阻塞。"},
+      {t: "用力推注，把血推回去", why: "遇到阻力不可用力推注。"}],
+    lesson: "評核表第 18 項：正壓封管＝先保留 NS 0.5–1 mL 或拇指壓住活塞，接著關閉管夾，最後才移除注射器。"},
+  stick: {title: "🩹 被針扎到了！", pic: EMO("🩹"),
+    cause: "還沒聽到「喀」一聲，安全機制沒有啟動，針尖還露在外面。拿去丟的時候，扎到自己的手。",
+    q: "被用過的角針扎到，第一步？", opts: [
+      {t: "立即用肥皂和流動清水沖洗傷口，並馬上依院內針扎流程通報、追蹤", ok: true, why: "先沖洗，再立即通報，才能及時評估與追蹤。"},
+      {t: "貼個 OK 繃，下班再說", why: "針扎要立即處理並通報，拖延會錯過評估的時機。"},
+      {t: "用嘴吸傷口", why: "不可以用嘴吸，會讓口腔也暴露。"},
+      {t: "用漂白水用力刷傷口", why: "不要用刺激性的消毒劑刷洗傷口，用肥皂和清水沖洗。"}],
+    lesson: "評核表第 21 項：垂直向上拉起，直至感覺針尖卡住定位，並聽到「喀」一聲，才表示安全機制已啟動。"},
+};
+
+/* ═════ 第 1 站 組裝密閉系統藥品轉移裝置（評核表 1–3） ═════
+   情境圖 I08：工作車上有生理食鹽水袋（左）、輸液套管（中）、CSTD 的 Spike 與 Adapter（右，分兩包） */
+const Z_ADP = [232, 112, 348, 174], Z_NS = [28, 136, 108, 194];
+LABS.push({id: "cstd", icon: "🔗", title: "組裝密閉系統藥品轉移裝置（CSTD）", items: [1, 2, 3], finImg: "outcomes/B-O3.jpg",
+  desc: "輸液套管接 Adapter、Spike 接 Adapter、Spike 戳入點滴袋橡皮塞。",
+  steps: [
+    {type: "drag", bg: "I08.jpg", task: "把<b>輸液套管</b>的 Spike 接到 <b>CSTD 的 Adapter</b> 透明軟管。",
+      tray: ["S23", "S15", "S25"], zones: [{id: "adp", r: Z_ADP, label: "CSTD Adapter 透明軟管"}], goal: [["S23", "adp"]],
+      wrong: {S15: "注射器不是接在 Adapter 上的。這一步要接的是「輸液套管」的 Spike。", S25: "酒精棉片不是這一步的用物。這一步要把「輸液套管」的 Spike 接到 Adapter。"},
+      okMsg: "輸液套管的 Spike 對準了 Adapter 的透明軟管。"},
+    {type: "choice", bg: "I08.jpg", item: 1, task: "輸液套管的 Spike 要插多深？",
+      q: "輸液套管的 Spike 插進 Adapter 的透明軟管，要插到什麼程度？", opts: [
+        {t: "完全沒入透明軟管", ok: true, why: "Spike 要完全沒入 Adapter 的透明軟管，避免化療滴注過程滲漏發生。"},
+        {t: "插進一半、卡住就好", acc: ACC.leak},
+        {t: "碰到軟管口就好，滴的時候會自己吸緊", acc: ACC.leak}]},
+    {type: "drag", bg: "I08.jpg", item: 2, task: "取 <b>CSTD 的 Spike</b>，和 <b>CSTD 的 Adapter</b> 相互銜接。",
+      tray: ["SPK", "S13"], zones: [{id: "adp", r: Z_ADP, label: "CSTD Adapter"}], goal: [["SPK", "adp"]],
+      wrong: {S13: "注射帽是 Port-A 角針用的，不是 CSTD 的零件。這一步要拿「CSTD 的 Spike」。"},
+      okMsg: "CSTD 的 Spike 和 Adapter 銜接好了（輸液套管→Adapter→Spike 連成一組）。"},
+    {type: "drag", bg: "I08.jpg", task: "把組好的 CSTD，用 <b>Spike 的尖端</b>戳入<b>生理食鹽水點滴袋的橡皮塞</b>。",
+      tray: ["CST", "S08"], zones: [{id: "ns", r: Z_NS, label: "點滴袋橡皮塞"}], goal: [["CST", "ns"]],
+      wrong: {S08: "20 mL 生理食鹽水小瓶是置放角針時抽 NS 用的。這一步要戳入生理食鹽水（或相容輸液）「點滴袋」的橡皮塞。"},
+      okMsg: "Spike 尖端戳入點滴袋的橡皮塞了。"},
+    {type: "choice", bg: "I08.jpg", item: 3, task: "戳入橡皮塞之後，還要確認什麼？",
+      q: "Spike 戳入點滴袋的橡皮塞以後，評核表要求一定要確認的是？", opts: [
+        {t: "橡皮塞下方無液體殘留", ok: true, why: "戳入後須確認橡皮塞下方無液體殘留，才算完成。"},
+        {t: "點滴袋的有效期限", why: "效期當然要看，但這一步評核表要求確認的是「橡皮塞下方無液體殘留」。"},
+        {t: "不用確認，直接進行下一步", why: "戳入之後還有一個確認動作：橡皮塞下方無液體殘留。"}]},
+  ]});
+
+/* ═════ 第 2 站 主護護理師執行給藥前準備（評核表 4–10） ═════
+   一開始選情境：幫浦有連線功能（第 6 項要多掃幫浦、第 10 項不適用）或沒有連線功能
+   第 10 項的醫囑數字是虛構練習用（Rate 100 mL/hr、VTBI 250 mL） */
+const Z_HIGH = [118, 0, 252, 66], Z_LOW = [132, 150, 262, 236];
+LABS.push({id: "prep", icon: "🛡️", title: "主護護理師執行給藥前準備", items: [4, 5, 6, 7, 8, 9, 10], finImg: "outcomes/B-O7.jpg",
+  desc: "穿防護裝備、病人辨識、條碼檢核、移除相容輸液、接化療藥、脫外層手套、設定幫浦。",
+  steps: [
+    {type: "mode", bg: "I10.jpg", task: "先看一下：這床的輸液幫浦<b>有沒有連線功能</b>？（兩種情境都練練看）", opts: [
+      {id: "nolink", t: "🔌 非輸液幫浦連線功能情境", okMsg: "非連線情境：條碼掃病人手圈＋化療藥袋；幫浦要自己設定 Rate → VTBI。"},
+      {id: "link", t: "📡 輸液幫浦連線功能情境", okMsg: "連線情境：條碼要掃幫浦＋病人手圈＋化療藥袋；幫浦設定（第 10 項）不適用。"}]},
+    {type: "drag", bg: "I09.jpg", after: "outcomes/B-O1.jpg", task: "穿戴<b>個人防護裝備</b>：把需要的裝備拖到主護護理師身上（有些是陷阱）。",
+      tray: ["S17", "S31", "S18", "S01", "S19", "S14"], zones: [{id: "rn", r: [40, 2, 205, 112], label: "主護護理師（穿戴在身上）"}],
+      goal: [["S17", "rn"], ["S18", "rn"], ["S01", "rn"], ["S19", "rn"]],
+      wrong: {S31: "一般布質隔離衣不防水，藥液會滲透。要穿「防水隔離衣（後開式、長袖、袖口可束緊）」。", S14: "單層清潔手套不夠。要戴「雙層丁腈膠或乳膠手套」。"},
+      okMsg: "防水隔離衣、雙層丁腈手套、外科口罩、護目鏡（或防護面罩）都穿戴好了。"},
+    {type: "choice", bg: "outcomes/B-O1.jpg", item: 4, task: "手套和隔離衣的袖口，要怎麼搭？",
+      q: "雙層手套和隔離衣袖口的關係，哪一個正確？", opts: [
+        {t: "手套套住隔離衣的袖口（手套在外、包住袖口）", ok: true, why: "雙層丁腈膠或乳膠手套，需套住袖口，手腕才不會露出縫。"},
+        {t: "手套塞進隔離衣袖口裡面", acc: ACC.skin},
+        {t: "袖口捲起來，比較好做事", why: "袖口捲起來手腕就露出來了。袖口要束緊，手套套住袖口。"}]},
+    {type: "choice", bg: "I10.jpg", item: 5, task: "進行<b>病人辨識</b>。", note: "辨識方式以院內病人辨識規範為準（評核表只寫「進行病人辨識」）。",
+      q: "病人辨識，下面哪一種做法最正確？", opts: [
+        {t: "請病人自己說出姓名與出生年月日，再和手圈、醫囑核對", ok: true, why: "用開放式問句讓病人自己說，再和手圈、醫囑核對。"},
+        {t: "問病人：「你是王先生嗎？」病人點頭就好", why: "封閉式問句，病人可能聽錯或順口答「是」。要請病人自己說出姓名與出生年月日。"},
+        {t: "看床頭的床號和名牌就好", why: "床號會換、名牌可能放錯，不能當作辨識病人的依據。"}]},
+    {type: "drag", bg: "I10.jpg", item: 6, tool: true, task: "<b>條碼檢核</b>：把條碼機拖到要掃描的地方（依你選的情境）。",
+      tray: ["S26"], zones: [
+        {id: "pump", r: [94, 8, 214, 90], label: "幫浦條碼"},
+        {id: "wrist", r: [30, 138, 104, 192], label: "病人手圈條碼"},
+        {id: "bag", r: [262, 148, 354, 236], label: "化療藥袋標籤條碼", pic: "outcomes/B-O8.jpg"}],
+      goal: S => S.mode === "link" ? [["S26", "pump"], ["S26", "wrist"], ["S26", "bag"]] : [["S26", "wrist"], ["S26", "bag"]],
+      judge: (S, it, z) => z === "pump" && S.mode !== "link" ? "非輸液幫浦連線功能情境：只要掃描病人手圈條碼及化療藥品點滴袋的標籤條碼，不用掃幫浦。" : null,
+      btns: [{t: "條碼機一直讀不到 → 先把藥掛上去，等一下再補掃", acc: ACC.scan}],
+      okMsg: "條碼檢核通過。"},
+    {type: "drag", bg: "I11.jpg", task: "要移除<b>相容輸液點滴袋</b>了。旋開之前，點滴袋要放在哪裡？",
+      tray: ["S24"], zones: [{id: "high", r: Z_HIGH, label: "留在點滴架上直接旋開"}, {id: "low", r: Z_LOW, label: "放低於眼睛"}], goal: [["S24", "low"]],
+      wrong: {"@high": "旋開前要先把點滴袋放置「低於眼睛」，旋開時接頭殘留的液體才不會往下噴到臉和眼睛。"},
+      okMsg: "相容輸液點滴袋放低於眼睛了。"},
+    {type: "seq", bg: "I11.jpg", item: 7, task: "接下來的動作，依序點選。", opts: [
+        {id: "open", t: "旋開 CSTD 的 Spike 與 Adapter"}, {id: "rm", t: "移除相容輸液點滴袋"}, {id: "pull", t: "從 Adapter 上拔下輸液套管"}],
+      orders: [["open", "rm"]],
+      why: {rm: "要先旋開 CSTD 的 Spike 與 Adapter，點滴袋才拿得下來。", pull: "Adapter 和輸液套管要一直連著（第 1 項已經完全沒入）。這一步只旋開 CSTD 的 Spike 與 Adapter。"},
+      okMsg: "旋開 Spike 與 Adapter，移除相容輸液點滴袋。"},
+    {type: "choice", bg: "outcomes/B-O2.jpg", task: "化療藥品點滴袋裝在<b>塑膠夾鏈袋</b>裡送來。要怎麼接？",
+      q: "化療藥袋要怎麼和 Adapter 銜接？", opts: [
+        {t: "不從夾鏈袋取出，只露出藥袋上的 CSTD Spike，和 Adapter 銜接", ok: true, why: "藥袋留在夾鏈袋裡，只露出 CSTD 的 Spike 來銜接。"},
+        {t: "把藥袋從夾鏈袋拿出來，比較好接、也比較好掛", acc: ACC.zip, pic: "outcomes/B-X1.jpg"}]},
+    {type: "drag", bg: "I11.jpg", item: 8, tool: true, ordered: true, task: "把化療藥袋（在夾鏈袋內）先<b>接上 Adapter</b>，再<b>掛上點滴架</b>。",
+      tray: ["CHB"], zones: [{id: "adp", r: [128, 70, 200, 132], label: "CSTD Adapter"}, {id: "pole", r: [196, 0, 262, 62], label: "點滴架"}],
+      goal: [["CHB", "adp"], ["CHB", "pole"]], orderMsg: "先將藥袋上 CSTD 的 Spike 與 Adapter 相互銜接，再將化療藥品掛上點滴架。",
+      okMsg: "藥袋留在夾鏈袋裡，Spike 與 Adapter 銜接，再掛上點滴架。"},
+    {type: "choice", bg: "I11.jpg", item: 9, task: "藥袋掛好了。下一個動作是什麼？",
+      q: "接好、掛好化療藥袋以後，下一步？", opts: [
+        {t: "脫除外層手套", ok: true, why: "上述操作步驟可能有化療藥品殘留在手套上，所以要脫除外層手套。"},
+        {t: "直接去按幫浦設定", why: "外層手套可能沾有化療藥，直接按幫浦會污染幫浦按鍵。先脫除外層手套。"},
+        {t: "兩層手套都脫掉", why: "只脫「外層」手套，內層手套繼續保護。"}]},
+    {type: "pump", bg: "I11.jpg", item: 10, task: "（採非連線操作流程適用）設定輸液點滴幫浦。", drug: "化療藥（練習用）", order: {rate: 100, vtbi: 250},
+      skipIf: S => S.mode === "link", skipMsg: "你選的是「輸液幫浦連線功能情境」，第 10 項不適用。（想練幫浦設定，可以按「全部重來」改選非連線情境。）",
+      okMsg: "設定順序：Rate → Volume to be infusion (VTBI)，數字和醫囑相同。"},
+  ]});
+
+/* ═════ 第 3 站 換接相容輸液點滴（評核表 11–12） ═════ */
+LABS.push({id: "swap", icon: "🔄", title: "換接相容輸液點滴", items: [11, 12], finImg: "outcomes/B-O9.jpg",
+  desc: "化療藥滴完：放低於眼睛旋開、移除化療藥袋，再接回相容輸液。",
+  steps: [
+    {type: "drag", bg: "I11.jpg", task: "化療藥滴完了。旋開之前，<b>化療點滴藥袋</b>要放在哪裡？",
+      tray: ["CHB"], zones: [{id: "high", r: Z_HIGH, label: "留在點滴架上直接旋開"}, {id: "low", r: Z_LOW, label: "放低於眼睛"}], goal: [["CHB", "low"]],
+      wrong: {"@high": {acc: ACC.eye}},
+      okMsg: "化療點滴藥袋放低於眼睛了。"},
+    {type: "seq", bg: "I11.jpg", item: 11, task: "接下來的動作，依序點選。", opts: [
+        {id: "open", t: "旋開 CSTD 的 Spike 與 Adapter"}, {id: "rm", t: "移除化療點滴藥袋"}, {id: "pull", t: "從化療藥袋上拔下 CSTD 的 Spike"}],
+      orders: [["open", "rm"]],
+      why: {rm: "要先旋開 CSTD 的 Spike 與 Adapter，藥袋才拿得下來。", pull: "Spike 留在化療藥袋上，不要拔。這一步旋開的是 Spike 與 Adapter 的接頭。"},
+      okMsg: "旋開 Spike 與 Adapter，移除化療點滴藥袋。"},
+    {type: "drag", bg: "I11.jpg", item: 12, tool: true, ordered: true, task: "把<b>相容輸液點滴袋</b>（已接 CSTD Spike）先<b>接上 Adapter</b>，再<b>掛上點滴架</b>。",
+      tray: ["S24", "CHB"], zones: [{id: "adp", r: [128, 70, 200, 132], label: "CSTD Adapter"}, {id: "pole", r: [196, 0, 262, 62], label: "點滴架"}],
+      goal: [["S24", "adp"], ["S24", "pole"]], orderMsg: "先將相容輸液點滴袋上 CSTD 的 Spike 與 Adapter 銜接，再掛上點滴架。",
+      wrong: {CHB: "化療藥已經滴完、移除了。這一步要接回的是「相容輸液點滴袋」。"},
+      okMsg: "相容輸液點滴袋的 Spike 與 Adapter 銜接，掛上點滴架。"},
+    {type: "choice", bg: "outcomes/B-O9.jpg", task: "（延伸，不在 21 項內）用完的化療藥袋怎麼丟？", note: "出自化療靜脈給藥 52 項表第 43 項。",
+      q: "輸注完的化療藥袋，怎麼丟？", opts: [
+        {t: "不拔除 CSTD 的 Spike，整袋直接丟棄於化療廢棄物收集桶", ok: true, pic: "outcomes/B-O9.jpg", why: "輸注完之化療藥袋請勿拔除 CSTD 的 Spike，直接丟棄於化療廢棄物收集桶。"},
+        {t: "拔下 Spike，藥袋和 Spike 分開丟", pic: "outcomes/B-X2.jpg", why: "拔下 Spike 時，藥袋裡殘留的藥會流出來。Spike 不拔，整袋丟。"}]},
+  ]});
+
+/* ═════ 第 4 站 角針置放（評核表 13–18） ═════
+   情境圖 I05：無菌洞巾上，Port-A 圓盤在洞口（約 205,105）；角針已排氣，接 10 mL 注射器，黃色管夾在左上
+   I16：回抽後全血（評核表第 16 項）；A-X2：淡粉紅回血（錯誤示範） */
+LABS.push({id: "insert", icon: "📍", title: "Port-A 角針置放", items: [13, 14, 15, 16, 17, 18], finImg: "outcomes/A-O7.jpg",
+  desc: "三點持針、固定圓盤、深呼吸垂直插入、反抽看全血、推-停沖管、正壓封管。",
+  steps: [
+    {type: "choice", bg: "I05.jpg", task: "慣用手拿握 <b>Port-A 角針握柄</b>，用什麼方法持針？",
+      q: "持角針的方法？", opts: [
+        {t: "三點持針法：拇指、食指、中指拿握角針握柄", ok: true, why: "以三點（拇指、食指、中指）持針法持針，下針時才穩、才垂直。"},
+        {t: "兩根手指捏住針頭附近", why: "要用三點（拇指、食指、中指）拿握「握柄」，不是捏針頭。"},
+        {t: "握住延長管，比較好施力", why: "握延長管無法控制角度，要用三點持針法拿握角針握柄。"}]},
+    {type: "drag", bg: "I05.jpg", item: 13, task: "使角針與 Port-A 盤面呈<b>垂直</b>，對準<b>圓盤下針處</b>。",
+      tray: ["S10", "S15"], zones: [{id: "ctr", r: [184, 84, 226, 126], label: "圓盤下針處（垂直對準）"}, {id: "edge", r: [234, 66, 270, 100], label: "圓盤邊緣斜斜對準"}],
+      goal: [["S10", "ctr"]],
+      wrong: {"S10@edge": "角針要與 Port-A 盤面呈「垂直」，對準「圓盤下針處」，不是斜斜對著邊緣。", S15: "5 mL 注射器不是這一步的用物。這一步要拿 Port-A 角針。"},
+      okMsg: "角針垂直對準圓盤下針處。"},
+    {type: "taps", bg: "I05.jpg", item: 14, task: "先<b>觸摸 Port-A 圓盤邊緣</b>，再用<b>非慣用手</b>的拇指、食指、中指固定盤面（依序點畫面上的圓圈）。",
+      spots: [{id: "edge", x: 206, y: 58, label: "觸摸圓盤邊緣"}, {id: "th", x: 152, y: 104, label: "拇指"}, {id: "ix", x: 262, y: 104, label: "食指"}, {id: "md", x: 206, y: 158, label: "中指"}],
+      order: ["edge", ["th", "ix", "md"]], why: {th: "先觸摸 Port-A 圓盤邊緣，確認圓盤在哪裡，再用三指固定。", ix: "先觸摸 Port-A 圓盤邊緣，確認圓盤在哪裡，再用三指固定。", md: "先觸摸 Port-A 圓盤邊緣，確認圓盤在哪裡，再用三指固定。"},
+      okMsg: "非慣用手大拇指、食指、中指用力固定盤面，盤面不會滑動。"},
+    {type: "seq", bg: "I05.jpg", item: 15, task: "插入角針：依序點選動作。", opts: [
+        {id: "br", t: "請病人深呼吸"}, {id: "in", t: "將角針垂直快速插入圓盤底部"}, {id: "pad", t: "墊片下壓並平貼皮膚"}, {id: "press", t: "插到底後再用力壓一下，確認真的到底"}],
+      orders: [["br", "in", "pad"]],
+      why: {in: "先請病人深呼吸，再將角針垂直快速插入。", pad: "角針插入圓盤底部以後，墊片才下壓平貼皮膚。", press: "角針插入至底部後，勿再用力強壓，避免角針前端變鈍。"},
+      okMsg: "請病人深呼吸 → 垂直快速插入圓盤底部 → 墊片下壓平貼皮膚。"},
+    {type: "taps", bg: "I05.jpg", task: "要反抽測試了。先點<b>黃色管夾</b>，把管夾打開。",
+      spots: [{id: "clamp", x: 76, y: 86, label: "打開管夾"}], order: ["clamp"], okMsg: "管夾打開了。"},
+    {type: "hold", bg: "I05.jpg", after: "I16.jpg", task: "以 <b>10 mL 注射器反抽</b>，測試是否通暢及回血。", label: "按住＝往後拉活塞（反抽）", ms: 1800,
+      okMsg: "回血順暢，顏色是暗紅色的全血。"},
+    {type: "choice", bg: "outcomes/A-X2.jpg", item: 16, task: "想一想：如果反抽回來是<b>淡粉紅色</b>（像上圖）呢？",
+      q: "反抽回來是淡粉紅色，可以開始給藥嗎？", note: "改善回血的方法出自 Port-A 角針置放查核表（15700-4-041710）認知題 1。", opts: [
+        {t: "不行。回血顏色須為全血；可先請病人改變姿勢（坐起、該側上臂抬高）、深呼吸或咳嗽、減緩回抽速度再試", ok: true, why: "回血顏色須為全血，淡粉紅色不算通暢。"},
+        {t: "可以，有回血就代表通暢", acc: ACC.extra},
+        {t: "馬上拔出來，換一支角針重插", why: "先試改變姿勢、改變胸內壓（深呼吸、咳嗽）、減緩回抽速度。"}]},
+    {type: "rhythm", bg: "I16.jpg", after: "outcomes/A-O5.jpg", item: 17, task: "測完回血，用 <b>10 mL NS</b> 以<b>推-停-推-停</b>方式將管壁沖洗乾淨。", n: 5, ml: 2,
+      twice: "推完要停一下再推——「推-停-推-停」，不是一直推。", okMsg: "10 mL NS 以推-停-推-停方式把管壁沖洗乾淨了。"},
+    {type: "seq", bg: "outcomes/A-O5.jpg", after: "outcomes/A-O7.jpg", item: 18, task: "操作<b>正壓封管</b>（方法一或方法二擇一）：依序點選。", opts: [
+        {id: "keep", t: "方法一：保留 NS 0.5–1 mL（勿全部推注完）"}, {id: "thumb", t: "方法二：以大拇指壓住針筒活塞"},
+        {id: "clamp", t: "關閉管夾"}, {id: "rm", t: "（緩慢）移除針筒／注射器"}, {id: "all", t: "把 NS 全部推完"}],
+      orders: [["keep", "clamp", "rm"], ["thumb", "clamp", "rm"]],
+      why: {clamp: "關管夾之前，要先做好「保留 NS 0.5–1 mL」或「大拇指壓住活塞」，管內才有正壓。", rm: {acc: ACC.back},
+        all: "方法一要保留 NS 0.5–1 mL，勿全部推注完。", keep: "方法一、方法二擇一做就好。", thumb: "方法一、方法二擇一做就好。"},
+      okMsg: "正壓封管完成：先維持正壓 → 關閉管夾 → 再移除注射器。"},
+  ]});
+
+/* ═════ 第 5 站 角針移除（評核表 19–21） ═════
+   情境圖 I15：病人胸前 Port-A 角針（約 200,125），延長管接頭在左下（約 80,155），右下是尖銳物品收集器 */
+const Z_CN = [52, 128, 112, 182];
+LABS.push({id: "remove", icon: "🔚", title: "Port-A 角針移除", items: [19, 20, 21], finImg: "outcomes/C-O5.jpg",
+  desc: "消毒接頭、反抽沖管、Heparin 封管、BD 安全針具「喀」一聲移除。",
+  steps: [
+    {type: "drag", bg: "I15.jpg", task: "以 <b>70–75% 酒精棉</b>消毒 Port-A 接頭。",
+      tray: ["S25", "S11"], zones: [{id: "cn", r: Z_CN, label: "Port-A 接頭"}], goal: [["S25", "cn"]],
+      wrong: {S11: "紗布是拔針後加壓止血用的。消毒接頭要用 70–75% 酒精棉。"}, okMsg: "Port-A 接頭消毒好了。"},
+    {type: "drag", bg: "I15.jpg", task: "採無菌技術接上 <b>NS 10 mL 注射器</b>。",
+      tray: ["S33", "S15"], zones: [{id: "cn", r: Z_CN, label: "Port-A 接頭"}], goal: [["S33", "cn"]],
+      wrong: {S15: "要用 NS 10 mL 注射器（或與 10 mL 注射器針筒管徑相同）。"}, okMsg: "接上 NS 10 mL 注射器了。"},
+    {type: "hold", bg: "I15.jpg", task: "<b>反抽</b>測試回血。", label: "按住＝往後拉活塞（反抽）", ms: 1500, okMsg: "有回血。"},
+    {type: "rhythm", bg: "I15.jpg", item: 19, task: "再以<b>推-停-推-停</b>方式將管壁沖洗乾淨。", n: 5, ml: 2,
+      okMsg: "以推-停-推-停方式將管壁沖洗乾淨。"},
+    {type: "drag", bg: "I15.jpg", task: "接上 <b>prefill heparin saline 3–5 mL</b>。",
+      tray: ["S34", "S08"], zones: [{id: "cn", r: Z_CN, label: "Port-A 接頭"}], goal: [["S34", "cn"]],
+      wrong: {S08: "20 mL 生理食鹽水不是 heparin。這一步要接 prefill heparin saline 3–5 mL。"}, okMsg: "接上 prefill heparin saline 了。"},
+    {type: "seq", bg: "I15.jpg", after: "outcomes/C-O1.jpg", item: 20, task: "依序點選動作。", opts: [
+        {id: "inj", t: "注入 Heparinized saline"}, {id: "clamp", t: "夾住管夾"}],
+      orders: [["inj", "clamp"]], why: {clamp: "先注入 Heparinized saline，再夾住管夾。"},
+      okMsg: "注入 Heparinized saline 後夾住管夾。"},
+    {type: "seq", bg: "outcomes/C-X2.jpg", task: "準備移除角針（BD 安全性賀伯注射針組）：依序點選。", opts: [
+        {id: "l", t: "左手（非慣用手）大拇指、食指固定注射針座盤"}, {id: "r", t: "右手（慣用手）大拇指與食指緊握安全針具握柄"},
+        {id: "br", t: "準備好，請病人深呼吸"}, {id: "one", t: "單手抓住握柄直接拔起來"}],
+      orders: [["l", "r", "br"], ["r", "l", "br"]],
+      why: {br: "雙手都就位（左手固定針座盤、右手握緊握柄）準備好了，才請病人深呼吸。", one: "要用左手（非慣用手）固定注射針座盤，不能單手拔。"},
+      okMsg: "左手固定針座盤、右手握緊握柄，請病人深呼吸。"},
+    {type: "drag", bg: "I15.jpg", after: "outcomes/C-O3.jpg", task: "把握柄往哪個方向拉？",
+      tray: ["GRP"], zones: [{id: "up", r: [172, 34, 232, 96], label: "垂直向上拉起"}, {id: "side", r: [246, 66, 312, 116], label: "斜斜往旁邊拔"}], goal: [["GRP", "up"]],
+      wrong: {"@side": "要「垂直向上」拉起，直至感覺針尖卡住定位。"}, okMsg: "垂直向上拉起。"},
+    {type: "choice", bg: "outcomes/C-O3.jpg", item: 21, task: "拉到什麼程度才算完成？",
+      q: "怎麼知道針尖已縮至底盤中的安全機制內？", opts: [
+        {t: "感覺針尖卡住定位，並聽到「喀」一聲", ok: true, why: "聽到「喀」一聲，即表示針尖已縮至底盤中的安全機制內且安全機制已啟動。"},
+        {t: "針一離開皮膚就算完成，直接拿去丟", acc: ACC.stick},
+        {t: "看到墊片離開皮膚就可以", why: "要拉到感覺針尖卡住定位，並聽到「喀」一聲，才算安全機制啟動。"}]},
+    {type: "drag", bg: "I15.jpg", task: "（延伸，不在 21 項內）拔出的角針丟哪裡？", note: "出自 Port-A 角針移除查核表（15700-4-041712）第 15 項。",
+      tray: ["NDL"], zones: [{id: "sharp", r: [252, 140, 358, 238], label: "尖銳物品收集器"}, {id: "bed", r: [14, 40, 120, 110], label: "先放病床上"}], goal: [["NDL", "sharp"]],
+      wrong: {"@bed": "拔出之 Port-A 角針要隨即丟入尖銳物品收集器中，不要先放著。"}, okMsg: "拔出的角針隨即丟入尖銳物品收集器。"},
+  ]});
+
+function home(){
+  $("#backlab").hidden = true;
+  $("#pnum").textContent = `完成 ${LABS.filter(l => DONE[l.id]).length} / ${LABS.length} 站`;
+  $("#app").innerHTML = `<header><div class="kicker">新進護理師到職訓練 · 動手做技術站</div><h1>🧪 化療靜脈給藥暨人工血管照護基礎技術</h1>
+    <p class="muted">把用物拖到正確的位置（或先點用物、再點位置），照評核表一步一步做。做錯會出事——出事以後要先選對處理方法，才能回到出事前重做。每一站都有「⏸ 暫停」「↩ 上一步」「🔁 全部重來」，放錯的用物可以再拖回上排。</p></header>
+    <div class="grid">${LABS.map(l => `<button class="xp" onclick="location.hash='#/${l.id}'"><span class="ic">${l.icon}</span><span><b>${esc(l.title)}</b><small>${esc(l.desc)}</small><small>評核表第 ${l.items[0]}–${l.items[l.items.length - 1]} 項${DONE[l.id] ? ' · <span class="done">✅ 做完了</span>' : ""}</small></span></button>`).join("")}</div>
+    <div class="card"><details><summary>📋 看評核表全部 21 項（原文）</summary>${checkTable(CHECK.map((_, i) => i + 1), new Set(), 0)}</details>
+    <p class="note">※ 步驟文字照評核表原文。「出事」情境與處理題、每步的補充說明（標「教學補充」者）不是評核表原文，以院內規範與老師說明為準。</p></div>`;
+}
+function route(){
+  const id = location.hash.replace(/^#\/?/, ""), L = LABS.find(l => l.id === id);
+  window.scrollTo(0, 0);
+  if(!L) return home();
+  $("#backlab").hidden = false; $("#pnum").textContent = `評核表第 ${L.items[0]}–${L.items[L.items.length - 1]} 項`;
+  $("#app").innerHTML = `<header><div class="kicker">動手做技術站</div><h1>${L.icon} ${esc(L.title)}</h1></header><div id="lpane"></div>`;
+  runStation($("#lpane"), L);
+}
+$("#backlab").onclick = () => { location.hash = ""; };
+window.addEventListener("hashchange", route); route();
+</script>
+</body>
+</html>
