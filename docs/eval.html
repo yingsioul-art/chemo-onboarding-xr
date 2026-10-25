@@ -421,7 +421,8 @@ function labForm(){
     if(!r.ok){ btn.disabled=false; btn.textContent="重新送出"; document.getElementById("msg").innerHTML=`<div class="note">送出失敗，請再按一次或告訴老師。（${esc(r.error||"")}）</div>`; return }
     const helpSt = LAB_ST.filter((_,i)=>zpd[i]>0);
     $app.innerHTML = `<div class="card" style="text-align:center;padding:30px 16px"><div class="big" style="color:var(--ok)">✓</div><h1>技術站自評已送出</h1>
-      <div class="sub">${helpSt.length?`上課時請特別留意：<br><b>${helpSt.map(esc).join("<br>")}</b>`:"你覺得每一站都做得到，上課時請實際操作驗證看看。"}</div>
+      <div class="sub" style="font-size:17px;color:var(--ink)"><b>接下來開始實體課練習，請依老師指示到操作台。</b></div>
+      <div class="sub">${helpSt.length?`練習時請特別留意：<br><b>${helpSt.map(esc).join("<br>")}</b>`:"你覺得每一站都做得到，練習時請實際操作驗證看看。"}</div>
       ${r.local?`<div class="note">（測試版）尚未設定回傳網址，資料只存在這台裝置。</div>`:""}
       <button onclick="location.hash=''">回首頁</button></div>`;
   };
