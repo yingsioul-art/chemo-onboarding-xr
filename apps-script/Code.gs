@@ -5,6 +5,9 @@
  * 讀取：
  *   ?mode=summary&since=ISO   → 匿名列（無員工編號），給大螢幕投影版
  *   ?mode=detail&since=ISO&key=… → 含員工編號，給老師個人版
+ * 訓練成效評估（eval.html，kind＝pre／post／check）另存「eval」分頁：
+ *   ?mode=evalpre&code=…  → 該代碼最近一次前測（後測頁做前後對照用）
+ *   ?mode=eval&key=…      → 全部成效資料（老師結果頁）
  */
 var SHEET_NAME = 'responses';
 var HEAD = ['收到時間', '員工編號', '開始時間', '送出時間', '作答秒數', '答對', '題數', '不知道題數',
@@ -16,6 +19,7 @@ function doPost(e) {
   try {
     lock.waitLock(20000);
     var p = JSON.parse((e && e.postData && e.postData.contents) || '');
+    if (p && EVAL_KINDS.indexOf(p.kind) >= 0) return evalPost_(p);
     if (!p || !p.code || !p.answers) return json_({ ok: false, error: 'missing code/answers' });
     var sh = sheet_();
     if (p.submission_id) {
@@ -38,6 +42,7 @@ function doGet(e) {
   var q = (e && e.parameter) || {};
   var mode = q.mode || 'ping';
   if (mode === 'ping') return json_({ ok: true, service: 'chemo-onboarding', time: new Date().toISOString() });
+  if (mode === 'evalpre' || mode === 'eval') return evalGet_(mode, q);
   var detail = mode === 'detail';
   if (detail) {
     var key = PropertiesService.getScriptProperties().getProperty('TEACHER_KEY');
@@ -57,6 +62,50 @@ function doGet(e) {
     rows.push(o);
   });
   if (!detail) shuffle_(rows);   // 投影版：打亂順序，避免由送出時間對回是誰
+  return json_({ ok: true, rows: rows });
+}
+
+// ---------- 訓練成效評估 ----------
+var EVAL_SHEET = 'eval';
+var EVAL_KINDS = ['pre', 'post', 'check'];
+var EVAL_HEAD = ['收到時間', '類型', '代碼', '梯次日期', '知識答對', 'submission_id', '版本', '原始JSON'];
+
+function evalSheet_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = ss.getSheetByName(EVAL_SHEET) || ss.insertSheet(EVAL_SHEET);
+  if (sh.getLastRow() === 0) { sh.appendRow(EVAL_HEAD); sh.getRange(1, 1, 1, EVAL_HEAD.length).setFontWeight('bold'); sh.setFrozenRows(1); }
+  return sh;
+}
+function evalRows_() {
+  var sh = evalSheet_(), last = sh.getLastRow();
+  if (last < 2) return [];
+  var iRaw = EVAL_HEAD.indexOf('原始JSON'), out = [];
+  sh.getRange(2, 1, last - 1, EVAL_HEAD.length).getValues().forEach(function (r) {
+    try { out.push(JSON.parse(r[iRaw])); } catch (x) {}
+  });
+  return out;
+}
+function evalPost_(p) {
+  if (!p.code) return json_({ ok: false, error: 'missing code' });
+  var sh = evalSheet_(), col = EVAL_HEAD.indexOf('submission_id') + 1, last = sh.getLastRow();
+  if (p.submission_id && last >= 2) {
+    var ids = sh.getRange(2, col, last - 1, 1).getValues();
+    for (var i = 0; i < ids.length; i++) if (String(ids[i][0]) === String(p.submission_id)) return json_({ ok: true, duplicate: true });
+  }
+  sh.appendRow([new Date(), p.kind, "'" + String(p.code), p.session || '', p.know == null ? '' : p.know,
+    p.submission_id || '', p.version || '', JSON.stringify(p)]);
+  return json_({ ok: true, row: sh.getLastRow() });
+}
+function evalGet_(mode, q) {
+  var rows = evalRows_();
+  if (mode === 'evalpre') {
+    // 只回分數與作答，不回開放題
+    var pre = null;
+    rows.forEach(function (p) { if (p.kind === 'pre' && String(p.code) === String(q.code) && (!pre || p.submitted_at > pre.submitted_at)) pre = p; });
+    return json_({ ok: true, pre: pre ? { se: pre.se, answers: pre.answers, know: pre.know } : null });
+  }
+  var key = PropertiesService.getScriptProperties().getProperty('TEACHER_KEY');
+  if (!key || q.key !== key) return json_({ ok: false, error: 'bad_key' });
   return json_({ ok: true, rows: rows });
 }
 

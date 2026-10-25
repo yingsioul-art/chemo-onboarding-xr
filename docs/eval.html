@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>化療給藥訓練成效評估</title>
+<style>
+:root{
+  color-scheme:light;
+  --bg:#f4f6f8; --card:#ffffff; --ink:#1b2631; --ink2:#46535f; --muted:#6b7884; --line:#d6dde3; --grid:#e8edf1;
+  --s1:#0b3c5d; --s2:#9aa9b6; --accent:#0b3c5d; --accent2:#155a8a; --soft:#e7eef4; --ok:#1e8449; --ok-bg:#e8f5ec; --ng:#c0392b; --ng-bg:#fbeceb;
+  --warn-bg:#fdf3e1; --warn:#7a4f00; --bar:#0b3c5d; --bar-ink:#ffffff; --r:6px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0f1720; --card:#17212c; --ink:#e6ecf1; --ink2:#b4c0cb; --muted:#8796a3; --line:#2a3744; --grid:#223040;
+    --s1:#5aa2d6; --s2:#4b5b6a; --accent:#5aa2d6; --accent2:#7db7e0; --soft:#1a2b3b; --ok:#4cc27e; --ok-bg:#132a1d; --ng:#ef7b6e; --ng-bg:#2e1a18;
+    --warn-bg:#2e2510; --warn:#f1c25a; --bar:#0a2236; --bar-ink:#e6ecf1; --r:6px;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0f1720; --card:#17212c; --ink:#e6ecf1; --ink2:#b4c0cb; --muted:#8796a3; --line:#2a3744; --grid:#223040;
+  --s1:#5aa2d6; --s2:#4b5b6a; --accent:#5aa2d6; --accent2:#7db7e0; --soft:#1a2b3b; --ok:#4cc27e; --ok-bg:#132a1d; --ng:#ef7b6e; --ng-bg:#2e1a18;
+  --warn-bg:#2e2510; --warn:#f1c25a; --bar:#0a2236; --bar-ink:#e6ecf1; --r:6px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 "Noto Sans TC","Microsoft JhengHei","PingFang TC",system-ui,sans-serif}
+.topbar{background:var(--bar);color:var(--bar-ink);position:sticky;top:0;z-index:5}
+.topbar div{max-width:1180px;margin:0 auto;padding:10px 16px;display:flex;gap:12px;align-items:center;font-size:15px}
+.topbar b{font-weight:700;letter-spacing:.02em}
+.topbar span{margin-left:auto;font-size:13px;opacity:.85}
+@media (max-width:640px){.topbar span{display:none}.topbar div{font-size:14px}}
+main{max-width:760px;margin:0 auto;padding:16px 16px 60px}
+main.wide{max-width:1180px}
+h1{font-size:21px;margin:6px 0 4px}
+h2{font-size:17px;margin:0 0 6px}
+.sub{color:var(--ink2);font-size:14px;margin-bottom:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;margin-bottom:12px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:12px}
+.tile{display:block;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;cursor:pointer;font:inherit;color:inherit}
+.tile:hover{border-color:var(--accent)}
+.tile b{display:block;font-size:18px;margin-bottom:4px}
+.tile span{font-size:14px;color:var(--ink2)}
+button,input,textarea{font:inherit;color:var(--ink)}
+button{border:1px solid var(--line);background:var(--card);border-radius:var(--r);padding:9px 14px;min-height:42px;cursor:pointer}
+button.pri{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+button.pri:hover{background:var(--accent2)}
+.tile{border-left:4px solid var(--accent)}
+button:disabled{opacity:.5;cursor:not-allowed}
+input[type=text],input[type=password],input[type=date],textarea{width:100%;border:1px solid var(--line);background:var(--card);border-radius:var(--r);padding:9px 12px}
+textarea{min-height:80px}
+.q{margin:0 0 4px;font-weight:600}
+.qn{color:var(--accent);margin-right:4px}
+.opts{display:grid;gap:6px;margin-top:8px}
+.opt{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:var(--r);padding:9px 12px;cursor:pointer;background:var(--card)}
+.opt input{margin-top:5px;flex:none}
+.opt.unsure{border-style:dashed;color:var(--ink2)}
+.opt.sel{border-color:var(--accent);background:var(--soft);border-style:solid}
+.opt.right{border-color:var(--ok);background:var(--ok-bg)}
+.opt.wrong{border-color:var(--ng);background:var(--ng-bg)}
+.scale{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:8px}
+.scale label{display:flex;flex-direction:column;align-items:center;gap:2px;border:1px solid var(--line);border-radius:var(--r);padding:8px 2px;cursor:pointer;font-size:13px;text-align:center}
+.scale label b{font-size:18px}
+.scale label.sel{border-color:var(--accent);background:var(--soft)}
+.scale input{display:none}
+.anchor{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);margin-top:4px}
+.sec{font-size:14px;font-weight:700;color:var(--accent);margin:22px 0 8px;padding-bottom:4px;border-bottom:2px solid var(--accent);letter-spacing:.03em}
+.note{background:var(--warn-bg);color:var(--warn);border-radius:var(--r);padding:10px 12px;font-size:14px;margin:10px 0}
+.ex{font-size:14px;color:var(--ink2);margin-top:8px;padding-top:8px;border-top:1px dashed var(--line)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.muted{color:var(--muted);font-size:13.5px}
+.big{font-size:40px;font-weight:700;line-height:1.1}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:12px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
+.kpi .v{font-size:30px;font-weight:700;line-height:1.15}
+.kpi .l{font-size:13.5px;color:var(--ink2)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,500px),1fr));gap:12px}
+.bar{display:grid;grid-template-columns:minmax(90px,34%) 1fr 92px;gap:8px;align-items:center;margin:5px 0}
+.bar .num{font-size:12.5px;color:var(--ink2);white-space:nowrap;text-align:right}
+.bar .lab{font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.trk{position:relative;display:grid;gap:2px}
+.trk i{display:block;height:9px;border-radius:0 4px 4px 0;background:var(--s2)}
+.trk i.post{background:var(--s1)}
+.legend{display:flex;gap:14px;font-size:13px;color:var(--ink2);margin-bottom:6px}
+.legend span::before{content:"";display:inline-block;width:12px;height:9px;border-radius:2px;margin-right:5px;background:var(--s2)}
+.legend span.post::before{background:var(--s1)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{border-bottom:1px solid var(--line);padding:7px 6px;text-align:left;vertical-align:top}
+th{color:var(--ink2);font-weight:600;white-space:nowrap}
+.tblwrap{overflow-x:auto}
+.pass{color:var(--ok);font-weight:600}.fail{color:var(--ng);font-weight:600}
+.back{background:none;border:none;color:var(--accent);padding:0;min-height:0;margin-bottom:6px}
+</style>
+</head>
+<body>
+<header class="topbar"><div><b>化療靜脈給藥暨人工血管照護</b>｜訓練成效評估<span>腫瘤品管｜新進護理師到職訓練</span></div></header>
+<main id="app"></main>
+<script>
+/* 到職訓練｜化療靜脈給藥暨人工血管照護 訓練成效評估（Kirkpatrick L1＋L2）
+   規格：vault 20_教學\Makar\40_新進護理師到職訓練XR\13_訓練成效評估表_規格_v1.md（改題目時兩邊一起改）
+   ENDPOINT：與 index.html 相同的 Apps Script 網址；空白時資料只存在本機瀏覽器（測試用）。
+   結果頁網址加 ?demo=1 可看假資料。 */
+const ENDPOINT = "";
+const VERSION = "eval-v1";
+
+// 把握度（自我效能）：依技術表 5 個區段
+const SE = [
+  "組裝密閉系統藥品轉移裝置（CSTD）",
+  "給藥前準備（防護裝備、病人辨識、條碼檢核）",
+  "化療藥袋與相容輸液的換接",
+  "Port-A 角針置放與回血測試",
+  "Port-A 角針移除與正壓封管",
+];
+const SE_ANCHOR = ["完全沒把握","不太有把握","普通","有把握","非常有把握"];
+
+// 知識題：a＝正解在 o 的索引（畫面上選項會固定打亂，前後測順序相同）
+const KQ = [
+  {step:"#3", q:"CSTD 的 Spike 戳入生理食鹽水點滴橡皮塞後，你看到橡皮塞下方還有液體殘留。下一步最適當的是？",
+   o:["不影響，繼續組裝","先處理到橡皮塞下方無液體殘留再繼續","拔出 Spike 重新戳一次","等換接化療藥品時再處理"], a:1,
+   ex:"技術表第 3 項要求確認橡皮塞下方無液體殘留；殘留液體在拆接時可能滴出，造成暴露。"},
+  {step:"#4", q:"主護準備掛上化療藥品，下列哪一組防護裝備穿戴正確？",
+   o:["防水隔離衣＋單層手套＋外科口罩","防水隔離衣（後開式、長袖、袖口可束緊）＋雙層手套套住袖口＋外科口罩＋護目鏡","前開式隔離衣＋雙層手套塞在袖口內＋N95＋護目鏡","隔離衣＋雙層手套＋外科口罩（不必護目鏡）"], a:1,
+   ex:"後開式、長袖、袖口可束緊的防水隔離衣；雙層丁腈膠或乳膠手套需套住袖口；外科口罩；護目鏡或防護面罩。"},
+  {step:"#6", q:"病房使用「輸液幫浦連線」功能，給化療藥前的條碼掃描應包含？",
+   o:["病人手圈＋化療藥袋標籤","幫浦＋病人手圈＋化療藥袋標籤","幫浦＋化療藥袋標籤","病人手圈＋幫浦"], a:1,
+   ex:"連線情境掃描幫浦、病人手圈、化療藥袋三個條碼；非連線情境才只掃手圈與藥袋，且要手動設定 Rate→VTBI。"},
+  {step:"#7／#11", q:"化療藥滴完，要旋開 CSTD 的 Spike 與 Adapter 移除化療藥袋。藥袋應放在哪裡？為什麼？",
+   o:["留在點滴架上，比較穩","放低於眼睛，若有滴漏不會濺到眼睛","舉高過頭，讓管內殘液流乾淨","放在病人床上，方便操作"], a:1,
+   ex:"拆接時把藥袋放低於眼睛，萬一滴漏或噴濺不會濺到眼睛。"},
+  {step:"#9", q:"化療藥袋與 CSTD 的 Adapter 銜接完、掛上點滴架後，接著要設定幫浦。下一步應先？",
+   o:["直接按幫浦","脫除外層手套，因外層可能沾到藥品","脫除兩層手套並洗手","用酒精棉擦拭手套後繼續"], a:1,
+   ex:"前面的操作可能讓化療藥品殘留在外層手套上，先脫除外層再碰幫浦，避免污染環境。"},
+  {step:"#16", q:"角針置放後用 10 mL 注射器反抽，抽出淡粉紅色、像被稀釋的液體。下一步？",
+   o:["有回血就好，開始給藥","繼續反抽確認為全血，未確認前不給藥","用力推注 NS 通管後直接給藥","拔針重戳"], a:1,
+   ex:"回血顏色須為全血；稀釋血不能確認針尖在圓盤內、導管通暢，此時給化療藥有外滲風險。"},
+  {step:"#8", q:"化療藥袋送到病房時裝在塑膠夾鏈袋內，銜接 CSTD 時應怎麼做？",
+   o:["取出藥袋再銜接，較好操作","不取出，只露出 Spike 與 Adapter 銜接，連夾鏈袋掛上點滴架","取出藥袋，夾鏈袋丟化療廢棄物桶","剪開夾鏈袋底部再銜接"], a:1,
+   ex:"夾鏈袋是第二層防護，藥袋破損或滴漏時可以接住藥品。"},
+  {step:"#15", q:"角針垂直插入 Port-A，已感覺碰到圓盤底部。接下來應？",
+   o:["再用力壓一下，確保插牢","不再用力強壓，墊片下壓平貼皮膚","稍微旋轉角針找最順的角度","往外拉一點留空間"], a:1,
+   ex:"插到底後再強壓會使角針前端變鈍，鈍針可能損傷 Port-A 的矽膠膜。"},
+  {step:"#17", q:"測完回血後用 10 mL NS 沖管，為什麼要用「推-停-推-停」？",
+   o:["減少病人疼痛","產生擾流，把管壁殘留的血液沖乾淨","控制速度避免管路破裂","確認角針有沒有在圓盤內"], a:1,
+   ex:"間歇推注產生擾流，比連續推注更能把管壁殘留的血液沖乾淨。"},
+  {step:"#18", q:"下列哪一種是正確的正壓封管？",
+   o:["NS 全部推完，先移除注射器再關管夾","保留 NS 0.5–1 mL，關閉管夾後緩慢移除注射器","NS 推完後放開活塞，再關管夾","不必關管夾，直接接上輸液"], a:1,
+   ex:"封管時讓管內維持正壓，避免血液回流造成堵塞；另一種方法是大拇指壓住活塞後關管夾，再移除注射器。"},
+];
+// 每題選項的固定顯示順序（同一題前後測一致）
+const ORDER = [[2,1,0,3],[0,3,1,2],[3,0,2,1],[1,2,3,0],[2,0,1,3],[0,2,3,1],[3,1,0,2],[1,3,2,0],[0,1,3,2],[2,3,1,0]];
+
+// 關鍵步驟一次通過（評核教師勾）
+const CS = [
+  "#3 戳入後橡皮塞下方無液體殘留",
+  "#4 個人防護裝備穿戴完整",
+  "#6 條碼檢核（幫浦／手圈／藥袋）",
+  "#7／#11 拆接 CSTD 時藥袋低於眼睛",
+  "#9 銜接後脫除外層手套",
+  "#16 回血確認為全血",
+];
+
+// 滿意度：沿用護理部評值表原文
+const L1 = [
+  "課程內容符合我的期待",
+  "講者表達清晰",
+  "課程有助我的個人成長",
+  "課程有助我的工作提升",
+  "整體而言，我對本課程感到滿意",
+  "我認為此次職前訓練對我進入工作的適應有很大幫助",
+  "我認為此次新進護理人員職前訓練課程之內容可符合臨床實務需求",
+];
+const L1_ANCHOR = ["非常不同意","不同意","尚可","同意","非常同意"];
+
+/* ---------- 共用 ---------- */
+const $app = document.getElementById("app");
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const today = () => { const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}` };
+const LS = { get(k,d){ try{ return JSON.parse(localStorage.getItem(k)) ?? d }catch(e){ return d } },
+             set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)) }catch(e){} } };
+// 代碼正規化：全形轉半形、去空白、轉大寫、各種橫線統一
+function normCode(s){
+  return String(s||"").replace(/[！-～]/g, c => String.fromCharCode(c.charCodeAt(0)-0xFEE0))
+    .replace(/\s+/g,"").replace(/[‐-―－—–_]/g,"-").toUpperCase();
+}
+const codeOK = c => /^\d{6}$/.test(c);
+const score = ans => KQ.reduce((n,k,i) => n + (ans[i]===k.a ? 1 : 0), 0);
+const mean = a => a.length ? a.reduce((x,y)=>x+y,0)/a.length : NaN;
+const f1 = x => isNaN(x) ? "—" : x.toFixed(1);
+const pct = x => isNaN(x) ? "—" : Math.round(x*100)+"%";
+
+async function send(payload){
+  payload.version = VERSION; payload.submitted_at = new Date().toISOString();
+  payload.submission_id = payload.kind + "-" + Date.now() + "-" + Math.random().toString(36).slice(2,8);
+  const local = LS.get("eval_local", []); local.push(payload); LS.set("eval_local", local);   // 本機留底
+  if(!ENDPOINT) return {ok:true, local:true};
+  try{
+    const r = await fetch(ENDPOINT,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload),redirect:"follow"});
+    return await r.json();
+  }catch(e){
+    try{ await fetch(ENDPOINT,{method:"POST",mode:"no-cors",body:JSON.stringify(payload)}); return {ok:true} }catch(x){ return {ok:false, error:String(x)} }
+  }
+}
+
+/* ---------- 路由 ---------- */
+function route(){
+  const h = location.hash.replace("#","");
+  ({pre:()=>quiz("pre"), post:()=>quiz("post"), check:checkForm, result:resultPage}[h] || home)();
+  window.scrollTo(0,0);
+}
+window.addEventListener("hashchange", route);
+
+function home(){
+  $app.className="";
+  $app.innerHTML = `
+    <h1>化療靜脈給藥暨人工血管照護｜訓練成效評估</h1>
+    <div class="sub">新進護理師到職訓練。請依老師指示選擇要填的項目。</div>
+    <div class="tiles">
+      <button class="tile" onclick="location.hash='pre'"><b>前測</b><span>上課前填。把握度 5 題＋情境題 10 題，約 5 分鐘。</span></button>
+      <button class="tile" onclick="location.hash='post'"><b>後測</b><span>課程結束後填。同樣的題目＋課程回饋，送出後可看前後對照與解說。</span></button>
+      <button class="tile" onclick="location.hash='check'"><b>評核教師</b><span>技術評核時勾選 6 項關鍵步驟是否第一次就做對。</span></button>
+      <button class="tile" onclick="location.hash='result'"><b>成效結果</b><span>老師查看前後測配對結果、匯出資料（需密碼）。</span></button>
+    </div>`;
+}
+
+/* ---------- 代碼區塊 ---------- */
+function codeBlock(id){
+  const last = LS.get("eval_code","");
+  return `<div class="card">
+    <h2>員工編號</h2>
+    <div class="sub" style="margin-bottom:8px">請填 <b>6 碼數字</b>。前測、後測要填同一個編號，系統才能配對。</div>
+    <input type="text" id="${id}" value="${esc(last)}" placeholder="例：012345" autocomplete="off" inputmode="numeric" maxlength="6">
+    <div class="muted" id="${id}_msg" style="margin-top:4px"></div>
+  </div>`;
+}
+function readCode(id){
+  const c = normCode(document.getElementById(id).value);
+  const m = document.getElementById(id+"_msg");
+  if(!codeOK(c)){ m.innerHTML = `<span class="fail">員工編號要是 6 碼數字，例如 012345。</span>`; document.getElementById(id).focus(); return null }
+  LS.set("eval_code", c); return c;
+}
+
+/* ---------- 前測／後測 ---------- */
+function scaleHTML(name, anchor){
+  return `<div class="scale">${[1,2,3,4,5].map(v=>`<label data-n="${name}"><input type="radio" name="${name}" value="${v}"><b>${v}</b></label>`).join("")}</div>
+          <div class="anchor"><span>1 ${anchor[0]}</span><span>5 ${anchor[4]}</span></div>`;
+}
+function quiz(kind){
+  $app.className="";
+  const isPost = kind==="post";
+  $app.innerHTML = `
+    <button class="back" onclick="location.hash=''">← 回首頁</button>
+    <h1>${isPost?"後測":"前測"}</h1>
+    <div class="sub">${isPost?"課程結束後填寫。題目和前測一樣，請依你現在的理解作答；不知道就選「不確定」。":"上課前填寫。不會算成績，請依你目前的理解作答；不知道就選「不確定」，不要用猜的。"}</div>
+    ${codeBlock("code")}
+    <div class="sec">一、操作把握度</div>
+    <div class="muted" style="margin:-4px 0 8px">我有把握能獨立、正確地完成……</div>
+    ${SE.map((s,i)=>`<div class="card"><p class="q"><span class="qn">${i+1}.</span>${esc(s)}</p>${scaleHTML("se"+i, SE_ANCHOR)}</div>`).join("")}
+    <div class="sec">二、情境題（單選）</div>
+    ${KQ.map((k,i)=>`<div class="card" id="kq${i}"><p class="q"><span class="qn">${i+1}.</span>${esc(k.q)}</p>
+      <div class="opts">${ORDER[i].map((oi,j)=>`<label class="opt" data-n="kq${i}"><input type="radio" name="kq${i}" value="${oi}"><span>${"ABCD"[j]}. ${esc(k.o[oi])}</span></label>`).join("")}
+        <label class="opt unsure" data-n="kq${i}"><input type="radio" name="kq${i}" value="-1"><span>E. 不確定</span></label></div></div>`).join("")}
+    ${isPost?`
+    <div class="sec">三、課程回饋</div>
+    ${L1.map((s,i)=>`<div class="card"><p class="q"><span class="qn">${i+1}.</span>${esc(s)}</p>${scaleHTML("l1"+i, L1_ANCHOR)}</div>`).join("")}
+    <div class="card"><p class="q">對本次到職訓練的建議（選填）</p><textarea id="sug"></textarea></div>
+    <div class="card"><p class="q">本次到職訓練的自我收穫或心得（選填）</p><textarea id="gain"></textarea></div>`:""}
+    <div id="msg"></div>
+    <button class="pri" id="go" style="width:100%">送出${isPost?"後測":"前測"}</button>`;
+  bindSel();
+  document.getElementById("go").onclick = async () => {
+    const code = readCode("code"); if(!code) return;
+    const val = n => { const r=document.querySelector(`input[name="${n}"]:checked`); return r ? +r.value : null };
+    const se = SE.map((_,i)=>val("se"+i)), ans = KQ.map((_,i)=>val("kq"+i));
+    const l1 = isPost ? L1.map((_,i)=>val("l1"+i)) : [];
+    const miss = [...se.map((v,i)=>v==null?`把握度第 ${i+1} 題`:null), ...ans.map((v,i)=>v==null?`情境題第 ${i+1} 題`:null), ...l1.map((v,i)=>v==null?`課程回饋第 ${i+1} 題`:null)].filter(Boolean);
+    if(miss.length){ document.getElementById("msg").innerHTML = `<div class="note">還沒填：${miss.slice(0,6).join("、")}${miss.length>6?` 等 ${miss.length} 題`:""}</div>`; return }
+    const btn = document.getElementById("go"); btn.disabled = true; btn.textContent = "送出中…";
+    const payload = {kind, code, session: today(), se, answers: ans, know: score(ans)};
+    if(isPost){ payload.l1 = l1; payload.suggest = document.getElementById("sug").value.trim(); payload.gain = document.getElementById("gain").value.trim() }
+    const r = await send(payload);
+    if(!r.ok){ btn.disabled=false; btn.textContent="重新送出"; document.getElementById("msg").innerHTML=`<div class="note">送出失敗，請再按一次或告訴老師。（${esc(r.error||"")}）</div>`; return }
+    if(isPost) postFeedback(payload, r.local); else preDone(r.local);
+  };
+}
+function bindSel(){
+  $app.querySelectorAll("label[data-n]").forEach(l => l.addEventListener("change", () => {
+    $app.querySelectorAll(`label[data-n="${l.dataset.n}"]`).forEach(x => x.classList.toggle("sel", x.querySelector("input").checked));
+  }));
+}
+function preDone(local){
+  $app.innerHTML = `<div class="card" style="text-align:center;padding:30px 16px">
+    <div class="big" style="color:var(--ok)">✓</div><h1>前測已送出</h1>
+    <div class="sub">下一步：進入<b>動手做技術站</b>練習。課程結束後請用<b>同一個員工編號</b>填後測，到時就能看到自己的前後對照與每題解說。</div>
+    ${local?`<div class="note">（測試版）尚未設定回傳網址，資料只存在這台裝置。</div>`:""}
+    <div class="row" style="justify-content:center"><a href="lab.html"><button class="pri">進入動手做技術站 →</button></a><button onclick="location.hash=''">回首頁</button></div></div>`;
+}
+async function findPre(code){
+  const local = LS.get("eval_local", []).filter(p => p.kind==="pre" && p.code===code);
+  if(local.length) return local[local.length-1];
+  if(!ENDPOINT) return null;
+  try{ const r = await (await fetch(`${ENDPOINT}?mode=evalpre&code=${encodeURIComponent(code)}`)).json(); return r.ok ? r.pre : null }catch(e){ return null }
+}
+async function postFeedback(p, local){
+  $app.innerHTML = `<div class="card">讀取前測資料中…</div>`;
+  const pre = await findPre(p.code);
+  const seRow = SE.map((s,i)=>`<tr><td>${esc(s)}</td><td>${pre?pre.se[i]:"—"}</td><td><b>${p.se[i]}</b></td></tr>`).join("");
+  $app.innerHTML = `
+    <h1>後測已送出，謝謝你！</h1>
+    ${local?`<div class="note">（測試版）尚未設定回傳網址，資料只存在這台裝置。</div>`:""}
+    <div class="kpis">
+      <div class="kpi"><div class="v">${pre?pre.know:"—"} → ${p.know}</div><div class="l">情境題答對（滿分 10）前測 → 後測</div></div>
+      <div class="kpi"><div class="v">${pre?f1(mean(pre.se)):"—"} → ${f1(mean(p.se))}</div><div class="l">把握度平均（滿分 5）前測 → 後測</div></div>
+    </div>
+    ${pre?"":`<div class="note">找不到員工編號 ${esc(p.code)} 的前測。若前測填了不同編號，請告訴老師。</div>`}
+    <div class="card"><h2>把握度</h2><div class="tblwrap"><table><tr><th>區段</th><th>前測</th><th>後測</th></tr>${seRow}</table></div></div>
+    <div class="sec">情境題解說</div>
+    ${KQ.map((k,i)=>{
+      const mine = p.answers[i], ok = mine===k.a, preOk = pre ? pre.answers[i]===k.a : null;
+      return `<div class="card"><p class="q"><span class="qn">${i+1}.</span>${esc(k.q)}
+        <span class="${ok?"pass":"fail"}" style="margin-left:6px">${ok?"答對":(mine===-1?"不確定":"答錯")}</span>${preOk==null?"":`<span class="muted">（前測${preOk?"答對":(pre.answers[i]===-1?"不確定":"答錯")}）</span>`}</p>
+        <div class="opts">${ORDER[i].map((oi,j)=>`<div class="opt ${oi===k.a?"right":(oi===mine?"wrong":"")}"><span>${"ABCD"[j]}. ${esc(k.o[oi])}${oi===k.a?" ✔":""}${oi===mine&&!ok?"（你的答案）":""}</span></div>`).join("")}${mine===-1?`<div class="opt wrong"><span>E. 不確定（你的答案）</span></div>`:""}</div>
+        <div class="ex">解說：${esc(k.ex)}<span class="muted">（技術表 ${esc(k.step)}）</span></div></div>`}).join("")}
+    <button onclick="location.hash=''" style="width:100%">回首頁</button>`;
+}
+
+/* ---------- 評核教師 ---------- */
+function checkForm(){
+  $app.className="";
+  $app.innerHTML = `
+    <button class="back" onclick="location.hash=''">← 回首頁</button>
+    <h1>評核教師｜關鍵步驟一次通過</h1>
+    <div class="sub">技術評核時，依學員<b>第一次操作</b>的表現勾選。提醒後才做對、或重做才對，都算「需提醒或重做」。</div>
+    <div class="card"><h2>學員員工編號</h2>
+      <div class="sub" style="margin-bottom:8px">6 碼數字，和學員前測填的相同。</div>
+      <input type="text" id="ccode" placeholder="例：012345" autocomplete="off" inputmode="numeric" maxlength="6"><div class="muted" id="ccode_msg" style="margin-top:4px"></div></div>
+    ${CS.map((s,i)=>`<div class="card"><p class="q">${esc(s)}</p><div class="opts">
+      <label class="opt" data-n="cs${i}"><input type="radio" name="cs${i}" value="1"><span>第一次就做對</span></label>
+      <label class="opt" data-n="cs${i}"><input type="radio" name="cs${i}" value="0"><span>需提醒或重做</span></label></div></div>`).join("")}
+    <div class="card"><p class="q">備註（選填）</p><textarea id="cnote" placeholder="例：#16 第一次抽到稀釋血即開始推藥"></textarea></div>
+    <div id="msg"></div>
+    <button class="pri" id="go" style="width:100%">送出評核</button>`;
+  bindSel();
+  document.getElementById("go").onclick = async () => {
+    const el = document.getElementById("ccode"), c = normCode(el.value);
+    if(!codeOK(c)){ document.getElementById("ccode_msg").innerHTML=`<span class="fail">員工編號要是 6 碼數字。</span>`; el.focus(); return }
+    const cs = CS.map((_,i)=>{ const r=document.querySelector(`input[name="cs${i}"]:checked`); return r?+r.value:null });
+    if(cs.includes(null)){ document.getElementById("msg").innerHTML=`<div class="note">還有 ${cs.filter(v=>v==null).length} 項沒勾。</div>`; return }
+    const btn = document.getElementById("go"); btn.disabled=true; btn.textContent="送出中…";
+    const r = await send({kind:"check", code:c, session:today(), cs, note:document.getElementById("cnote").value.trim()});
+    if(!r.ok){ btn.disabled=false; btn.textContent="重新送出"; document.getElementById("msg").innerHTML=`<div class="note">送出失敗：${esc(r.error||"")}</div>`; return }
+    $app.innerHTML = `<div class="card" style="text-align:center;padding:30px 16px"><div class="big" style="color:var(--ok)">✓</div><h1>${esc(c)} 評核已送出</h1>
+      <div class="sub">一次通過 ${cs.filter(v=>v===1).length}／${CS.length} 項</div>
+      ${r.local?`<div class="note">（測試版）尚未設定回傳網址，資料只存在這台裝置。</div>`:""}
+      <div class="row" style="justify-content:center"><button class="pri" onclick="checkForm()">評下一位</button><button onclick="location.hash=''">回首頁</button></div></div>`;
+  };
+}
+
+/* ---------- 成效結果（老師） ---------- */
+function resultPage(){
+  $app.className="wide";
+  const demo = new URLSearchParams(location.search).get("demo")==="1";
+  const d0 = new Date(Date.now()-30*864e5);
+  $app.innerHTML = `
+    <button class="back" onclick="location.hash=''">← 回首頁</button>
+    <h1>訓練成效結果</h1>
+    <div class="sub">Kirkpatrick L1 反應（滿意度）＋L2 學習（知識、自我效能、技能）。前後測以員工編號配對，只計同一編號兩次都有填的人。</div>
+    <div class="card row">
+      <label class="muted">從 <input type="date" id="from" value="${d0.toISOString().slice(0,10)}" style="width:auto"></label>
+      <label class="muted">到 <input type="date" id="to" value="${today()}" style="width:auto"></label>
+      ${demo?"":`<input type="password" id="key" placeholder="老師密碼" style="width:160px" value="${esc(LS.get("eval_key",""))}">`}
+      <button class="pri" id="load">讀取</button>
+      <button id="csv" disabled>匯出 CSV</button>
+    </div>
+    <div id="out">${demo?"":`<div class="muted">輸入密碼後按「讀取」。${ENDPOINT?"":"（尚未設定回傳網址，只會讀到這台裝置上的資料。）"}</div>`}</div>`;
+  document.getElementById("load").onclick = () => loadResults(demo);
+  if(demo) loadResults(true);
+}
+async function loadResults(demo){
+  const out = document.getElementById("out");
+  const from = document.getElementById("from").value, to = document.getElementById("to").value;
+  let rows;
+  if(demo) rows = demoRows();
+  else if(!ENDPOINT) rows = LS.get("eval_local", []);
+  else{
+    const key = document.getElementById("key").value; LS.set("eval_key", key);
+    out.innerHTML = `<div class="muted">讀取中…</div>`;
+    try{
+      const r = await (await fetch(`${ENDPOINT}?mode=eval&key=${encodeURIComponent(key)}`)).json();
+      if(!r.ok){ out.innerHTML = `<div class="note">${r.error==="bad_key"?"密碼不對。":esc(r.error)}</div>`; return }
+      rows = r.rows;
+    }catch(e){ out.innerHTML = `<div class="note">讀取失敗：${esc(e)}</div>`; return }
+  }
+  rows = rows.filter(p => (!from || p.session>=from) && (!to || p.session<=to));
+  render(rows);
+}
+function latest(rows, kind){
+  const m = {}; rows.filter(p=>p.kind===kind).forEach(p => { if(!m[p.code] || p.submitted_at > m[p.code].submitted_at) m[p.code]=p }); return m;
+}
+function render(rows){
+  const pre = latest(rows,"pre"), post = latest(rows,"post"), chk = latest(rows,"check");
+  const paired = Object.keys(post).filter(c => pre[c]);
+  const P = paired.map(c => ({code:c, pre:pre[c], post:post[c]}));
+  const kPre = mean(P.map(x=>x.pre.know)), kPost = mean(P.map(x=>x.post.know));
+  const sPre = mean(P.map(x=>mean(x.pre.se))), sPost = mean(P.map(x=>mean(x.post.se)));
+  const unsure = p => p.answers.filter(v=>v===-1).length, uPre = mean(P.map(x=>unsure(x.pre))), uPost = mean(P.map(x=>unsure(x.post)));
+  const C = Object.values(chk), allPass = C.filter(c=>c.cs.every(v=>v===1)).length;
+  const L = Object.values(post).filter(p=>p.l1);
+  const sd = a => { const m=mean(a); return a.length>1 ? Math.sqrt(a.reduce((s,x)=>s+(x-m)**2,0)/(a.length-1)) : NaN };
+  const dK = P.map(x=>x.post.know-x.pre.know), dS = P.map(x=>mean(x.post.se)-mean(x.pre.se));
+  const bars = (labels, a, b, max) => labels.map((l,i)=>`<div class="bar"><div class="lab" title="${esc(l)}">${esc(l)}</div><div class="trk">
+      <i style="width:${(a[i]/max*100)||0}%"></i><i class="post" style="width:${(b[i]/max*100)||0}%"></i></div>
+      <div class="num">${max===1?pct(a[i])+" → "+pct(b[i]):f1(a[i])+" → "+f1(b[i])}</div></div>`).join("");
+  const unp = [...Object.keys(pre).filter(c=>!post[c]).map(c=>c+"（缺後測）"), ...Object.keys(post).filter(c=>!pre[c]).map(c=>c+"（缺前測）")];
+  document.getElementById("out").innerHTML = `
+    <div class="kpis">
+      <div class="kpi"><div class="v">${P.length}</div><div class="l">前後測配對人數（前測 ${Object.keys(pre).length}、後測 ${Object.keys(post).length}）</div></div>
+      <div class="kpi"><div class="v">${f1(kPre)} → ${f1(kPost)}</div><div class="l">知識：情境題平均答對（滿分 10）</div></div>
+      <div class="kpi"><div class="v">${f1(uPre)} → ${f1(uPost)}</div><div class="l">情境題平均選「不確定」題數</div></div>
+      <div class="kpi"><div class="v">${f1(sPre)} → ${f1(sPost)}</div><div class="l">自我效能：把握度平均（滿分 5）</div></div>
+      <div class="kpi"><div class="v">${C.length?pct(allPass/C.length):"—"}</div><div class="l">技能：6 項關鍵步驟全部一次通過（${allPass}／${C.length} 人）</div></div>
+      <div class="kpi"><div class="v">${f1(mean(L.map(p=>mean(p.l1))))}</div><div class="l">反應：滿意度平均（滿分 5，${L.length} 人）</div></div>
+    </div>
+    ${unp.length?`<div class="note">未配對：${unp.map(esc).join("、")}。可能是前後測員工編號填不一樣，請核對。</div>`:""}
+    <div class="grid2">
+      <div class="card"><h2>知識：各題答對率</h2><div class="sub">配對者，前測 → 後測</div>
+        <div class="legend"><span>前測</span><span class="post">後測</span></div>
+        ${bars(KQ.map((k,i)=>`${i+1}. ${k.step}`), KQ.map((k,i)=>mean(P.map(x=>x.pre.answers[i]===k.a?1:0))), KQ.map((k,i)=>mean(P.map(x=>x.post.answers[i]===k.a?1:0))), 1)}</div>
+      <div class="card"><h2>自我效能：各區段把握度</h2><div class="sub">配對者平均，前測 → 後測（滿分 5）</div>
+        <div class="legend"><span>前測</span><span class="post">後測</span></div>
+        ${bars(SE, SE.map((_,i)=>mean(P.map(x=>x.pre.se[i]))), SE.map((_,i)=>mean(P.map(x=>x.post.se[i]))), 5)}</div>
+      <div class="card"><h2>技能：關鍵步驟一次通過率</h2><div class="sub">評核教師勾選，${C.length} 人</div>
+        <div class="tblwrap"><table><tr><th>關鍵步驟</th><th>一次通過</th></tr>
+        ${CS.map((s,i)=>{ const n=C.filter(c=>c.cs[i]===1).length; return `<tr><td>${esc(s)}</td><td>${n}／${C.length}（${C.length?pct(n/C.length):"—"}）</td></tr>` }).join("")}</table></div></div>
+      <div class="card"><h2>反應：滿意度</h2><div class="sub">後測填答者，平均（滿分 5）</div>
+        <div class="tblwrap"><table>${L1.map((s,i)=>`<tr><td>${esc(s)}</td><td>${f1(mean(L.map(p=>p.l1[i])))}</td></tr>`).join("")}</table></div></div>
+    </div>
+    <div class="card"><h2>配對差（報告與統計用）</h2>
+      <div class="tblwrap"><table><tr><th>指標</th><th>n</th><th>前測 平均</th><th>後測 平均</th><th>差 平均（SD）</th></tr>
+      <tr><td>知識（0–10）</td><td>${P.length}</td><td>${f1(kPre)}</td><td>${f1(kPost)}</td><td>${f1(mean(dK))}（${f1(sd(dK))}）</td></tr>
+      <tr><td>自我效能（1–5）</td><td>${P.length}</td><td>${f1(sPre)}</td><td>${f1(sPost)}</td><td>${f1(mean(dS))}（${f1(sd(dS))}）</td></tr></table></div>
+      <div class="muted" style="margin-top:6px">正式統計（配對 t 檢定或 Wilcoxon signed-rank）請用「匯出 CSV」後再跑。</div></div>
+    ${L.some(p=>p.suggest||p.gain)?`<div class="card"><h2>開放題</h2>
+      ${L.filter(p=>p.suggest).length?`<div class="sub" style="margin:6px 0 2px">建議</div><ul>${L.filter(p=>p.suggest).map(p=>`<li>${esc(p.suggest)}</li>`).join("")}</ul>`:""}
+      ${L.filter(p=>p.gain).length?`<div class="sub" style="margin:6px 0 2px">收穫或心得</div><ul>${L.filter(p=>p.gain).map(p=>`<li>${esc(p.gain)}</li>`).join("")}</ul>`:""}</div>`:""}`;
+  const btn = document.getElementById("csv"); btn.disabled = false; btn.onclick = () => exportCSV(pre, post, chk);
+}
+function exportCSV(pre, post, chk){
+  const codes = [...new Set([...Object.keys(pre), ...Object.keys(post), ...Object.keys(chk)])].sort();
+  const head = ["emp_id","pre_session","post_session","pre_know","post_know","pre_unsure","post_unsure",
+    ...SE.map((_,i)=>`pre_se${i+1}`), ...SE.map((_,i)=>`post_se${i+1}`),
+    ...KQ.map((_,i)=>`pre_k${i+1}`), ...KQ.map((_,i)=>`post_k${i+1}`),
+    ...CS.map((_,i)=>`cs${i+1}`), ...L1.map((_,i)=>`l1_${i+1}`), "suggest","gain","check_note"];
+  const lines = [head.join(",")];
+  codes.forEach(c => {
+    const a=pre[c], b=post[c], k=chk[c], ok=(p,i)=>p?(p.answers[i]===-1?9:(p.answers[i]===KQ[i].a?1:0)):"";
+    const r = [c, a?.session??"", b?.session??"", a?.know??"", b?.know??"", a?a.answers.filter(v=>v===-1).length:"", b?b.answers.filter(v=>v===-1).length:"",
+      ...SE.map((_,i)=>a?.se[i]??""), ...SE.map((_,i)=>b?.se[i]??""),
+      ...KQ.map((_,i)=>ok(a,i)), ...KQ.map((_,i)=>ok(b,i)),
+      ...CS.map((_,i)=>k?.cs[i]??""), ...L1.map((_,i)=>b?.l1?.[i]??""), b?.suggest??"", b?.gain??"", k?.note??""];
+    lines.push(r.map(v => /[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g,'""')}"` : v).join(","));
+  });
+  const blob = new Blob(["﻿"+lines.join("\r\n")], {type:"text/csv;charset=utf-8"});
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `訓練成效_${today()}.csv`; a.click();
+}
+function demoRows(){
+  // 假資料：12 人前後測＋10 人評核
+  let s = 7; const rnd = () => (s = (s*9301+49297)%233280)/233280;
+  const rows = [];
+  for(let n=0;n<12;n++){
+    const code = String(120100+n*37).padStart(6,"0");
+    const mk = (kind, p, se) => { const answers = KQ.map(k => rnd()<p ? k.a : (rnd()<.5 ? -1 : (k.a+1)%4));
+      return {kind, code, session:today(), se:SE.map(()=>Math.max(1,Math.min(5,Math.round(se+rnd()*1.4-0.7)))), answers, know:score(answers), submitted_at:new Date().toISOString()} };
+    rows.push(mk("pre", .55, 2.3));
+    if(n<11){ const p = mk("post", .9, 4); p.l1 = L1.map(()=>rnd()<.6?5:4); if(n%4===0) p.gain="更清楚 CSTD 拆接時要注意的地方。"; rows.push(p) }
+    if(n<10) rows.push({kind:"check", code, session:today(), cs:CS.map(()=>rnd()<.82?1:0), submitted_at:new Date().toISOString()});
+  }
+  return rows;
+}
+route();
+</script>
+</body>
+</html>
