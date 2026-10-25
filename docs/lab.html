@@ -69,13 +69,22 @@ h3{font-size:1.05em;margin:18px 0 6px}
 .ndl{animation:ndl 2.2s ease-in .3s both}
 @keyframes ndl{from{transform:translate(var(--dx),var(--dy))}to{transform:translate(0,0)}}
 .pad2{animation:pad2 .8s ease-out 2.7s both}
-@keyframes pad2{from{transform:translateY(0)}to{transform:translateY(18px)}}
+@keyframes pad2{from{transform:translateY(0)}to{transform:translateY(22px)}}
 @media (prefers-reduced-motion:reduce){.ndl,.pad2{animation:none}}
 .media{margin-top:12px;padding:10px;border-radius:12px;background:color-mix(in srgb,var(--pri) 6%,var(--card))}
 .vids{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
 .vids figure{margin:0}
 .vids video{width:100%;max-height:340px;background:#000;border-radius:10px;display:block}
 .vids figcaption{font-size:.85em;margin-top:4px;color:var(--sub)}
+.pop{position:fixed;inset:0;z-index:70;background:rgba(10,20,25,.55);display:flex;align-items:center;justify-content:center;padding:16px}
+.pop .box{background:var(--card);color:var(--ink);border-radius:16px;max-width:560px;width:100%;padding:16px;max-height:92vh;overflow:auto;box-shadow:var(--shadow)}
+.popsvg{width:100%;height:auto;display:block;border-radius:12px;border:1px solid var(--line)}
+.popsteps{margin:10px 0 0;padding-left:0;list-style:none;display:grid;gap:6px}
+.popsteps li{padding:8px 10px;border-radius:10px;background:color-mix(in srgb,var(--pri) 6%,var(--card));opacity:.35;animation:popon .3s ease-out both}
+@keyframes popon{to{opacity:1;background:color-mix(in srgb,#1f9d55 14%,var(--card))}}
+.t2{opacity:0;animation:fadein .4s ease-out 2.5s both}.t3{opacity:0;animation:fadein .3s ease-out 2.7s both}.t4{opacity:0;animation:fadein .4s ease-out 3.5s both}
+@keyframes fadein{to{opacity:1}}
+@media (prefers-reduced-motion:reduce){.t2,.t3,.t4,.popsteps li{animation:none;opacity:1}}
 .met{margin-top:10px;padding:10px;border:1px dashed var(--line);border-radius:12px}
 .met select{max-width:100%;padding:6px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
 .metdot{display:inline-block;width:16px;height:16px;border-radius:50%;background:var(--line)}
@@ -286,6 +295,7 @@ function handCtl(card, o){
      dose   推藥到剩多少：start（起始 mL）、by（每推幾 mL）、keep [最少, 最多]（停在這個範圍才對）、zero（推光了＝錯誤訊息或 {acc}）
    okScene：做對以後畫面換成這段 SVG（例如動畫）
    overlay(S)：drag／taps 畫面上再疊一層 SVG（例如管夾放大圓圈），隨狀態改變
+   popup {title, svg, steps [文字], at [第幾秒亮]}：這一步做對後跳出說明視窗（動畫＋逐步文字），可再播一次
    media {title, items [{src, cap}], note}：這一步下方放說明影片（只在換步驟時重畫，按按鈕不會讓影片重播）
      manip  手動操作示意圖（推入、銜接、戳入）：start {零件: {x, y}}、render(S) 回傳 SVG（零件加 data-part）、
             move(S, 零件, x, y) 限制移動範圍、drop(S, 零件) 放手時判斷：true＝完成／字串＝提醒／{acc}＝出事／null＝沒事
@@ -330,6 +340,16 @@ function checkTable(nums, done, cur){
   return `<table class="rec"><tr><th>項</th><th>評核表原文</th></tr>${nums.map(n => `<tr class="${done.has(n) ? "ok" : n === cur ? "now" : ""}"><td>${done.has(n) ? "✅" : n === cur ? "▶" : "○"} ${n}</td><td>${CHECK[n - 1]}</td></tr>`).join("")}</table>`;
 }
 
+/* 說明視窗：點背景或「知道了」關閉；「再播一次」重新放動畫（重建內容讓 CSS 動畫重跑） */
+function showPop(p){
+  const d = document.createElement("div"); d.className = "pop";
+  const body = () => `<div class="box"><h3 style="margin:0 0 8px">${p.title}</h3><svg viewBox="0 0 360 240" class="popsvg">${p.svg}</svg>
+    <ol class="popsteps">${p.steps.map((t, i) => `<li style="animation-delay:${p.at[i]}s">${t}</li>`).join("")}</ol>
+    <div class="row" style="margin-top:10px"><button class="btn ghost" data-p="re">▶ 再播一次</button><button class="btn gold" data-p="x">知道了</button></div></div>`;
+  d.innerHTML = body();
+  d.onclick = e => { const b = e.target.closest("[data-p]"); if(e.target === d || (b && b.dataset.p === "x")) d.remove(); else if(b) d.innerHTML = body(); };
+  document.body.appendChild(d);
+}
 function runStation(pane, L){
   const ST = L.steps;
   let S, accN = 0, holdT = null, mediaFor = -1;
@@ -362,6 +382,7 @@ function runStation(pane, L){
   function finish(){
     S.ok = true; beep(true);
     const s = st();
+    if(s.popup) setTimeout(() => showPop(s.popup), 120);
     S.fb = say("✅ " + (s.okMsg || "做對了！") + (s.item ? CHK_NO([].concat(s.item).join("、")) : ""), true) + (s.note ? `<div class="note">📝 教學補充：${s.note}</div>` : "");
   }
   function next(){
@@ -1091,8 +1112,16 @@ const PAD_SCENE = `<rect width="360" height="240" fill="#fbfaf8"/>${PSEC_DEF}<sv
     <g class="ndl" style="--dx:0px;--dy:-110px">
       <line x1="150" y1="20" x2="150" y2="176" stroke="#4a5563" stroke-width="3.5" stroke-linecap="round"/>
       <rect x="136" y="0" width="28" height="18" rx="5" fill="#fff" stroke="#4a5563" stroke-width="2"/>
-      <g class="pad2"><rect x="106" y="17" width="88" height="8" rx="3" fill="#e2eef5" stroke="#7aa9c4" stroke-width="1.5"/></g></g>
-    <text x="150" y="240" text-anchor="middle" font-size="14" font-weight="700" fill="#14171c">垂直插到底 → 墊片下壓平貼皮膚</text></svg>`;
+      <g class="pad2"><rect x="106" y="17" width="88" height="8" rx="3" fill="#e2eef5" stroke="#7aa9c4" stroke-width="1.5"/>
+        <line x1="194" y1="21" x2="222" y2="21" stroke="#2f6f8f" stroke-width="1.2"/><text x="226" y="25" font-size="12" font-weight="800" fill="#2f6f8f">墊片</text></g></g>
+    <g class="t2"><line x1="154" y1="176" x2="222" y2="192" stroke="#b03030" stroke-width="1.2"/><text x="224" y="196" font-size="11" font-weight="800" fill="#b03030">針尖到底</text></g>
+    <g class="t3"><path d="M128 4 v12 m-5 -5 l5 5 l5 -5 M172 4 v12 m-5 -5 l5 5 l5 -5" stroke="#e08a00" stroke-width="2.2" fill="none"/><text x="70" y="14" font-size="11" font-weight="800" fill="#c26a00">下壓</text></g>
+    <g class="t4"><rect x="60" y="226" width="180" height="20" rx="10" fill="#1f9d55"/><text x="150" y="240" text-anchor="middle" font-size="12" font-weight="800" fill="#fff">✓ 墊片平貼皮膚、沒有空隙</text></g></svg>`;
+/* 插入角針做完跳出的說明視窗：動畫＋三個動作的文字，播到哪一步就亮哪一步（at＝第幾秒亮） */
+const PAD_POP = {title: "🎬 插入角針：看動畫的重點", svg: PAD_SCENE, at: [0, .3, 2.7], steps: [
+  "① 請病人<b>深呼吸</b>。",
+  "② 角針與盤面<b>垂直</b>、<b>快速</b>插入，直到針尖碰到圓盤底部（插到底後勿再用力強壓，避免針尖變鈍）。",
+  "③ <b>墊片下壓、平貼皮膚</b>：針座底部的墊片往下壓，貼平皮膚、中間不留空隙，角針才不會晃動、移位。"]};
 const Z_CLAMP = {x: 195, y: 94};   // I17／L4-clamp 圖上黃色管夾的位置
 /* 管夾放大圓圈：直接用 MAKAR 選項圖 A3 對照總表圓圈內的放大圖（關閉＝A3-A、打開＝A3-C；10/25 使用者指定）
    open 為真顯示打開；(x, y) 圓圈位置、c 管夾位置（拉一條線過去） */
@@ -1121,7 +1150,7 @@ LABS.push({id: "insert", icon: "📍", title: "Port-A 角針置放", items: [13,
       /* 10/25 使用者：三指位置不分順序、同時出現 → 點「三指固定盤面」後，拇指、食指、中指三個標示一起出現在指尖 */
       overlay: S => S.taps.includes("fix") ? [[198, 134, "拇指"], [230, 90, "食指"], [180, 109, "中指"]].map(([x, y, t]) => `<circle cx="${x}" cy="${y}" r="8" fill="#1f9d55" stroke="#fff" stroke-width="2"/>${TAG(x + (t === "食指" ? 0 : -28), y + (t === "食指" ? -16 : t === "拇指" ? 4 : 0), t, "#1f9d55")}`).join("") : "",
       okMsg: "非慣用手大拇指、食指、中指用力固定盤面，盤面不會滑動。"},
-    {type: "seq", bg: "lab/L4-fix-v5.jpg", okScene: PAD_SCENE, item: 15, task: "插入角針：依序點選動作。", opts: [
+    {type: "seq", bg: "lab/L4-fix-v5.jpg", okScene: PAD_SCENE, popup: PAD_POP, item: 15, task: "插入角針：依序點選動作。", opts: [
         {id: "br", t: "請病人深呼吸"}, {id: "in", t: "將角針垂直快速插入圓盤底部"}, {id: "pad", t: "墊片下壓並平貼皮膚"}, {id: "press", t: "插到底後再用力壓一下，確認真的到底"}],
       orders: [["br", "in", "pad"]],
       why: {in: "先請病人深呼吸，再將角針垂直快速插入。", pad: "角針插入圓盤底部以後，墊片才下壓平貼皮膚。", press: "角針插入至底部後，勿再用力強壓，避免角針前端變鈍。"},
