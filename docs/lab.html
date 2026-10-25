@@ -253,7 +253,7 @@ function handCtl(card, o){
      pump   幫浦設定 Rate → VTBI：order {rate, vtbi}；skipIf(S) 為真時直接「不適用」
      manip  手動操作示意圖（推入、銜接、戳入）：start {零件: {x, y}}、render(S) 回傳 SVG（零件加 data-part）、
             move(S, 零件, x, y) 限制移動範圍、drop(S, 零件) 放手時判斷：true＝完成／字串＝提醒／{acc}＝出事／null＝沒事
-   drag 可用 scene（自畫的 SVG 背景，取代 bg 照片）、fillPlace（放好的用物畫滿虛線框）
+   drag 可用 scene（自畫的 SVG 背景，取代 bg 照片；可以是 S => 字串）、fillPlace（放好的用物畫滿虛線框）、noCard（放好後不畫用物卡，由 scene 畫）
    choice 的選項可帶 svg（自畫的小圖，viewBox 0 0 120 120）；manip／choice 可用 vb 改畫面範圍（放大局部）、choice 可用 scene 取代 bg
    錯誤訊息若是 {acc: {title, cause, q, opts, lesson, pic}} 就出事（handAccident），答對處理題才回到出事前 */
 
@@ -355,7 +355,7 @@ function runStation(pane, L){
       const row = Math.floor(i / 5), inRow = Math.min(5, s.tray.length - row * 5), col = i % 5;
       g += itemG(id, 180 - inRow * 36 + col * 72 + 7, 6 + row * 92, 58);
     });
-    g += `<g transform="translate(0 ${th})">` + (s.scene || `<image href="images/${S.img || s.bg}" x="0" y="0" width="360" height="240" preserveAspectRatio="xMidYMid slice"/>`);
+    g += `<g transform="translate(0 ${th})">` + (scn(s) || `<image href="images/${S.img || s.bg}" x="0" y="0" width="360" height="240" preserveAspectRatio="xMidYMid slice"/>`);
     const after = S.ok && s.after;
     (after ? [] : s.zones || []).forEach(z => {
       const [x1, y1, x2, y2] = z.r, hit = s.tool ? S.hit.includes(z.id) : Object.values(S.placed).includes(z.id);
@@ -364,7 +364,7 @@ function runStation(pane, L){
       g += `<g class="zone${hit ? " hit" : ""}"><rect class="z${hit ? "" : " pulse"}" x="${x1}" y="${y1}" width="${x2 - x1}" height="${y2 - y1}" rx="8"/>
         <rect x="${lx}" y="${ly}" width="${lw}" height="16" rx="8" fill="${hit ? "#1f9d55" : "rgba(20,30,35,.78)"}"/><text x="${lx + lw / 2}" y="${ly + 12}" font-size="10" text-anchor="middle" fill="#fff" font-weight="700">${hit ? "✓ " : ""}${esc(z.label)}</text></g>`;
     });
-    if(!s.tool && !after) Object.entries(S.placed).forEach(([id, zid]) => {
+    if(!s.tool && !after && !s.noCard) Object.entries(S.placed).forEach(([id, zid]) => {
       const z = s.zones.find(q => q.id === zid); if(!z) return;
       const [x1, y1, x2, y2] = z.r, w = Math.min(x2 - x1, y2 - y1) - 10;
       g += s.fillPlace ? itemG(id, (x1 + x2 - w) / 2, (y1 + y2 - w) / 2, w, true) : itemG(id, x2 - 40, y1 + 3, 36, true);
@@ -377,6 +377,7 @@ function runStation(pane, L){
     });
     return g + `</g></svg>`;
   }
+  const scn = s => typeof s.scene === "function" ? s.scene(S) : s.scene;
   const imgView = s => `<img class="scene" src="images/${S.img || s.bg}" alt="">`;
 
   function draw(){
@@ -389,7 +390,7 @@ function runStation(pane, L){
     const useSvg = ["drag", "taps"].includes(s.type);
     if(s.type === "manip" && !S.pos) S.pos = JSON.parse(JSON.stringify(s.start));
     v.innerHTML = useSvg ? svgView(s) : s.type === "manip" ? `<svg viewBox="${s.vb || "0 0 360 240"}" id="sv">${s.render(S)}</svg>`
-      : s.scene ? `<svg viewBox="${s.vb || "0 0 360 240"}">${s.scene}</svg>` : imgView(s);
+      : s.scene ? `<svg viewBox="${s.vb || "0 0 360 240"}">${scn(s)}</svg>` : imgView(s);
     let h = "";
     if(s.type === "mode") h = `<div class="opts">${s.opts.map(o => `<button class="opt" data-b="m:${o.id}"${S.ok ? " disabled" : ""}>${o.t}</button>`).join("")}</div>`;
     if(s.type === "choice"){
@@ -480,7 +481,7 @@ function runStation(pane, L){
       const jw = s.judge ? s.judge(S, id, z.id) : undefined;
       if(jw) return bad(jw);
       if(!hit){ const W = s.wrong || {}; return bad(W[id + "@" + z.id] || W[id] || W["@" + z.id] || `「${ITEMS[id].name.replace("\n", "")}」不是放在「${z.label}」。`); }
-      if(s.ordered){ const i = G.indexOf(hit); if(!G.slice(0, i).every(g => s.tool ? S.hit.includes(g[1]) : S.placed[g[0]] === g[1])) return bad(s.orderMsg || "順序不對。"); }
+      if(s.ordered){ const i = G.indexOf(hit); if(!G.slice(0, i).every(g => s.tool ? S.hit.includes(g[1]) : S.placed[g[0]] === g[1])) return bad((typeof s.orderMsg === "function" ? s.orderMsg(S) : s.orderMsg) || "順序不對。"); }
       if(s.tool ? S.hit.includes(z.id) : false) return draw();
       commit(() => {
         if(s.tool) S.hit.push(z.id); else S.placed[id] = z.id;
@@ -776,6 +777,46 @@ LABS.push({id: "cstd", icon: "🔗", title: "組裝密閉系統藥品轉移裝�
    一開始選情境：幫浦有連線功能（第 6 項要多掃幫浦、第 10 項不適用）或沒有連線功能
    第 10 項的醫囑數字是虛構練習用（Rate 100 mL/hr、VTBI 250 mL） */
 const Z_HIGH = [118, 0, 252, 66], Z_LOW = [132, 150, 262, 236];
+/* 10/25 使用者修改：第 6、7、9 步改自畫床旁情境（點滴架、幫浦、工作台），化療藥袋一律用給藥影片截圖（和第 8 步同一張）
+   第 9 步改成手動：把夾鏈袋露出的 Spike 拖到 Adapter 接上，再把藥袋拖到點滴架掛勾 */
+const ZIP = "images/video/V-zipbag.jpg", ZIP_SPK = [131, 91];          // 照片 150×100 時，露出的 Spike 在照片內的位置
+const POLE = 250, EYE = 88, PUMP = [215, 174, 70, 34];
+const vSpike = (x, y) => `<g transform="translate(${x} ${y}) rotate(90) scale(.55)">${cSpike(0, 0)}</g>`;  // 尖端朝上，接頭面在 y＋58
+const vAdp = (x, y) => `<g transform="translate(${x} ${y}) rotate(90) scale(.55)">${adapter(0, 0)}</g>`;   // 接頭面朝上，軟管尾端在 y＋72
+const SP_K = SPK_L * .55, AD_K = ADP_L * .55;
+const lineTo = (x, y) => `<path d="M${x} ${y} C ${x} ${y + 30}, ${POLE} ${PUMP[1] - 30}, ${POLE} ${PUMP[1]}" fill="none" stroke="${C1.tubeS}" stroke-width="3"/>`;
+const compBag = (cx, top) => `<path d="M${cx - 28} ${top} Q${cx} ${top - 6} ${cx + 28} ${top} L${cx + 30} ${top + 56} Q${cx} ${top + 70} ${cx - 30} ${top + 56} Z" fill="#eaf4fb" stroke="#8fb3c9" stroke-width="1.5"/>
+  <rect x="${cx - 20}" y="${top + 12}" width="40" height="18" rx="2" fill="#fff" stroke="#b9c7d0"/><text x="${cx}" y="${top + 24}" font-size="7.5" text-anchor="middle" fill="${C1.txt}" font-weight="700">相容輸液</text>
+  <rect x="${cx - 5}" y="${top + 62}" width="10" height="10" fill="#f4f7f9" stroke="#9aa6ae"/>`;
+/* 相容輸液點滴袋＋CSTD（Spike→Adapter）＋管路到幫浦；state：on 接著／open 旋開／gone 移除 */
+function compSet(cx, top, state){
+  const bot = top + 72, face = bot - 8 + SP_K, gap = state === "open" ? 12 : 0;
+  let g = "";
+  if(state !== "gone") g += vSpike(cx, bot - 8 - gap) + compBag(cx, top - gap);
+  return g + vAdp(cx, face) + lineTo(cx, face + AD_K);
+}
+const zipPhoto = (x, y, w = 150) => `<image href="${ZIP}" x="${x}" y="${y}" width="${w}" height="${w * 2 / 3}" preserveAspectRatio="xMidYMid slice"/><rect x="${x}" y="${y}" width="${w}" height="${w * 2 / 3}" rx="4" fill="none" stroke="#9fb0ba"/>`;
+/* 床旁背景：點滴架、眼睛高度線、幫浦、工作台（上面放夾鏈袋裡的化療藥袋） */
+const bedside = (bagOnTable = true) => `<rect width="360" height="240" fill="#eef3f6"/>
+  <line x1="${POLE}" y1="6" x2="${POLE}" y2="238" stroke="#8d99a1" stroke-width="4"/><path d="M${POLE - 14} 8 H${POLE + 14} M${POLE - 14} 8 v6 M${POLE + 14} 8 v6" stroke="#8d99a1" stroke-width="3" fill="none"/>
+  <line x1="0" y1="${EYE}" x2="360" y2="${EYE}" stroke="#e08a00" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="6" y="${EYE - 5}" font-size="9.5" fill="#a35f00" font-weight="800">👁 護理師眼睛高度</text>
+  <rect x="${PUMP[0]}" y="${PUMP[1]}" width="${PUMP[2]}" height="${PUMP[3]}" rx="5" fill="#f7f9fa" stroke="#7f8b93" stroke-width="1.5"/><rect x="${PUMP[0] + 8}" y="${PUMP[1] + 6}" width="34" height="14" rx="2" fill="#bfe3d0"/>
+  <text x="${PUMP[0] + 35}" y="${PUMP[1] + 30}" font-size="7.5" text-anchor="middle" fill="${C1.txt}">輸液幫浦</text>
+  <path d="M${PUMP[0]} ${PUMP[1] + 22} C 150 ${PUMP[1] + 22}, 120 236, 0 236" fill="none" stroke="${C1.tubeS}" stroke-width="3"/>
+  <rect x="4" y="148" width="122" height="88" rx="4" fill="#d9e1e6" stroke="#b5c1c8"/><text x="65" y="232" font-size="8.5" text-anchor="middle" fill="#6b7a83">工作台</text>
+  ${bagOnTable ? zipPhoto(8, 154, 114) + TAG(65, 146, "化療藥袋（在夾鏈袋內）") : ""}`;
+/* 化療藥袋掛在點滴架上（照片轉 90°，Spike 朝下）＋Adapter＋管路 */
+const hungBag = () => { const px = POLE + 40 - 72.8, py = 14 + 104.8; return `<g transform="translate(${POLE + 40} 14) rotate(90)"><image href="${ZIP}" x="0" y="0" width="120" height="80" preserveAspectRatio="xMidYMid slice"/></g>` + vAdp(px, py) + lineTo(px, py + AD_K); };
+const LOW_CX = 160, LOW_TOP = 100, LOW_FACE = LOW_TOP + 72 - 8 + SP_K;
+/* 第 3 步：手套與隔離衣袖口（kind：over 手套套住袖口／under 手套塞進袖口／roll 袖口捲起） */
+function cuffSvg(kind){
+  const gown = x2 => `<rect x="0" y="38" width="${x2}" height="44" fill="#9fd3ec" stroke="#5aa3c6" stroke-width="1.5"/><text x="6" y="64" font-size="10" fill="#1d5d7a" font-weight="700">隔離衣</text>`;
+  const glove = x1 => `<path d="M${x1} 42 H96 Q116 44 116 60 Q116 76 96 78 H${x1} Z" fill="#6f8ff0" stroke="#3c5cc4" stroke-width="1.5"/><rect x="96" y="30" width="10" height="16" rx="5" fill="#6f8ff0" stroke="#3c5cc4"/><text x="${x1 + 8}" y="64" font-size="10" fill="#fff" font-weight="700">手套</text>`;
+  if(kind === "over") return gown(70) + glove(52) + `<path d="M52 40 v42" stroke="#2c4aa8" stroke-width="2"/>`;
+  if(kind === "under") return glove(52) + gown(72) + `<path d="M72 38 v44" stroke="#2f7fa6" stroke-width="2"/>`;
+  return gown(40) + `<rect x="34" y="34" width="10" height="52" rx="4" fill="#86c3e0" stroke="#5aa3c6"/><rect x="44" y="44" width="20" height="32" fill="#f1c9a5" stroke="#c99a72"/><text x="54" y="100" font-size="9" text-anchor="middle" fill="#a0522d" font-weight="700">手腕露出</text>` + glove(62);
+}
 LABS.push({id: "prep", icon: "🛡️", title: "主護護理師執行給藥前準備", items: [4, 5, 6, 7, 8, 9, 10], finImg: "outcomes/B-O7.jpg",
   desc: "穿防護裝備、病人辨識、條碼檢核、移除相容輸液、接化療藥、脫外層手套、設定幫浦。",
   steps: [
@@ -789,28 +830,30 @@ LABS.push({id: "prep", icon: "🛡️", title: "主護護理師執行給藥前�
       okMsg: "防水隔離衣、雙層丁腈手套、外科口罩、護目鏡（或防護面罩）都穿戴好了。"},
     {type: "choice", bg: "outcomes/B-O1.jpg", item: 4, task: "手套和隔離衣的袖口，要怎麼搭？",
       q: "雙層手套和隔離衣袖口的關係，哪一個正確？", opts: [
-        {t: "手套套住隔離衣的袖口（手套在外、包住袖口）", ok: true, why: "雙層丁腈膠或乳膠手套，需套住袖口，手腕才不會露出縫。"},
-        {t: "手套塞進隔離衣袖口裡面", acc: ACC.skin},
-        {t: "袖口捲起來，比較好做事", why: "袖口捲起來手腕就露出來了。袖口要束緊，手套套住袖口。"}]},
-    {type: "choice", bg: "I10.jpg", item: 5, task: "進行<b>病人辨識</b>。", note: "辨識方式以院內病人辨識規範為準（評核表只寫「進行病人辨識」）。",
+        {svg: cuffSvg("over"), t: "手套套住隔離衣的袖口（手套在外、包住袖口）", ok: true, why: "雙層丁腈膠或乳膠手套，需套住袖口，手腕才不會露出縫。"},
+        {svg: cuffSvg("under"), t: "手套塞進隔離衣袖口裡面（袖口在外）", acc: ACC.skin},
+        {svg: cuffSvg("roll"), t: "袖口捲起來，比較好做事", why: "袖口捲起來手腕就露出來了。袖口要束緊，手套套住袖口。"}]},
+    {type: "choice", bg: "I10.jpg", item: 5, task: "進行<b>病人辨識</b>。",
       q: "病人辨識，下面哪一種做法最正確？", opts: [
         {t: "請病人自己說出姓名與出生年月日，再和手圈、醫囑核對", ok: true, why: "用開放式問句讓病人自己說，再和手圈、醫囑核對。"},
         {t: "問病人：「你是王先生嗎？」病人點頭就好", why: "封閉式問句，病人可能聽錯或順口答「是」。要請病人自己說出姓名與出生年月日。"},
         {t: "看床頭的床號和名牌就好", why: "床號會換、名牌可能放錯，不能當作辨識病人的依據。"}]},
-    {type: "drag", bg: "I10.jpg", item: 6, tool: true, task: "<b>條碼檢核</b>：把條碼機拖到要掃描的地方（依你選的情境）。",
+    {type: "drag", bg: "I10.jpg", item: 6, tool: true, ordered: true, task: "<b>條碼檢核</b>：把條碼機<b>依順序</b>拖到要掃描的地方（依你選的情境）。",
+      orderMsg: S => S.mode === "link" ? "掃描順序：先掃輸液幫浦條碼 → 再掃病人手圈條碼 → 最後隔著塑膠夾鏈袋掃化療藥品點滴袋的標籤條碼。" : "掃描順序：先掃病人手圈條碼 → 再隔著塑膠夾鏈袋掃化療藥品點滴袋的標籤條碼。",
       tray: ["S26"], zones: [
         {id: "pump", r: [94, 8, 214, 90], label: "幫浦條碼"},
         {id: "wrist", r: [30, 138, 104, 192], label: "病人手圈條碼"},
-        {id: "bag", r: [262, 148, 354, 236], label: "化療藥袋標籤條碼", pic: "outcomes/B-O8.jpg"}],
+        {id: "bag", r: [262, 148, 354, 236], label: "化療藥袋標籤條碼", pic: "video/V-zipbag.jpg"}],
       goal: S => S.mode === "link" ? [["S26", "pump"], ["S26", "wrist"], ["S26", "bag"]] : [["S26", "wrist"], ["S26", "bag"]],
       judge: (S, it, z) => z === "pump" && S.mode !== "link" ? "非輸液幫浦連線功能情境：只要掃描病人手圈條碼及化療藥品點滴袋的標籤條碼，不用掃幫浦。" : null,
       btns: [{t: "條碼機一直讀不到 → 先把藥掛上去，等一下再補掃", acc: ACC.scan}],
       okMsg: "條碼檢核通過。"},
-    {type: "drag", bg: "I11.jpg", task: "要移除<b>相容輸液點滴袋</b>了。旋開之前，點滴袋要放在哪裡？",
-      tray: ["S24"], zones: [{id: "high", r: Z_HIGH, label: "留在點滴架上直接旋開"}, {id: "low", r: Z_LOW, label: "放低於眼睛"}], goal: [["S24", "low"]],
+    {type: "drag", noCard: true, task: "要移除<b>相容輸液點滴袋</b>了。旋開之前，點滴袋要放在哪裡？",
+      scene: S => bedside() + (S.placed.S24 === "low" ? compSet(LOW_CX, LOW_TOP, "on") : compSet(POLE, 14, "on")),
+      tray: ["S24"], zones: [{id: "high", r: [212, 4, 288, 84], label: "留在點滴架上直接旋開"}, {id: "low", r: [LOW_CX - 38, LOW_TOP - 6, LOW_CX + 38, 172], label: "放低於眼睛"}], goal: [["S24", "low"]],
       wrong: {"@high": "旋開前要先把點滴袋放置「低於眼睛」，旋開時接頭殘留的液體才不會往下噴到臉和眼睛。"},
       okMsg: "相容輸液點滴袋放低於眼睛了。"},
-    {type: "seq", bg: "I11.jpg", item: 7, task: "接下來的動作，依序點選。", opts: [
+    {type: "seq", item: 7, task: "接下來的動作，依序點選。", scene: S => bedside() + compSet(LOW_CX, LOW_TOP, S.seq.includes("rm") ? "gone" : S.seq.includes("open") ? "open" : "on"), opts: [
         {id: "open", t: "旋開 CSTD 的 Spike 與 Adapter"}, {id: "rm", t: "移除相容輸液點滴袋"}, {id: "pull", t: "從 Adapter 上拔下輸液套管"}],
       orders: [["open", "rm"]],
       why: {rm: "要先旋開 CSTD 的 Spike 與 Adapter，點滴袋才拿得下來。", pull: "Adapter 和輸液套管要一直連著（第 1 項已經完全沒入）。這一步只旋開 CSTD 的 Spike 與 Adapter。"},
@@ -818,17 +861,43 @@ LABS.push({id: "prep", icon: "🛡️", title: "主護護理師執行給藥前�
     {type: "choice", bg: "video/V-zipbag.jpg", task: "化療藥品點滴袋裝在<b>塑膠夾鏈袋</b>裡送來。要怎麼接？",
       q: "化療藥袋要怎麼和 Adapter 銜接？", opts: [
         {t: "不從夾鏈袋取出，只露出藥袋上的 CSTD Spike，和 Adapter 銜接", ok: true, why: "藥袋留在夾鏈袋裡，只露出 CSTD 的 Spike 來銜接。"},
-        {t: "把藥袋從夾鏈袋拿出來，比較好接、也比較好掛", acc: ACC.zip, pic: "outcomes/B-X1.jpg"}]},
-    {type: "drag", bg: "I11.jpg", item: 8, tool: true, ordered: true, task: "把化療藥袋（在夾鏈袋內）先<b>接上 Adapter</b>，再<b>掛上點滴架</b>。",
-      tray: ["CHB"], zones: [{id: "adp", r: [128, 70, 200, 132], label: "CSTD Adapter"}, {id: "pole", r: [196, 0, 262, 62], label: "點滴架"}],
-      goal: [["CHB", "adp"], ["CHB", "pole"]], orderMsg: "先將藥袋上 CSTD 的 Spike 與 Adapter 相互銜接，再將化療藥品掛上點滴架。",
+        {t: "把藥袋從夾鏈袋拿出來，比較好接、也比較好掛", acc: ACC.zip}]},
+    {type: "manip", item: 8, task: "把化療藥袋（在夾鏈袋內）露出的 Spike <b>接上 Adapter</b>，再把藥袋<b>掛上點滴架</b>。",
+      start: {bag: {x: 8, y: 138}, st: {j: false, h: false}},
+      move(S, id, x, y){ S.pos.bag = {x: Math.max(-30, Math.min(300, x)), y: Math.max(0, Math.min(190, y))}; },
+      render(S){
+        const {bag, st} = S.pos, sx = bag.x + ZIP_SPK[0], sy = bag.y + ZIP_SPK[1];
+        const ax = st.j ? sx : LOW_CX, ay = st.j ? sy : LOW_FACE;
+        let g = bedside(false);
+        if(st.h){
+          const hx = POLE, hy = 14, px = hx + 40 - 72.8, py = hy + 104.8;   // 掛上後照片轉 90°，Spike 朝下
+          g += `<g transform="translate(${hx + 40} ${hy}) rotate(90)"><image href="${ZIP}" x="0" y="0" width="120" height="80" preserveAspectRatio="xMidYMid slice"/></g>` + vAdp(px, py) + lineTo(px, py + AD_K);
+          return g + HINT("✓ 已接上 Adapter，掛上點滴架", 120, 18);
+        }
+        g += vAdp(ax, ay) + lineTo(ax, ay + AD_K);
+        g += `<g data-part="bag">${zipPhoto(bag.x, bag.y)}${GRAB(bag.x, bag.y, 150, 100)}</g>`;
+        if(!st.j) g += `<circle cx="${sx}" cy="${sy}" r="9" fill="none" stroke="#ffb020" stroke-width="2.5" class="pulse"/><circle cx="${ax}" cy="${ay}" r="9" fill="none" stroke="#ffb020" stroke-width="2.5" class="pulse"/>` + TAG(ax + 52, ay - 2, "CSTD Adapter");
+        else g += `<circle cx="${POLE}" cy="14" r="11" fill="none" stroke="#ffb020" stroke-width="2.5" class="pulse"/>` + TAG(POLE - 58, 42, "點滴架掛勾");
+        return g + HINT(st.j ? "接好了！把藥袋拖到點滴架掛勾 ⬆" : "按住藥袋，把露出的 Spike（橘圈）拖到 Adapter（橘圈）", 180, 16);
+      },
+      drop(S){
+        const {bag, st} = S.pos, sx = bag.x + ZIP_SPK[0], sy = bag.y + ZIP_SPK[1];
+        const nearHook = Math.abs(bag.x + 75 - POLE) < 60 && bag.y + 50 < 90;
+        if(!st.j){
+          if(Math.hypot(sx - LOW_CX, sy - LOW_FACE) < 20){ st.j = true; S.pos.bag = {x: LOW_CX - ZIP_SPK[0], y: LOW_FACE - ZIP_SPK[1]}; S.fb = say("🔗 Spike 與 Adapter 接好了。現在把藥袋掛上點滴架。", true); beep(true, 660); return null; }
+          if(nearHook){ S.pos.bag = {x: 8, y: 138}; return "先將藥袋上 CSTD 的 Spike 與 Adapter 相互銜接，再將化療藥品掛上點滴架。"; }
+          return null;
+        }
+        if(nearHook){ st.h = true; return true; }
+        return null;
+      },
       okMsg: "藥袋留在夾鏈袋裡，Spike 與 Adapter 銜接，再掛上點滴架。"},
-    {type: "choice", bg: "I11.jpg", item: 9, task: "藥袋掛好了。下一個動作是什麼？",
+    {type: "choice", scene: () => bedside(false) + hungBag(), item: 9, task: "藥袋掛好了。下一個動作是什麼？",
       q: "接好、掛好化療藥袋以後，下一步？", opts: [
         {t: "脫除外層手套", ok: true, why: "上述操作步驟可能有化療藥品殘留在手套上，所以要脫除外層手套。"},
         {t: "直接去按幫浦設定", why: "外層手套可能沾有化療藥，直接按幫浦會污染幫浦按鍵。先脫除外層手套。"},
         {t: "兩層手套都脫掉", why: "只脫「外層」手套，內層手套繼續保護。"}]},
-    {type: "pump", bg: "I11.jpg", item: 10, task: "（採非連線操作流程適用）設定輸液點滴幫浦。", drug: "化療藥（練習用）", order: {rate: 100, vtbi: 250},
+    {type: "pump", scene: () => bedside(false) + hungBag(), item: 10, task: "（採非連線操作流程適用）設定輸液點滴幫浦。", drug: "化療藥（練習用）", order: {rate: 100, vtbi: 250},
       skipIf: S => S.mode === "link", skipMsg: "你選的是「輸液幫浦連線功能情境」，第 10 項不適用。（想練幫浦設定，可以按「全部重來」改選非連線情境。）",
       okMsg: "設定順序：Rate → Volume to be infusion (VTBI)，數字和醫囑相同。"},
   ]});
