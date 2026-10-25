@@ -119,7 +119,7 @@ const SE_ANCHOR = ["完全沒把握","不太有把握","普通","有把握","非
 const KQ = [
   {step:"#3", q:"CSTD 的 Spike 戳入生理食鹽水點滴橡皮塞後，你看到橡皮塞下方還有液體殘留。下一步最適當的是？",
    o:["不影響，繼續組裝","先處理到橡皮塞下方無液體殘留再繼續","拔出 Spike 重新戳一次","等換接化療藥品時再處理"], a:1,
-   ex:"技術表第 3 項要求確認橡皮塞下方無液體殘留；殘留液體在拆接時可能滴出，造成暴露。"},
+   ex:"技術表第 3 項要求確認橡皮塞下方無液體殘留；殘留液體在拆接時可能滴出。"},
   {step:"#4", q:"主護準備掛上化療藥品，下列哪一組防護裝備穿戴正確？",
    o:["防水隔離衣＋單層手套＋外科口罩","防水隔離衣（後開式、長袖、袖口可束緊）＋雙層手套套住袖口＋外科口罩＋護目鏡","前開式隔離衣＋雙層手套塞在袖口內＋N95＋護目鏡","隔離衣＋雙層手套＋外科口罩（不必護目鏡）"], a:1,
    ex:"後開式、長袖、袖口可束緊的防水隔離衣；雙層丁腈膠或乳膠手套需套住袖口；外科口罩；護目鏡或防護面罩。"},
@@ -255,7 +255,7 @@ function quiz(kind){
     <div class="sub">${isPost?"課程結束後填寫。題目和前測一樣，請依你現在的理解作答；不知道就選「不確定」。":"上課前填寫。不會算成績，請依你目前的理解作答；不知道就選「不確定」，不要用猜的。"}</div>
     ${codeBlock("code")}
     <div class="sec">一、操作把握度</div>
-    <div class="muted" style="margin:-4px 0 8px">我有把握能獨立、正確地完成……</div>
+    <div style="margin:0 0 10px;font-size:18px;font-weight:700;color:var(--ink)">我有把握能獨立、正確地完成……</div>
     ${SE.map((s,i)=>`<div class="card"><p class="q"><span class="qn">${i+1}.</span>${esc(s)}</p>${scaleHTML("se"+i, SE_ANCHOR)}</div>`).join("")}
     <div class="sec">二、情境題（單選）</div>
     ${KQ.map((k,i)=>`<div class="card" id="kq${i}"><p class="q"><span class="qn">${i+1}.</span>${esc(k.q)}</p>
