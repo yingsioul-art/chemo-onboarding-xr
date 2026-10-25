@@ -143,7 +143,7 @@ details summary{cursor:pointer;font-weight:800}
 </style>
 </head>
 <body>
-<div class="top"><div class="in"><a href="index.html">← 首頁</a><button id="backlab" hidden>← 技術站清單</button><b id="pnum"></b></div></div>
+<div class="top"><div class="in"><button id="backlab" hidden>← 技術站清單</button><b id="pnum"></b></div></div>
 <div class="wrap" id="app"></div>
 <div id="toast"></div>
 <script>
@@ -301,8 +301,8 @@ const ITEMS = {
   S33: {img: "supplies/S33.jpg", name: "NS 10 mL 注射器"},
   S34: {img: "supplies/S34.jpg", name: "Prefill heparin"},
   S35: {img: "supplies/S35.jpg", name: "感染性垃圾桶"},
-  SPK: {img: "supplies/S22.jpg", name: "CSTD 的\nSpike", crop: [0, .28, .56, .56]},
-  ADP: {img: "supplies/S22.jpg", name: "CSTD 的\nAdapter", crop: [.44, .1, .56, .62]},
+  SPK: {img: "supplies/S22-SPK.jpg", name: "CSTD 的\nSpike"},
+  ADP: {img: "supplies/S22-ADP.jpg", name: "CSTD 的\nAdapter"},
   CST: {img: "supplies/S22.jpg", name: "組好的 CSTD", crop: [0, .1, 1, .8]},
   CHB: {img: "lab/L09.png", name: "化療藥袋\n（在夾鏈袋內）"},  // ChatGPT 去背物件圖（依給藥影片 03:35）
   NDL: {img: "outcomes/C-O5.jpg", name: "拔出的角針", crop: [.2, .1, .7, .7]},
@@ -866,6 +866,50 @@ const bedside = (bagOnTable = true) => `<rect width="360" height="240" fill="#ee
 const HANG = {x: POLE - ZSX, y: 12};
 const hungBag = () => { const px = HANG.x + ZSX, py = HANG.y + ZH; return zipUp(HANG.x, HANG.y) + vAdp(px, py) + lineTo(px, py + AD_K); };
 const LOW_CX = 160, LOW_TOP = 100, LOW_FACE = LOW_TOP + 72 - 8 + SP_K;
+/* 「藥袋拖去接 Adapter → 接上後直立 → 拖到點滴架掛勾」的手動步驟（第 2 站第 9 步、第 3 站第 3 步共用）
+   o：img 物件圖（直立、出口朝下）、w／h 直立時寬高、sx 出口在圖內的 x、ax／ay Adapter 接頭位置、home 橫躺在工作台的左上角、name 藥袋名稱 */
+function hangStep(o){
+  const up = (x, y) => `<image href="${o.img}" x="${x}" y="${y}" width="${o.w}" height="${o.h}"/>`;
+  const lie = (x, y) => `<g transform="translate(${x} ${y + o.w}) rotate(-90)">${up(0, 0)}</g>`;
+  const lieSp = (x, y) => [x + o.h, y + o.w - o.sx];
+  return {type: "manip", item: o.item, task: o.task, start: {bag: Object.assign({}, o.home), st: {j: false, h: false}},
+    move(S, id, x, y){ S.pos.bag = {x: Math.max(-30, Math.min(300, x)), y: Math.max(0, Math.min(200, y))}; },
+    render(S){
+      const {bag, st} = S.pos;
+      let g = bedside(false);
+      if(st.h){ const px = POLE, py = 12 + o.h; return g + up(POLE - o.sx, 12) + vAdp(px, py) + lineTo(px, py + AD_K) + HINT("✓ 已接上 Adapter，掛上點滴架", 120, 18); }
+      if(!st.j){
+        const [sx, sy] = lieSp(bag.x, bag.y);
+        g += vAdp(o.ax, o.ay) + lineTo(o.ax, o.ay + AD_K) + `<g data-part="bag">${lie(bag.x, bag.y)}${GRAB(bag.x, bag.y, o.h, o.w)}</g>`;
+        g += `<circle cx="${sx}" cy="${sy}" r="9" fill="none" stroke="#ffb020" stroke-width="2.5" class="pulse"/><circle cx="${o.ax}" cy="${o.ay}" r="9" fill="none" stroke="#ffb020" stroke-width="2.5" class="pulse"/>` + TAG(o.ax + 52, o.ay - 2, "CSTD Adapter");
+        return g + HINT(`按住${o.name}，把 Spike 接頭（橘圈）拖到 Adapter（橘圈）`, 180, 16);
+      }
+      const ax = bag.x + o.sx, ay = bag.y + o.h;
+      g += vAdp(ax, ay) + lineTo(ax, ay + AD_K) + `<g data-part="bag">${up(bag.x, bag.y)}${GRAB(bag.x, bag.y, o.w, o.h)}</g>`;
+      g += `<circle cx="${POLE}" cy="12" r="11" fill="none" stroke="#ffb020" stroke-width="2.5" class="pulse"/>` + TAG(POLE - 58, 42, "點滴架掛勾");
+      return g + HINT(`接好了！把${o.name}拖到點滴架掛勾 ⬆`, 180, 16);
+    },
+    drop(S){
+      const {bag, st} = S.pos;
+      if(!st.j){
+        const [sx, sy] = lieSp(bag.x, bag.y);
+        if(Math.hypot(sx - o.ax, sy - o.ay) < 22){ st.j = true; S.pos.bag = {x: o.ax - o.sx, y: o.ay - o.h}; S.fb = say(`🔗 Spike 與 Adapter 接好了。現在把${o.name}掛上點滴架。`, true); beep(true, 660); return null; }
+        if(bag.y < 60 && Math.abs(bag.x + o.h / 2 - POLE) < 70){ S.pos.bag = Object.assign({}, o.home); return o.orderMsg; }
+        return null;
+      }
+      if(bag.y < 50 && Math.abs(bag.x + o.sx - POLE) < 50){ st.h = true; return true; }
+      return null;
+    },
+    okMsg: o.okMsg};
+}
+/* 第 3 站：化療藥袋放低時的位置（直立，出口在 LOW_CX、y＝LOWC_A）；相容輸液袋（已接 CSTD Spike）物件圖 */
+const LOWC_TOP = 96, LOWC_A = LOWC_TOP + ZH;
+function chemoLow(state){
+  const gap = state === "open" ? 14 : 0;
+  return (state === "gone" ? "" : zipUp(LOW_CX - ZSX, LOWC_TOP - gap)) + vAdp(LOW_CX, LOWC_A) + lineTo(LOW_CX, LOWC_A + AD_K);
+}
+const COMP = "images/lab/S24-CSTD.png", COMP_W = 50, COMP_H = 50 * 830 / 300, COMP_SX = .539 * 50;
+
 /* 第 3 步：手套與隔離衣袖口（kind：over 手套套住袖口／under 手套塞進袖口／roll 袖口捲起） */
 function cuffSvg(kind){
   const gown = x2 => `<rect x="0" y="38" width="${x2}" height="44" fill="#9fd3ec" stroke="#5aa3c6" stroke-width="1.5"/><text x="6" y="64" font-size="10" fill="#1d5d7a" font-weight="700">隔離衣</text>`;
@@ -918,37 +962,9 @@ LABS.push({id: "prep", icon: "🛡️", title: "主護護理師執行給藥前�
       q: "化療藥袋要怎麼和 Adapter 銜接？", opts: [
         {t: "不從夾鏈袋取出，只露出藥袋上的 CSTD Spike，和 Adapter 銜接", ok: true, why: "藥袋留在夾鏈袋裡，只露出 CSTD 的 Spike 來銜接。"},
         {t: "把藥袋從夾鏈袋拿出來，比較好接、也比較好掛", acc: ACC.zip}]},
-    {type: "manip", item: 8, task: "把化療藥袋（在夾鏈袋內）露出的 Spike <b>接上 Adapter</b>，再把藥袋<b>掛上點滴架</b>。",
-      start: {bag: {x: 6, y: 156}, st: {j: false, h: false}},
-      move(S, id, x, y){ S.pos.bag = {x: Math.max(-30, Math.min(300, x)), y: Math.max(0, Math.min(200, y))}; },
-      render(S){
-        const {bag, st} = S.pos;
-        let g = bedside(false);
-        if(st.h) return g + hungBag() + HINT("✓ 已接上 Adapter，掛上點滴架", 120, 18);
-        if(!st.j){
-          const [sx, sy] = lieSpike(bag.x, bag.y);
-          g += vAdp(LOW_CX, LOW_FACE) + lineTo(LOW_CX, LOW_FACE + AD_K);
-          g += `<g data-part="bag">${zipLie(bag.x, bag.y)}${GRAB(bag.x, bag.y, ZH, ZW)}</g>`;
-          g += `<circle cx="${sx}" cy="${sy}" r="9" fill="none" stroke="#ffb020" stroke-width="2.5" class="pulse"/><circle cx="${LOW_CX}" cy="${LOW_FACE}" r="9" fill="none" stroke="#ffb020" stroke-width="2.5" class="pulse"/>` + TAG(LOW_CX + 52, LOW_FACE - 2, "CSTD Adapter");
-          return g + HINT("按住藥袋，把露出的 Spike（橘圈）拖到 Adapter（橘圈）", 180, 16);
-        }
-        const ax = bag.x + ZSX, ay = bag.y + ZH;   // 接上後藥袋直立，Adapter 跟著 Spike
-        g += vAdp(ax, ay) + lineTo(ax, ay + AD_K) + `<g data-part="bag">${zipUp(bag.x, bag.y)}${GRAB(bag.x, bag.y, ZW, ZH)}</g>`;
-        g += `<circle cx="${POLE}" cy="12" r="11" fill="none" stroke="#ffb020" stroke-width="2.5" class="pulse"/>` + TAG(POLE - 58, 42, "點滴架掛勾");
-        return g + HINT("接好了！把藥袋拖到點滴架掛勾 ⬆", 180, 16);
-      },
-      drop(S){
-        const {bag, st} = S.pos;
-        if(!st.j){
-          const [sx, sy] = lieSpike(bag.x, bag.y);
-          if(Math.hypot(sx - LOW_CX, sy - LOW_FACE) < 22){ st.j = true; S.pos.bag = {x: LOW_CX - ZSX, y: LOW_FACE - ZH}; S.fb = say("🔗 Spike 與 Adapter 接好了。現在把藥袋掛上點滴架。", true); beep(true, 660); return null; }
-          if(bag.y < 60 && Math.abs(bag.x + ZH / 2 - POLE) < 70){ S.pos.bag = {x: 6, y: 156}; return "先將藥袋上 CSTD 的 Spike 與 Adapter 相互銜接，再將化療藥品掛上點滴架。"; }
-          return null;
-        }
-        if(bag.y < 50 && Math.abs(bag.x + ZSX - POLE) < 50){ st.h = true; return true; }
-        return null;
-      },
-      okMsg: "藥袋留在夾鏈袋裡，Spike 與 Adapter 銜接，再掛上點滴架。"},
+    hangStep({item: 8, task: "把化療藥袋（在夾鏈袋內）露出的 Spike <b>接上 Adapter</b>，再把藥袋<b>掛上點滴架</b>。", name: "藥袋",
+      img: ZIP, w: ZW, h: ZH, sx: ZSX, ax: LOW_CX, ay: LOW_FACE, home: {x: 6, y: 156},
+      orderMsg: "先將藥袋上 CSTD 的 Spike 與 Adapter 相互銜接，再將化療藥品掛上點滴架。", okMsg: "藥袋留在夾鏈袋裡，Spike 與 Adapter 銜接，再掛上點滴架。"}),
     {type: "choice", scene: () => bedside(false) + hungBag(), item: 9, task: "藥袋掛好了。下一個動作是什麼？",
       q: "接好、掛好化療藥袋以後，下一步？", opts: [
         {t: "脫除外層手套", ok: true, why: "上述操作步驟可能有化療藥品殘留在手套上，所以要脫除外層手套。"},
@@ -963,20 +979,19 @@ LABS.push({id: "prep", icon: "🛡️", title: "主護護理師執行給藥前�
 LABS.push({id: "swap", icon: "🔄", title: "換接相容輸液點滴", items: [11, 12], finImg: "outcomes/B-O9.jpg",
   desc: "化療藥滴完：放低於眼睛旋開、移除化療藥袋，再接回相容輸液。",
   steps: [
-    {type: "drag", bg: "I11.jpg", task: "化療藥滴完了。旋開之前，<b>化療點滴藥袋</b>要放在哪裡？",
-      tray: ["CHB"], zones: [{id: "high", r: Z_HIGH, label: "留在點滴架上直接旋開"}, {id: "low", r: Z_LOW, label: "放低於眼睛"}], goal: [["CHB", "low"]],
+    {type: "drag", noCard: true, task: "化療藥滴完了。旋開之前，<b>化療點滴藥袋</b>要放在哪裡？",
+      scene: S => bedside(false) + (S.placed.CHB === "low" ? chemoLow("on") : hungBag()),
+      tray: ["CHB"], zones: [{id: "high", r: [POLE - 48, 2, POLE + 48, 138], label: "留在點滴架上直接旋開"}, {id: "low", r: [LOW_CX - 46, LOWC_TOP - 4, LOW_CX + 46, 236], label: "放低於眼睛"}], goal: [["CHB", "low"]],
       wrong: {"@high": {acc: ACC.eye}},
       okMsg: "化療點滴藥袋放低於眼睛了。"},
-    {type: "seq", bg: "I11.jpg", item: 11, task: "接下來的動作，依序點選。", opts: [
+    {type: "seq", item: 11, task: "接下來的動作，依序點選。", scene: S => bedside(false) + chemoLow(S.seq.includes("rm") ? "gone" : S.seq.includes("open") ? "open" : "on"), opts: [
         {id: "open", t: "旋開 CSTD 的 Spike 與 Adapter"}, {id: "rm", t: "移除化療點滴藥袋"}, {id: "pull", t: "從化療藥袋上拔下 CSTD 的 Spike"}],
       orders: [["open", "rm"]],
       why: {rm: "要先旋開 CSTD 的 Spike 與 Adapter，藥袋才拿得下來。", pull: "Spike 留在化療藥袋上，不要拔。這一步旋開的是 Spike 與 Adapter 的接頭。"},
       okMsg: "旋開 Spike 與 Adapter，移除化療點滴藥袋。"},
-    {type: "drag", bg: "I11.jpg", item: 12, tool: true, ordered: true, task: "把<b>相容輸液點滴袋</b>（已接 CSTD Spike）先<b>接上 Adapter</b>，再<b>掛上點滴架</b>。",
-      tray: ["S24", "CHB"], zones: [{id: "adp", r: [128, 70, 200, 132], label: "CSTD Adapter"}, {id: "pole", r: [196, 0, 262, 62], label: "點滴架"}],
-      goal: [["S24", "adp"], ["S24", "pole"]], orderMsg: "先將相容輸液點滴袋上 CSTD 的 Spike 與 Adapter 銜接，再掛上點滴架。",
-      wrong: {CHB: "化療藥已經滴完、移除了。這一步要接回的是「相容輸液點滴袋」。"},
-      okMsg: "相容輸液點滴袋的 Spike 與 Adapter 銜接，掛上點滴架。"},
+    hangStep({item: 12, task: "把<b>相容輸液點滴袋</b>（已接 CSTD Spike）先<b>接上 Adapter</b>，再<b>掛上點滴架</b>。", name: "相容輸液點滴袋",
+      img: COMP, w: COMP_W, h: COMP_H, sx: COMP_SX, ax: LOW_CX, ay: LOWC_A, home: {x: 2, y: 172},
+      orderMsg: "先將相容輸液點滴袋上 CSTD 的 Spike 與 Adapter 銜接，再掛上點滴架。", okMsg: "相容輸液點滴袋的 Spike 與 Adapter 銜接，掛上點滴架。"}),
     {type: "choice", bg: "outcomes/B-O9.jpg", task: "（延伸，不在 21 項內）用完的化療藥袋怎麼丟？", note: "出自化療靜脈給藥 52 項表第 43 項。",
       q: "輸注完的化療藥袋，怎麼丟？", opts: [
         {t: "不拔除 CSTD 的 Spike，整袋直接丟棄於化療廢棄物收集桶", ok: true, pic: "outcomes/B-O9.jpg", why: "輸注完之化療藥袋請勿拔除 CSTD 的 Spike，直接丟棄於化療廢棄物收集桶。"},
