@@ -578,6 +578,12 @@ async function submit(){
     hc_wrong:ans.filter(a=>a.cls==="over").map(a=>a.id),ask_steps:[...document.querySelectorAll("input[type=checkbox]:checked")].map(x=>x.value),
     gap1:document.getElementById("g1").value.trim(),gap2:document.getElementById("g2").value.trim(),
     act_conf:S.actConf||{},submission_id:S.sid||(S.sid=S.code+"-"+Date.now().toString(36)),version:VERSION,ua:navigator.userAgent};
+  /* 試算表每題一欄（10/25 使用者：responses 分頁也拆）：每幕把握度＋每題作答、對錯（1 對／0 錯／9 不知道）、差距類型；
+     後台遇到新欄位名稱會自動加在試算表最右邊 */
+  const cols={}, confL=Object.fromEntries(CONF);
+  Object.keys(D.acts).forEach(act=>{ const c=(S.actConf||{})[act]; if(c) cols[`把握度_${act}幕`]=confL[c]||c });
+  ans.forEach(a=>{ if(!a.chosen) return; cols[`${a.id}_作答`]=a.chosen; cols[`${a.id}_對錯`]=a.unknown?9:a.correct?1:0; cols[`${a.id}_差距`]=(GAPCLS[a.cls]||{}).l||"" });
+  payload.cols=cols;
   S.payload=payload; save();
   if(!ENDPOINT){ setS("warn","（測試版）尚未設定回傳網址，作答只留在本頁。"); S.sent=true; S.phase="done"; save(); setTimeout(route,1200); return }
   setS("warn","送出中…");

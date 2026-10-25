@@ -329,7 +329,7 @@ const ITEMS = {
   ADP: {img: "supplies/S22-ADP.jpg", name: "CSTD 的\nAdapter"},
   CST: {img: "supplies/S22.jpg", name: "組好的 CSTD", crop: [0, .1, 1, .8]},
   CHB: {img: "lab/L09.png", name: "化療藥袋\n（在夾鏈袋內）"},  // ChatGPT 去背物件圖（依給藥影片 03:35）
-  NDL: {img: "outcomes/C-O5.jpg", name: "拔出的角針", crop: [.2, .1, .7, .7]},
+  NDL: {img: "lab/C-O5-v2.jpg", name: "拔出的角針", crop: [.1, .3, .58, .58]},
   GRP: {img: "lab/L5-ready-v2.jpg", name: "右手握柄\n（往上拉）", crop: [.2, 0, .6, .6]},
 };
 const PIC = src => `<img src="images/${src}" alt="">`;
@@ -735,7 +735,7 @@ const ACC = {
       {t: "重新接上 NS 注射器，以推-停-推-停方式沖淨管路，再照正壓封管步驟（先關管夾、再移除注射器）重做", ok: true, why: "先把血沖乾淨，再用正確順序封管。"},
       {t: "沒關係，下次要用的時候再沖", why: "血液留在管內會凝固，可能造成阻塞。"},
       {t: "用力推注，把血推回去", why: "遇到阻力不可用力推注。"}],
-    lesson: "評核表第 18 項：正壓封管＝先保留 NS 0.5–1 mL 或拇指壓住活塞，接著關閉管夾，最後才移除注射器。"},
+    lesson: "評核表第 18 項：正壓封管＝先保留 NS 0.5 mL 或拇指壓住活塞，接著關閉管夾，最後才移除注射器。"},
   stick: {title: "🩹 被針扎到了！", pic: EMO("🩹"),
     cause: "還沒聽到「喀」一聲，安全機制沒有啟動，針尖還露在外面。拿去丟的時候，扎到自己的手。",
     q: "被用過的角針扎到，第一步？", opts: [
@@ -1170,10 +1170,10 @@ LABS.push({id: "insert", icon: "📍", title: "Port-A 角針置放", items: [13,
     {type: "rhythm", bg: "I16.jpg", after: "lab/L4-clamp.jpg", item: 17, task: "測完回血，用 <b>10 mL NS</b> 以<b>推-停-推-停</b>方式將管壁沖洗乾淨。每按一次「推」＝推 1 mL。", n: 9, ml: 1, total: 10, beat: BEAT, beatRef: BEAT_REF, media: FLUSH_MEDIA,
       twice: "推完要停一下再推——「推-停-推-停」，不是一直推。", okMsg: "以推-停-推-停方式把管壁沖洗乾淨了，注射器留 1 mL，下一步正壓封管用。"},
     {type: "mode", bg: "lab/L4-clamp.jpg", media: LOCK_MEDIA, task: "沖完管了，接著<b>正壓封管</b>。方法一、方法二擇一，選一個來做：", opts: [
-        {id: "m1", t: "方法一：保留 NS 0.5–1 mL（勿全部推注完）", okMsg: "方法一：注射器裡的 NS 不要全部推完，保留 0.5–1 mL。"},
+        {id: "m1", t: "方法一：保留 NS 0.5 mL（勿全部推注完）", okMsg: "方法一：注射器裡的 NS 不要全部推完，保留 0.5 mL。"},
         {id: "m2", t: "方法二：以大拇指壓住針筒活塞", okMsg: "方法二：大拇指壓住針筒活塞，維持管內正壓。"}]},
     {type: "dose", bg: "lab/L4-clamp.jpg", silent: true, skipIf: S => S.mode !== "m1", task: "方法一：注射器裡還有 1 mL NS。要推到剩多少就停？",
-      start: 1, by: .5, keep: [.5, 1], zero: {acc: ACC.back}, okMsg: "保留 NS 0.5–1 mL，沒有全部推完，管內維持正壓。"},
+      start: 1, by: .5, keep: [.4, .6], keepMsg: "要推到剩餘「0.5 mL」才停。", zero: {acc: ACC.back}, okMsg: "保留 NS 0.5 mL，沒有全部推完，管內維持正壓。"},
     {type: "hold", bg: "lab/L4-clamp.jpg", silent: true, skipIf: S => S.mode !== "m2", task: "方法二：以<b>大拇指壓住針筒活塞</b>，維持正壓。",
       label: "按住＝大拇指壓住活塞", ms: 1500, early: "大拇指要一直壓住活塞，進度條跑滿才放手。", okMsg: "大拇指壓住針筒活塞，管內維持正壓。"},
     {type: "taps", bg: "lab/L4-clamp.jpg", after: "lab/I17c.jpg", overlay: S => INSET(!S.ok, 296, 64, Z_CLAMP), spots: [{id: "clamp", x: Z_CLAMP.x, y: Z_CLAMP.y, label: "黃色管夾"}], order: ["clamp"],
@@ -1189,7 +1189,7 @@ const Z_CN = [52, 128, 112, 182];
    Heparin 正壓封管依移除影片 01:51–02:04 兩種方法（推完大拇指壓住活塞再關管夾／推到剩小於 1 mL 隨即關管夾；10/25 使用者指定方法二寫「剩餘 0.5 mL」）
    C-O1：移除時接著注射器（管夾關）；lab/C-O1-open：管夾打開；lab/C-O1-blood：管夾打開、回血 */
 const Z_CLAMP5 = {x: 145, y: 105};
-LABS.push({id: "remove", icon: "🔚", title: "Port-A 角針移除", items: [19, 20, 21], finImg: "outcomes/C-O5.jpg",
+LABS.push({id: "remove", icon: "🔚", title: "Port-A 角針移除", items: [19, 20, 21], finImg: "lab/C-O5-v2.jpg",
   desc: "消毒接頭、反抽沖管、Heparin 封管、BD 安全針具「喀」一聲移除。",
   steps: [
     {type: "drag", bg: "I15.jpg", task: "以 <b>70–75% 酒精棉</b>消毒 Port-A 接頭。",

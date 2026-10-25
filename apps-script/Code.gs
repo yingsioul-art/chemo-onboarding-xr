@@ -29,9 +29,11 @@ function doPost(e) {
         for (var i = 0; i < ids.length; i++) if (String(ids[i][0]) === String(p.submission_id)) return json_({ ok: true, duplicate: true });
       }
     }
-    sh.appendRow([new Date(), "'" + String(p.code), p.started_at || '', p.submitted_at || '', p.duration_sec || '',
+    var row = [new Date(), "'" + String(p.code), p.started_at || '', p.submitted_at || '', p.duration_sec || '',
       p.total, p.max, p.unknown, (p.hc_wrong || []).length, (p.hc_wrong || []).join('、'), (p.ask_steps || []).join('、'),
-      p.gap1 || '', p.gap2 || '', p.submission_id || '', p.version || '', p.ua || '', JSON.stringify(p)]);
+      p.gap1 || '', p.gap2 || '', p.submission_id || '', p.version || '', p.ua || '', JSON.stringify(p)];
+    // 每題一欄（10/25）：固定欄之後接 p.cols；表頭沒有的欄位名稱就加在最右邊
+    sh.appendRow(row.concat(extraCols_(sh, HEAD.length, p.cols)));
     return json_({ ok: true, row: sh.getLastRow() });
   } catch (err) {
     return json_({ ok: false, error: String(err && err.message || err) });
@@ -93,20 +95,22 @@ function evalPost_(p) {
     for (var i = 0; i < ids.length; i++) if (String(ids[i][0]) === String(p.submission_id)) return json_({ ok: true, duplicate: true });
   }
   // 每題一欄（10/25）：網頁送來的 p.cols＝{欄位名稱: 答案}；表頭沒有的欄位名稱就加在最右邊
-  var head = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(String);
-  var cols = p.cols || {};
+  var row = [new Date(), p.kind, "'" + String(p.code), p.session || '', p.know == null ? '' : p.know,
+             p.submission_id || '', p.version || '', JSON.stringify(p)];
+  sh.appendRow(row.concat(extraCols_(sh, EVAL_HEAD.length, p.cols)));
+  return json_({ ok: true, row: sh.getLastRow() });
+}
+// 固定欄（前 n 欄）之後的每題欄：依表頭名稱對值，缺的表頭補在最右邊
+function extraCols_(sh, n, cols) {
+  cols = cols || {};
+  var head = sh.getRange(1, 1, 1, Math.max(sh.getLastColumn(), n)).getValues()[0].map(String);
   Object.keys(cols).forEach(function (k) {
     if (head.indexOf(k) < 0) { head.push(k); sh.getRange(1, head.length).setValue(k).setFontWeight('bold'); }
   });
-  var base = { '收到時間': new Date(), '類型': p.kind, '代碼': "'" + String(p.code), '梯次日期': p.session || '',
-               '知識答對': p.know == null ? '' : p.know, 'submission_id': p.submission_id || '', '版本': p.version || '',
-               '原始JSON': JSON.stringify(p) };
-  sh.appendRow(head.map(function (h) {
-    if (base.hasOwnProperty(h)) return base[h];
+  return head.slice(n).map(function (h) {
     var v = cols[h];
     return v == null ? '' : (typeof v === 'string' && /^[=+\-@]/.test(v) ? "'" + v : v);   // 避免開放題被當成公式
-  }));
-  return json_({ ok: true, row: sh.getLastRow() });
+  });
 }
 function evalGet_(mode, q) {
   var rows = evalRows_();
