@@ -391,8 +391,28 @@ async function postFeedback(p, local){
 }
 
 /* ---------- 技術站自評（上課前） ---------- */
+// 技術站完成紀錄：lab.html 存在同網站的 localStorage（chemo-lab-v1，{站id: 完成時間}）
+const LAB_IDS = ["cstd","prep","swap","insert","remove"];
+function labLeft(){
+  try{ const d = JSON.parse(localStorage.getItem("chemo-lab-v1")) || {}; return LAB_IDS.map((id,i)=>d[id]?null:LAB_ST[i]).filter(Boolean) }
+  catch(e){ return [] }   // 讀不到紀錄（私密視窗等）時不擋
+}
 function labForm(){
   $app.className="";
+  // 5 站都做完才能填自評（10/25 使用者定）
+  const left = labLeft();
+  if(left.length){
+    $app.innerHTML = `
+      <button class="back" onclick="location.hash=''">← 回首頁</button>
+      <h1>技術站自評</h1>
+      <div class="card" style="text-align:center;padding:24px 16px">
+        <h2>請先做完動手做技術站的 5 站</h2>
+        <div class="sub">這台裝置還沒做完：<br><b>${left.map(esc).join("<br>")}</b></div>
+        <a href="lab.html"><button class="pri">回動手做技術站 →</button></a>
+        <div class="muted" style="margin-top:12px">要用做技術站的同一台裝置、同一個瀏覽器開這一頁，系統才讀得到完成紀錄。</div>
+      </div>`;
+    return;
+  }
   $app.innerHTML = `
     <button class="back" onclick="location.hash=''">← 回首頁</button>
     <h1>技術站自評</h1>

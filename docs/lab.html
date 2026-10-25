@@ -1242,9 +1242,11 @@ function home(){
   $("#app").innerHTML = `<header><div class="kicker">新進護理師到職訓練 · 動手做技術站</div><h1>🧪 化療靜脈給藥暨人工血管照護基礎技術</h1>
     <p class="muted">把用物拖到正確的位置（或先點用物、再點位置），照評核表一步一步做。做錯會出事——出事以後要先選對處理方法，才能回到出事前重做。每一站都有「⏸ 暫停」「↩ 上一步」「🔁 全部重來」，放錯的用物可以再拖回上排。</p></header>
     <div class="grid">${LABS.map(l => `<button class="xp" onclick="location.hash='#/${l.id}'"><span class="ic">${l.icon}</span><span><b>${esc(l.title)}</b><small>${esc(l.desc)}</small><small>評核表第 ${l.items[0]}–${l.items[l.items.length - 1]} 項${DONE[l.id] ? ' · <span class="done">✅ 做完了</span>' : ""}</small></span></button>`).join("")}</div>
-    <div class="card" style="text-align:center"><b>做完技術站了嗎？</b>
-      <p class="muted">已完成 ${LABS.filter(l => DONE[l.id]).length} / ${LABS.length} 站。做完後請填<b>技術站自評</b>，寫下你需要老師協助的步驟，接著開始實體課練習。</p>
-      <a class="btn gold" style="display:inline-block;text-decoration:none" href="eval.html#labfb">📝 填技術站自評 →</a></div>
+    ${(() => { const left = LABS.filter(l => !DONE[l.id]);   // 5 站都做完才能填自評（10/25 使用者定）
+      return `<div class="card" style="text-align:center"><b>${left.length ? "做完 5 站，才能填技術站自評" : "5 站都完成了！"}</b>
+      <p class="muted">已完成 ${LABS.length - left.length} / ${LABS.length} 站。${left.length ? `還沒做：${left.map(l => esc(l.title)).join("、")}。` : ""}做完後請填<b>技術站自評</b>，寫下你需要老師協助的步驟，接著開始實體課練習。</p>
+      ${left.length ? `<button class="btn" disabled style="opacity:.45;cursor:not-allowed">🔒 填技術站自評（還有 ${left.length} 站）</button>`
+        : `<a class="btn gold" style="display:inline-block;text-decoration:none" href="eval.html#labfb">📝 填技術站自評 →</a>`}</div>` })()}
     <div class="card"><details><summary>📋 看評核表全部 21 項（原文）</summary>${checkTable(CHECK.map((_, i) => i + 1), new Set(), 0)}</details>
     <p class="note">※ 步驟文字照評核表原文。「出事」情境與處理題、每步的補充說明（標「教學補充」者）不是評核表原文，以院內規範與老師說明為準。</p></div>`;
 }
