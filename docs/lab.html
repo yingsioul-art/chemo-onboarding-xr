@@ -506,7 +506,10 @@ function runStation(pane, L){
     $("#view").innerHTML = `<img class="scene" src="images/${L.finImg || ST[ST.length - 1].bg}" alt="">`;
     // 課程流程：前測 → 技術站 → 技術站自評（eval.html#labfb）→ 實體課練習；5 站都做完時主按鈕改成去填自評
     const allDone = LABS.every(l => DONE[l.id]);
-    handBtns($("#ctrls"), `${allDone ? `<div class="row" style="margin-top:12px"><a class="btn gold" style="text-decoration:none;text-align:center" href="eval.html#labfb">📝 5 站都完成了，填技術站自評 →</a></div>` : ""}<div class="row" style="margin-top:12px"><button class="btn" data-b="again">🔁 再做一次</button><button class="btn ghost" data-b="list">← 回技術站清單</button></div>`, b => { if(b === "again"){ hist.length = 0; accN = 0; S = fresh(0); draw(); ctl.upd(); } else location.hash = ""; });
+    // 10/26 使用者：完成一站要有按鈕直接到下一站（依站序；最後一站時跳到還沒做的那一站）
+    const li = LABS.indexOf(L), nx = LABS[li + 1] || (allDone ? null : LABS.find(l => !DONE[l.id]));
+    const nxBtn = nx ? `<div class="row" style="margin-top:12px"><button class="btn gold" data-b="nxst">▶ 下一站：站 ${LABS.indexOf(nx) + 1}｜${nx.title}</button></div>` : "";
+    handBtns($("#ctrls"), `${allDone ? `<div class="row" style="margin-top:12px"><a class="btn gold" style="text-decoration:none;text-align:center" href="eval.html#labfb">📝 5 站都完成了，填技術站自評 →</a></div>` : nxBtn}<div class="row" style="margin-top:12px"><button class="btn" data-b="again">🔁 再做一次</button><button class="btn ghost" data-b="list">← 回技術站清單</button></div>`, b => { if(b === "again"){ hist.length = 0; accN = 0; S = fresh(0); draw(); ctl.upd(); } else if(b === "nxst"){ location.hash = "/" + nx.id; window.scrollTo(0, 0); } else location.hash = ""; });
     $("#fb").innerHTML = say(`做完評核表第 ${L.items[0]}–${L.items[L.items.length - 1]} 項。這一站出事 <b>${accN}</b> 次${accN ? "——出事的地方，就是實際操作時要特別留意的地方。" : "，很棒！"}`, true);
   }
 
