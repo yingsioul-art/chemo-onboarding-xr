@@ -225,7 +225,8 @@ function renderStart(){
     <label for="emp"><b>員工編號（6 碼數字）</b></label>
     <input id="emp" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off" spellcheck="false" placeholder="例：012345">
     <div class="hint" id="cnt">已填 0 / 6 碼</div>
-  </div>`;
+  </div>
+  <p class="hint" style="text-align:right"><a href="teacher.html">老師：看本梯次全班結果 →</a></p>`;   // 10/26：老師上課時從首頁一點就開
   const inp=document.getElementById("emp"), cnt=document.getElementById("cnt"); let comp=false;
   const go=btn("開始","primary",()=>{S.code=inp.value;S.started_at=new Date().toISOString();S.idx=0;S.phase="intro";save();route()},true);
   const norm=()=>{ if(comp) return; let v=inp.value.replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-65248)).replace(/\D/g,"").slice(0,6); if(v!==inp.value) inp.value=v; cnt.textContent=`已填 ${v.length} / 6 碼`; go.disabled=v.length!==6 };

@@ -3,7 +3,7 @@
  * 部署：在「到職訓練情境作答」專用試算表 → 擴充功能 → Apps Script，貼上本檔 → 部署為網頁應用程式（執行身分＝我、存取＝所有人）。
  * 🔴 老師個人版密碼：專案設定 → 指令碼屬性 → 新增 TEACHER_KEY（自訂一組字串）。沒有設定時，個人版一律拒絕。
  * 讀取：
- *   ?mode=summary&since=ISO   → 匿名列（無員工編號），給大螢幕投影版
+ *   ?mode=summary&since=ISO&until=ISO → 匿名列（無員工編號），給老師圖表頁（until 可省略）
  *   ?mode=detail&since=ISO&key=… → 含員工編號，給老師個人版
  * 訓練成效評估（eval.html，kind＝pre／post／check／lab）另存「eval」分頁：
  *   ?mode=evalpre&code=…  → 該代碼最近一次前測（後測頁做前後對照用）
@@ -51,12 +51,13 @@ function doGet(e) {
     if (!key || q.key !== key) return json_({ ok: false, error: 'bad_key' });
   }
   var since = q.since ? new Date(q.since) : new Date(Date.now() - 12 * 3600 * 1000);
+  var until = q.until ? new Date(q.until) : null;   // 10/26：老師頁選「日期＋上午／下午」→ 帶結束時間
   var sh = sheet_(), last = sh.getLastRow();
   if (last < 2) return json_({ ok: true, rows: [] });
   var vals = sh.getRange(2, 1, last - 1, HEAD.length).getValues();
   var iRaw = HEAD.indexOf('原始JSON'), rows = [];
   vals.forEach(function (r) {
-    if (!(r[0] instanceof Date) || r[0] < since) return;
+    if (!(r[0] instanceof Date) || r[0] < since || (until && r[0] >= until)) return;
     var p; try { p = JSON.parse(r[iRaw]); } catch (x) { return; }
     var o = { total: p.total, max: p.max, unknown: p.unknown, answers: p.answers,
               hc_wrong: p.hc_wrong || [], ask_steps: p.ask_steps || [], gap1: p.gap1 || '', gap2: p.gap2 || '' };

@@ -33,7 +33,7 @@ html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Noto Sa
 main{max-width:1280px;margin:0 auto;padding:16px}
 header{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
 header h1{font-size:20px;margin:0;flex:1 1 260px}
-select,button{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:8px 12px;min-height:40px;cursor:pointer}
+select,button,input[type=date]{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:8px 12px;min-height:40px;cursor:pointer}
 button.on{background:var(--accent);border-color:var(--accent);color:#fff}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:14px}
 .kpi,.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
@@ -70,8 +70,8 @@ details summary{cursor:pointer;color:var(--ink2);font-size:14px}
 <main>
 <header>
   <h1>化療給藥情境練習｜全班結果</h1>
-  <select id="range" aria-label="時間範圍"><option value="3">最近 3 小時</option><option value="today" selected>今天</option><option value="168">最近 7 天</option></select>
-  <button id="mProj" class="on">投影版</button><button id="mTea">老師版</button>
+  <input type="date" id="day" aria-label="上課日期">
+  <select id="half" aria-label="時段"><option value="am">上午</option><option value="pm">下午</option><option value="all">全天</option></select>
   <button id="refresh">重新整理</button>
 </header>
 <div id="msg"></div>
@@ -83,37 +83,36 @@ details summary{cursor:pointer;color:var(--ink2);font-size:14px}
 <div class="card" style="margin-bottom:14px"><h2>各題答對率</h2><div class="sub">依三幕排列；滑過長條看人數</div><div id="rate"></div>
   <details><summary>表格檢視</summary><div id="rateTable"></div></details></div>
 <div class="card" style="margin-bottom:14px"><h2>學員寫的差距</h2><div class="sub">「哪一步原本以為會、結果不會」與「打算怎麼補」（不顯示是誰寫的）</div><div id="gaps" class="gaps"></div></div>
-<div class="card" id="teacherBox" hidden><h2>每位學員的需求（老師版，請勿投影）</h2>
-  <div class="leg"><span><i style="background:var(--g-known)"></i>✓ 已經會</span><span><i style="background:var(--g-over)"></i>! 以為會</span><span><i style="background:var(--g-unsure)"></i>? 會但沒把握</span><span><i style="background:var(--g-gap)"></i>✗ 還不會</span></div>
-  <div style="overflow-x:auto"><table id="tt"></table></div></div>
 </main>
 <div id="tip"></div>
 <script>
-/* 老師圖表：讀 Apps Script（apps-script/Code.gs）的 doGet；ENDPOINT 與學員頁相同。網址加 ?demo=1 可看假資料預覽。 */
+/* 老師圖表：讀 Apps Script（apps-script/Code.gs）的 doGet；ENDPOINT 與學員頁相同。網址加 ?demo=1 可看假資料預覽。
+   10/26 使用者：老師選「日期＋上午／下午」看該梯次，不具名（只用匿名彙總，不顯示員工編號），讓老師快速和學員對焦學習需求 */
 const ENDPOINT = "https://script.google.com/macros/s/AKfycbzHpVJHrzP-dC0UWTtxjLVG7BKCxPn28-WUCjH69VMhk4u8_SnFYLZkJcPTmvwgMsaA/exec";
 const REFRESH_SEC = 15;
 const qs = new URLSearchParams(location.search), DEMO = qs.has("demo");
-let D, mode = "proj", key = "", timer;
+let D, timer;
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const GC = {known:"var(--g-known)",over:"var(--g-over)",unsure:"var(--g-unsure)",gap:"var(--g-gap)"};
 
 fetch("data/script.json",{cache:"no-cache"}).then(r=>r.json()).then(d=>{D=d;load();timer=setInterval(load,REFRESH_SEC*1000)});
-$("range").onchange=load; $("refresh").onclick=load;
-$("mProj").onclick=()=>{mode="proj";$("mProj").classList.add("on");$("mTea").classList.remove("on");load()};
-$("mTea").onclick=()=>{ if(!key && !DEMO){ key=prompt("請輸入老師密碼")||""; if(!key) return }
-  mode="teacher";$("mTea").classList.add("on");$("mProj").classList.remove("on");load()};
+// 預設今天、現在的時段（中午 12 點前＝上午）
+{ const t=new Date(), p=n=>String(n).padStart(2,"0"); $("day").value=`${t.getFullYear()}-${p(t.getMonth()+1)}-${p(t.getDate())}`; $("half").value=t.getHours()<12?"am":"pm" }
+$("day").onchange=load; $("half").onchange=load; $("refresh").onclick=load;
 
-function since(){ const v=$("range").value; if(v==="today"){const t=new Date();t.setHours(0,0,0,0);return t} return new Date(Date.now()-v*3600e3) }
+// 選的時段：上午 00:00–12:00、下午 12:00–24:00、全天 00:00–24:00（本機時間）
+function span(){ const [y,m,d]=$("day").value.split("-").map(Number), h=$("half").value;
+  return [new Date(y,m-1,d,h==="pm"?12:0), new Date(y,m-1,d,h==="am"?12:24)] }
 async function load(){
   let rows;
   try{
     if(DEMO) rows=demo();
     else{
       if(!ENDPOINT){ $("msg").innerHTML=`<div class="note">尚未設定資料來源（ENDPOINT）。網址加上 <b>?demo=1</b> 可看假資料預覽。</div>`; render([]); return }
-      const u=`${ENDPOINT}?mode=${mode==="teacher"?"detail":"summary"}&since=${encodeURIComponent(since().toISOString())}`+(mode==="teacher"?`&key=${encodeURIComponent(key)}`:"");
+      if(!$("day").value){ $("msg").innerHTML=`<div class="note">請先選上課日期。</div>`; return }
+      const [a,b]=span(), u=`${ENDPOINT}?mode=summary&since=${encodeURIComponent(a.toISOString())}&until=${encodeURIComponent(b.toISOString())}`;
       const j=await (await fetch(u,{cache:"no-store"})).json();
-      if(!j.ok){ if(j.error==="bad_key"){ key=""; $("msg").innerHTML=`<div class="note">老師密碼不對，已切回投影版。</div>`; $("mProj").click(); return } throw new Error(j.error) }
+      if(!j.ok) throw new Error(j.error);
       rows=j.rows;
     }
     $("msg").innerHTML = DEMO?`<div class="note">預覽模式：以下是假資料。</div>`:"";
@@ -152,16 +151,6 @@ function render(rows){
   // 差距文字
   const gs=rows.filter(r=>r.gap1||r.gap2);
   $("gaps").innerHTML=gs.length?gs.map(r=>`<div class="gap">${esc(r.gap1)}${r.gap2?`<small>打算：${esc(r.gap2)}</small>`:""}</div>`).join(""):`<div class="empty">還沒有資料</div>`;
-  // 老師版
-  $("teacherBox").hidden = mode!=="teacher";
-  if(mode==="teacher"){
-    const rs=rows.slice().sort((a,b)=>(a.t||"")<(b.t||"")?1:-1);
-    $("tt").innerHTML=`<tr><th>員工編號</th><th>答對</th><th>差距地圖</th><th>以為會</th><th>想請老師帶</th><th>寫的差距</th></tr>`+rs.map(r=>`<tr>
-      <td>${esc(r.code||"—")}</td><td>${r.total}/${r.max}</td>
-      <td><div class="strip">${(r.answers||[]).map(a=>`<i title="${esc(title(a.id))}" style="background:${GC[a.cls]||"var(--g-na)"}"></i>`).join("")}</div></td>
-      <td>${esc((r.hc_wrong||[]).join("、"))}</td><td>${esc((r.ask_steps||[]).join("、"))}</td>
-      <td>${esc(r.gap1)}${r.gap2?`<br><small>打算：${esc(r.gap2)}</small>`:""}</td></tr>`).join("");
-  }
 }
 // 滑過提示
 const tip=$("tip");
@@ -173,7 +162,7 @@ function demo(){
   const gapsT=["以為回血有出來就可以給，原來要確認是全血","不知道換上化療藥後要先脫外層手套","沖管量 35 和 70 搞混","條碼不符時以為人工核對就可以","角針長度不知道要看 Port 外觀選"];
   return Array.from({length:14},(_,k)=>{const R=r("p"+k);const answers=D.items.map(it=>{const conf=["high","mid","low"][Math.floor(R()*3)],correct=R()<.72,unknown=!correct&&R()<.2;
     return{id:it.id,conf,correct,unknown,cls:correct?(conf==="high"?"known":"unsure"):(conf==="high"&&!unknown?"over":"gap")}});
-    return{code:String(100000+k*7919).slice(0,6),t:new Date(Date.now()-k*60e3).toISOString(),total:answers.filter(a=>a.correct).length,max:answers.length,unknown:answers.filter(a=>a.unknown).length,answers,
+    return{total:answers.filter(a=>a.correct).length,max:answers.length,unknown:answers.filter(a=>a.unknown).length,answers,
       hc_wrong:answers.filter(a=>a.cls==="over").map(a=>a.id),ask_steps:D.items.filter(()=>R()<.12).map(i=>i.id),gap1:gapsT[k%gapsT.length],gap2:k%2?"實作時請老師示範":""}});
 }
 </script>
