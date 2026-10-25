@@ -276,7 +276,7 @@ const ITEMS = {
   SPK: {img: "supplies/S22.jpg", name: "CSTD 的 Spike", crop: [0, .28, .56, .56]},
   ADP: {img: "supplies/S22.jpg", name: "CSTD 的 Adapter", crop: [.44, .1, .56, .62]},
   CST: {img: "supplies/S22.jpg", name: "組好的 CSTD", crop: [0, .1, 1, .8]},
-  CHB: {img: "outcomes/B-O2.jpg", name: "化療藥袋\n（在夾鏈袋內）"},
+  CHB: {img: "video/V-zipbag.jpg", name: "化療藥袋\n（在夾鏈袋內）", crop: [.25, .35, .72, .65]},  // 給藥影片 03:35 截圖
   NDL: {img: "outcomes/C-O5.jpg", name: "拔出的角針", crop: [.2, .1, .7, .7]},
   GRP: {img: "outcomes/C-O3.jpg", name: "右手握柄\n（往上拉）", crop: [.15, 0, .8, .8]},
 };
@@ -668,7 +668,7 @@ LABS.push({id: "prep", icon: "🛡️", title: "主護護理師執行給藥前�
       orders: [["open", "rm"]],
       why: {rm: "要先旋開 CSTD 的 Spike 與 Adapter，點滴袋才拿得下來。", pull: "Adapter 和輸液套管要一直連著（第 1 項已經完全沒入）。這一步只旋開 CSTD 的 Spike 與 Adapter。"},
       okMsg: "旋開 Spike 與 Adapter，移除相容輸液點滴袋。"},
-    {type: "choice", bg: "outcomes/B-O2.jpg", task: "化療藥品點滴袋裝在<b>塑膠夾鏈袋</b>裡送來。要怎麼接？",
+    {type: "choice", bg: "video/V-zipbag.jpg", task: "化療藥品點滴袋裝在<b>塑膠夾鏈袋</b>裡送來。要怎麼接？",
       q: "化療藥袋要怎麼和 Adapter 銜接？", opts: [
         {t: "不從夾鏈袋取出，只露出藥袋上的 CSTD Spike，和 Adapter 銜接", ok: true, why: "藥袋留在夾鏈袋裡，只露出 CSTD 的 Spike 來銜接。"},
         {t: "把藥袋從夾鏈袋拿出來，比較好接、也比較好掛", acc: ACC.zip, pic: "outcomes/B-X1.jpg"}]},
