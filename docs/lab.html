@@ -154,6 +154,14 @@ details summary{cursor:pointer;font-weight:800}
 #lpane.tb>.split{height:12px;margin:-6px 0;cursor:row-resize}
 #lpane.tb>.split::after{width:36px;height:3px}
 .split:hover,.split.drag{background:var(--pri)}
+/* 10/26 使用者：手機看不到填答互動畫面——手機上滑動時容易誤拖分隔條，操作區被縮成一小格內捲、填答區藏在格子外面；
+   選過「左右並排」也會擠成窄條。手機（窄螢幕）一律上下自然排列、不內捲，版面按鈕與分隔條不顯示 */
+@media (max-width:700px){
+  .laybar,#lpane>.split{display:none!important}
+  #lpane.lr,#lpane.tb{display:block}
+  #lpane>.sim{height:auto!important;overflow:visible!important}
+  #lpane.lr>.card:last-child{position:static;max-height:none;overflow:visible}
+}
 </style>
 </head>
 <body>
