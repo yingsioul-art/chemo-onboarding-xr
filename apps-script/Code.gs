@@ -5,7 +5,7 @@
  * 讀取：
  *   ?mode=summary&since=ISO   → 匿名列（無員工編號），給大螢幕投影版
  *   ?mode=detail&since=ISO&key=… → 含員工編號，給老師個人版
- * 訓練成效評估（eval.html，kind＝pre／post／check）另存「eval」分頁：
+ * 訓練成效評估（eval.html，kind＝pre／post／check／lab）另存「eval」分頁：
  *   ?mode=evalpre&code=…  → 該代碼最近一次前測（後測頁做前後對照用）
  *   ?mode=eval&key=…      → 全部成效資料（老師結果頁）
  */
@@ -67,7 +67,7 @@ function doGet(e) {
 
 // ---------- 訓練成效評估 ----------
 var EVAL_SHEET = 'eval';
-var EVAL_KINDS = ['pre', 'post', 'check'];
+var EVAL_KINDS = ['pre', 'post', 'check', 'lab'];   // lab＝技術站自評（上課前，ZPD）
 var EVAL_HEAD = ['收到時間', '類型', '代碼', '梯次日期', '知識答對', 'submission_id', '版本', '原始JSON'];
 
 function evalSheet_() {

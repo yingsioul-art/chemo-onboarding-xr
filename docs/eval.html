@@ -9,21 +9,21 @@
   color-scheme:light;
   --bg:#f4f6f8; --card:#ffffff; --ink:#1b2631; --ink2:#46535f; --muted:#6b7884; --line:#d6dde3; --grid:#e8edf1;
   --s1:#0b3c5d; --s2:#9aa9b6; --accent:#0b3c5d; --accent2:#155a8a; --soft:#e7eef4; --ok:#1e8449; --ok-bg:#e8f5ec; --ng:#c0392b; --ng-bg:#fbeceb;
-  --warn-bg:#fdf3e1; --warn:#7a4f00; --bar:#0b3c5d; --bar-ink:#ffffff; --r:6px;
+  --warn-bg:#fdf3e1; --warn:#7a4f00; --bar:#0b3c5d; --bar-ink:#ffffff; --r:6px; --zpd:#c27c0e;
 }
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
     color-scheme:dark;
     --bg:#0f1720; --card:#17212c; --ink:#e6ecf1; --ink2:#b4c0cb; --muted:#8796a3; --line:#2a3744; --grid:#223040;
     --s1:#5aa2d6; --s2:#4b5b6a; --accent:#5aa2d6; --accent2:#7db7e0; --soft:#1a2b3b; --ok:#4cc27e; --ok-bg:#132a1d; --ng:#ef7b6e; --ng-bg:#2e1a18;
-    --warn-bg:#2e2510; --warn:#f1c25a; --bar:#0a2236; --bar-ink:#e6ecf1; --r:6px;
+    --warn-bg:#2e2510; --warn:#f1c25a; --bar:#0a2236; --bar-ink:#e6ecf1; --r:6px; --zpd:#e0a03a;
   }
 }
 :root[data-theme="dark"]{
   color-scheme:dark;
   --bg:#0f1720; --card:#17212c; --ink:#e6ecf1; --ink2:#b4c0cb; --muted:#8796a3; --line:#2a3744; --grid:#223040;
   --s1:#5aa2d6; --s2:#4b5b6a; --accent:#5aa2d6; --accent2:#7db7e0; --soft:#1a2b3b; --ok:#4cc27e; --ok-bg:#132a1d; --ng:#ef7b6e; --ng-bg:#2e1a18;
-  --warn-bg:#2e2510; --warn:#f1c25a; --bar:#0a2236; --bar-ink:#e6ecf1; --r:6px;
+  --warn-bg:#2e2510; --warn:#f1c25a; --bar:#0a2236; --bar-ink:#e6ecf1; --r:6px; --zpd:#e0a03a;
 }
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 "Noto Sans TC","Microsoft JhengHei","PingFang TC",system-ui,sans-serif}
@@ -91,6 +91,12 @@ th,td{border-bottom:1px solid var(--line);padding:7px 6px;text-align:left;vertic
 th{color:var(--ink2);font-weight:600;white-space:nowrap}
 .tblwrap{overflow-x:auto}
 .pass{color:var(--ok);font-weight:600}.fail{color:var(--ng);font-weight:600}
+.stack{display:flex;height:20px;border-radius:4px;overflow:hidden;background:var(--grid)}
+.stack i{display:block;height:100%}
+.z0{background:var(--ok)}.z1{background:var(--zpd)}.z2{background:var(--ng)}
+.zleg{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--ink2);margin-bottom:8px}
+.zleg span::before{content:"";display:inline-block;width:12px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.zleg .l0::before{background:var(--ok)}.zleg .l1::before{background:var(--zpd)}.zleg .l2::before{background:var(--ng)}
 .back{background:none;border:none;color:var(--accent);padding:0;min-height:0;margin-bottom:6px}
 </style>
 </head>
@@ -173,6 +179,28 @@ const L1 = [
 ];
 const L1_ANCHOR = ["非常不同意","不同意","尚可","同意","非常同意"];
 
+// 技術站自評（上課前）：找出近端發展區（ZPD）＝「需要老師提醒或示範就做得到」的站
+const LAB_ST = [
+  "站 1｜組裝密閉系統藥品轉移裝置（CSTD）",
+  "站 2｜主護護理師執行給藥前準備",
+  "站 3｜換接相容輸液點滴",
+  "站 4｜Port-A 角針置放",
+  "站 5｜Port-A 角針移除",
+];
+const ZPD = ["我自己做得到", "需要老師在旁提醒或示範，我就做得到", "還做不到，需要從頭教"];
+// 技術站使用感受：1–2 為 UMUX-Lite（可換算 SUS），3–6 為依技術站特色自編
+const UX = [
+  "這個技術站的功能符合我的學習需要",
+  "這個技術站很容易使用",
+  "走完技術站，我更清楚自己哪些步驟還不會",
+  "「出事」情境讓我記住做錯的後果",
+  "拖拉、節拍等動手操作讓我更有實際做的感覺",
+  "動畫、影片與評核表打勾幫助我理解步驟",
+];
+// UMUX-Lite 原始分數（0–100）與換算的 SUS 分數（Lewis 等，2013）
+const umux = u => ((u[0]-1)+(u[1]-1))/8*100;
+const umuxSUS = u => 0.65*umux(u)+22.9;
+
 /* 試算表每題一欄（10/25 使用者：eval 分頁要看到每題作答）：送出時把每題整理成「欄位名稱 → 答案」，
    後台遇到新欄位名稱會自動加在試算表最右邊。情境題記「選的字母＋選項原文」，另一欄對錯：1 對、0 錯、9 不確定 */
 const SE_SHORT = ["CSTD組裝","給藥前準備","換接","角針置放","角針移除"];
@@ -227,7 +255,7 @@ async function send(payload){
 /* ---------- 路由 ---------- */
 function route(){
   const h = location.hash.replace("#","");
-  ({pre:()=>quiz("pre"), post:()=>quiz("post"), check:checkForm, result:resultPage}[h] || home)();
+  ({pre:()=>quiz("pre"), labfb:labForm, post:()=>quiz("post"), check:checkForm, result:resultPage}[h] || home)();
   window.scrollTo(0,0);
 }
 window.addEventListener("hashchange", route);
@@ -239,6 +267,7 @@ function home(){
     <div class="sub">新進護理師到職訓練。請依老師指示選擇要填的項目。</div>
     <div class="tiles">
       <button class="tile" onclick="location.hash='pre'"><b>前測</b><span>上課前填。把握度 5 題＋情境題 10 題，約 5 分鐘。</span></button>
+      <button class="tile" onclick="location.hash='labfb'"><b>技術站自評</b><span>做完動手做技術站後填。找出你需要老師協助的步驟，約 3 分鐘。</span></button>
       <button class="tile" onclick="location.hash='post'"><b>後測</b><span>課程結束後填。同樣的題目＋課程回饋，送出後可看前後對照與解說。</span></button>
       <button class="tile" onclick="location.hash='check'"><b>評核教師</b><span>技術評核時勾選 6 項關鍵步驟是否第一次就做對。</span></button>
       <button class="tile" onclick="location.hash='result'"><b>成效結果</b><span>老師查看前後測配對結果、匯出資料（需密碼）。</span></button>
@@ -313,9 +342,9 @@ function bindSel(){
 function preDone(local){
   $app.innerHTML = `<div class="card" style="text-align:center;padding:30px 16px">
     <div class="big" style="color:var(--ok)">✓</div><h1>前測已送出</h1>
-    <div class="sub">下一步：進入<b>動手做技術站</b>練習。課程結束後請用<b>同一個員工編號</b>填後測，到時就能看到自己的前後對照與每題解說。</div>
+    <div class="sub">下一步：進入<b>動手做技術站</b>走一遍，做完回到本頁填<b>技術站自評</b>，寫下你需要老師協助的步驟。課程結束後再用<b>同一個員工編號</b>填後測。</div>
     ${local?`<div class="note">（測試版）尚未設定回傳網址，資料只存在這台裝置。</div>`:""}
-    <div class="row" style="justify-content:center"><a href="lab.html"><button class="pri">進入動手做技術站 →</button></a><button onclick="location.hash=''">回首頁</button></div></div>`;
+    <div class="row" style="justify-content:center"><a href="lab.html"><button class="pri">進入動手做技術站 →</button></a><button onclick="location.hash='labfb'">我做完了，填技術站自評</button></div></div>`;
 }
 async function findPre(code){
   const local = LS.get("eval_local", []).filter(p => p.kind==="pre" && p.code===code);
@@ -344,6 +373,43 @@ async function postFeedback(p, local){
         <div class="opts">${ORDER[i].map((oi,j)=>`<div class="opt ${oi===k.a?"right":(oi===mine?"wrong":"")}"><span>${"ABCD"[j]}. ${esc(k.o[oi])}${oi===k.a?" ✔":""}${oi===mine&&!ok?"（你的答案）":""}</span></div>`).join("")}${mine===-1?`<div class="opt wrong"><span>E. 不確定（你的答案）</span></div>`:""}</div>
         <div class="ex">解說：${esc(k.ex)}<span class="muted">（技術表 ${esc(k.step)}）</span></div></div>`}).join("")}
     <button onclick="location.hash=''" style="width:100%">回首頁</button>`;
+}
+
+/* ---------- 技術站自評（上課前） ---------- */
+function labForm(){
+  $app.className="";
+  $app.innerHTML = `
+    <button class="back" onclick="location.hash=''">← 回首頁</button>
+    <h1>技術站自評</h1>
+    <div class="sub">走完動手做技術站後填寫。老師會依全班的回答，在實體課優先帶練大家需要協助的步驟。請照實際狀況填，不會算成績。</div>
+    ${codeBlock("code")}
+    <div class="sec">一、每一站我做得到嗎？</div>
+    ${LAB_ST.map((t,i)=>`<div class="card"><p class="q">${esc(t)}</p><div class="opts">
+      ${ZPD.map((z,j)=>`<label class="opt" data-n="z${i}"><input type="radio" name="z${i}" value="${j}"><span>${esc(z)}</span></label>`).join("")}</div></div>`).join("")}
+    <div class="card"><p class="q">我最需要老師協助的步驟是？</p>
+      <div class="muted" style="margin-bottom:6px">寫出站別與卡住的地方，例：站 4 三指固定時盤面會滑動</div><textarea id="need"></textarea></div>
+    <div class="sec">二、技術站使用感受</div>
+    ${UX.map((s,i)=>`<div class="card"><p class="q"><span class="qn">${i+1}.</span>${esc(s)}</p>${scaleHTML("ux"+i, L1_ANCHOR)}</div>`).join("")}
+    <div class="card"><p class="q">這個技術站我最想改的地方（選填）</p><textarea id="improve"></textarea></div>
+    <div id="msg"></div>
+    <button class="pri" id="go" style="width:100%">送出技術站自評</button>`;
+  bindSel();
+  document.getElementById("go").onclick = async () => {
+    const code = readCode("code"); if(!code) return;
+    const val = n => { const r=document.querySelector(`input[name="${n}"]:checked`); return r ? +r.value : null };
+    const zpd = LAB_ST.map((_,i)=>val("z"+i)), ux = UX.map((_,i)=>val("ux"+i));
+    const miss = [...zpd.map((v,i)=>v==null?`站 ${i+1}`:null), ...ux.map((v,i)=>v==null?`使用感受第 ${i+1} 題`:null)].filter(Boolean);
+    if(miss.length){ document.getElementById("msg").innerHTML = `<div class="note">還沒填：${miss.join("、")}</div>`; return }
+    const btn = document.getElementById("go"); btn.disabled = true; btn.textContent = "送出中…";
+    const r = await send({kind:"lab", code, session:today(), zpd, ux,
+      need:document.getElementById("need").value.trim(), improve:document.getElementById("improve").value.trim()});
+    if(!r.ok){ btn.disabled=false; btn.textContent="重新送出"; document.getElementById("msg").innerHTML=`<div class="note">送出失敗，請再按一次或告訴老師。（${esc(r.error||"")}）</div>`; return }
+    const helpSt = LAB_ST.filter((_,i)=>zpd[i]>0);
+    $app.innerHTML = `<div class="card" style="text-align:center;padding:30px 16px"><div class="big" style="color:var(--ok)">✓</div><h1>技術站自評已送出</h1>
+      <div class="sub">${helpSt.length?`上課時請特別留意：<br><b>${helpSt.map(esc).join("<br>")}</b>`:"你覺得每一站都做得到，上課時請實際操作驗證看看。"}</div>
+      ${r.local?`<div class="note">（測試版）尚未設定回傳網址，資料只存在這台裝置。</div>`:""}
+      <button onclick="location.hash=''">回首頁</button></div>`;
+  };
 }
 
 /* ---------- 評核教師 ---------- */
@@ -420,7 +486,8 @@ function latest(rows, kind){
   const m = {}; rows.filter(p=>p.kind===kind).forEach(p => { if(!m[p.code] || p.submitted_at > m[p.code].submitted_at) m[p.code]=p }); return m;
 }
 function render(rows){
-  const pre = latest(rows,"pre"), post = latest(rows,"post"), chk = latest(rows,"check");
+  const pre = latest(rows,"pre"), post = latest(rows,"post"), chk = latest(rows,"check"), lab = latest(rows,"lab");
+  const LB = Object.values(lab);
   const paired = Object.keys(post).filter(c => pre[c]);
   const P = paired.map(c => ({code:c, pre:pre[c], post:post[c]}));
   const kPre = mean(P.map(x=>x.pre.know)), kPost = mean(P.map(x=>x.post.know));
@@ -443,6 +510,14 @@ function render(rows){
       <div class="kpi"><div class="v">${C.length?pct(allPass/C.length):"—"}</div><div class="l">技能：6 項關鍵步驟全部一次通過（${allPass}／${C.length} 人）</div></div>
       <div class="kpi"><div class="v">${f1(mean(L.map(p=>mean(p.l1))))}</div><div class="l">反應：滿意度平均（滿分 5，${L.length} 人）</div></div>
     </div>
+    <div class="card"><h2>技術站自評：全班近端發展區（ZPD）地圖</h2>
+      <div class="sub">上課前填，${LB.length} 人。橘色＝需要老師提醒或示範就做得到，是實體課最值得帶練的部分。</div>
+      <div class="zleg"><span class="l0">自己做得到</span><span class="l1">需要提醒或示範（ZPD）</span><span class="l2">還做不到</span></div>
+      ${LAB_ST.map((t,i)=>{ const c=[0,1,2].map(j=>LB.filter(p=>p.zpd[i]===j).length), n=LB.length||1;
+        return `<div class="bar"><div class="lab" title="${esc(t)}">${esc(t)}</div><div class="stack">${c.map((v,j)=>`<i class="z${j}" style="width:${v/n*100}%" title="${ZPD[j]} ${v} 人"></i>`).join("")}</div>
+        <div class="num">${c[0]}／${c[1]}／${c[2]}</div></div>` }).join("")}
+      ${LB.filter(p=>p.need).length?`<div class="sub" style="margin:12px 0 2px">學員寫的「最需要老師協助的步驟」</div><ul>${LB.filter(p=>p.need).map(p=>`<li>${esc(p.need)}</li>`).join("")}</ul>`:""}
+    </div>
     ${unp.length?`<div class="note">未配對：${unp.map(esc).join("、")}。可能是前後測員工編號填不一樣，請核對。</div>`:""}
     <div class="grid2">
       <div class="card"><h2>知識：各題答對率</h2><div class="sub">配對者，前測 → 後測</div>
@@ -457,6 +532,11 @@ function render(rows){
       <div class="card"><h2>反應：滿意度</h2><div class="sub">後測填答者，平均（滿分 5）</div>
         <div class="tblwrap"><table>${L1.map((s,i)=>`<tr><td>${esc(s)}</td><td>${f1(mean(L.map(p=>p.l1[i])))}</td></tr>`).join("")}</table></div></div>
     </div>
+    <div class="card"><h2>技術站使用感受</h2>
+      <div class="sub">${LB.length} 人，平均（滿分 5）。UMUX-Lite 換算 SUS：<b>${f1(mean(LB.map(p=>umuxSUS(p.ux))))}</b>（SUS 平均水準約 68）</div>
+      <div class="tblwrap"><table>${UX.map((s,i)=>`<tr><td>${i<2?"UMUX-Lite｜":""}${esc(s)}</td><td>${f1(mean(LB.map(p=>p.ux[i])))}</td></tr>`).join("")}</table></div>
+      ${LB.filter(p=>p.improve).length?`<div class="sub" style="margin:12px 0 2px">最想改的地方</div><ul>${LB.filter(p=>p.improve).map(p=>`<li>${esc(p.improve)}</li>`).join("")}</ul>`:""}
+    </div>
     <div class="card"><h2>配對差（報告與統計用）</h2>
       <div class="tblwrap"><table><tr><th>指標</th><th>n</th><th>前測 平均</th><th>後測 平均</th><th>差 平均（SD）</th></tr>
       <tr><td>知識（0–10）</td><td>${P.length}</td><td>${f1(kPre)}</td><td>${f1(kPost)}</td><td>${f1(mean(dK))}（${f1(sd(dK))}）</td></tr>
@@ -465,21 +545,23 @@ function render(rows){
     ${L.some(p=>p.suggest||p.gain)?`<div class="card"><h2>開放題</h2>
       ${L.filter(p=>p.suggest).length?`<div class="sub" style="margin:6px 0 2px">建議</div><ul>${L.filter(p=>p.suggest).map(p=>`<li>${esc(p.suggest)}</li>`).join("")}</ul>`:""}
       ${L.filter(p=>p.gain).length?`<div class="sub" style="margin:6px 0 2px">收穫或心得</div><ul>${L.filter(p=>p.gain).map(p=>`<li>${esc(p.gain)}</li>`).join("")}</ul>`:""}</div>`:""}`;
-  const btn = document.getElementById("csv"); btn.disabled = false; btn.onclick = () => exportCSV(pre, post, chk);
+  const btn = document.getElementById("csv"); btn.disabled = false; btn.onclick = () => exportCSV(pre, post, chk, lab);
 }
-function exportCSV(pre, post, chk){
-  const codes = [...new Set([...Object.keys(pre), ...Object.keys(post), ...Object.keys(chk)])].sort();
+function exportCSV(pre, post, chk, lab){
+  const codes = [...new Set([...Object.keys(pre), ...Object.keys(post), ...Object.keys(chk), ...Object.keys(lab)])].sort();
   const head = ["emp_id","pre_session","post_session","pre_know","post_know","pre_unsure","post_unsure",
     ...SE.map((_,i)=>`pre_se${i+1}`), ...SE.map((_,i)=>`post_se${i+1}`),
     ...KQ.map((_,i)=>`pre_k${i+1}`), ...KQ.map((_,i)=>`post_k${i+1}`),
-    ...CS.map((_,i)=>`cs${i+1}`), ...L1.map((_,i)=>`l1_${i+1}`), "suggest","gain","check_note"];
+    ...CS.map((_,i)=>`cs${i+1}`), ...L1.map((_,i)=>`l1_${i+1}`), "suggest","gain","check_note",
+    ...LAB_ST.map((_,i)=>`zpd${i+1}`), ...UX.map((_,i)=>`ux${i+1}`), "umux_sus","lab_need","lab_improve"];
   const lines = [head.join(",")];
   codes.forEach(c => {
-    const a=pre[c], b=post[c], k=chk[c], ok=(p,i)=>p?(p.answers[i]===-1?9:(p.answers[i]===KQ[i].a?1:0)):"";
+    const a=pre[c], b=post[c], k=chk[c], z=lab[c], ok=(p,i)=>p?(p.answers[i]===-1?9:(p.answers[i]===KQ[i].a?1:0)):"";
     const r = [c, a?.session??"", b?.session??"", a?.know??"", b?.know??"", a?a.answers.filter(v=>v===-1).length:"", b?b.answers.filter(v=>v===-1).length:"",
       ...SE.map((_,i)=>a?.se[i]??""), ...SE.map((_,i)=>b?.se[i]??""),
       ...KQ.map((_,i)=>ok(a,i)), ...KQ.map((_,i)=>ok(b,i)),
-      ...CS.map((_,i)=>k?.cs[i]??""), ...L1.map((_,i)=>b?.l1?.[i]??""), b?.suggest??"", b?.gain??"", k?.note??""];
+      ...CS.map((_,i)=>k?.cs[i]??""), ...L1.map((_,i)=>b?.l1?.[i]??""), b?.suggest??"", b?.gain??"", k?.note??"",
+      ...LAB_ST.map((_,i)=>z?z.zpd[i]+1:""), ...UX.map((_,i)=>z?.ux[i]??""), z?umuxSUS(z.ux).toFixed(1):"", z?.need??"", z?.improve??""];
     lines.push(r.map(v => /[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g,'""')}"` : v).join(","));
   });
   const blob = new Blob(["﻿"+lines.join("\r\n")], {type:"text/csv;charset=utf-8"});
@@ -495,6 +577,8 @@ function demoRows(){
       return {kind, code, session:today(), se:SE.map(()=>Math.max(1,Math.min(5,Math.round(se+rnd()*1.4-0.7)))), answers, know:score(answers), submitted_at:new Date().toISOString()} };
     rows.push(mk("pre", .55, 2.3));
     if(n<11){ const p = mk("post", .9, 4); p.l1 = L1.map(()=>rnd()<.6?5:4); if(n%4===0) p.gain="更清楚 CSTD 拆接時要注意的地方。"; rows.push(p) }
+    rows.push({kind:"lab", code, session:today(), zpd:LAB_ST.map((_,i)=>{ const r=rnd(); return r<(i>=3?.3:.55)?0:(r<.88?1:2) }),
+      ux:UX.map(()=>rnd()<.55?5:4), need: n%3===0 ? "站 4 三指固定時盤面會滑動，角針角度抓不準" : "", improve: n%5===0 ? "拖拉的用物卡在手機上有點小" : "", submitted_at:new Date().toISOString()});
     if(n<10) rows.push({kind:"check", code, session:today(), cs:CS.map(()=>rnd()<.82?1:0), submitted_at:new Date().toISOString()});
   }
   return rows;
