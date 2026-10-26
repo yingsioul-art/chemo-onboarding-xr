@@ -72,7 +72,7 @@ function doGet(e) {
 
 // ---------- 訓練成效評估 ----------
 var EVAL_SHEET = 'eval';
-var EVAL_KINDS = ['pre', 'post', 'check', 'lab'];   // lab＝技術站自評（上課前，ZPD）
+var EVAL_KINDS = ['pre', 'post', 'check', 'lab', 'm3'];   // lab＝技術站自評（上課前，ZPD）；m3＝三個月自學站 lab3m.html（10/26：計畫、練前練後把握度、各站做錯項次，老師在 lab3m.html#/teacher 用 mode=eval 讀）
 var EVAL_HEAD = ['收到時間', '類型', '代碼', '梯次日期', '知識答對', 'submission_id', '版本', '原始JSON'];
 
 function evalSheet_() {
