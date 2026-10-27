@@ -119,6 +119,8 @@ th{color:var(--ink2);font-weight:600;white-space:nowrap}
      審題稿與字數檢查：vault …\52_成效評估資料\20261028_知識題修改方案_與現行版本比較.md 第八節。 */
 const ENDPOINT = "https://script.google.com/macros/s/AKfycbzHpVJHrzP-dC0UWTtxjLVG7BKCxPn28-WUCjH69VMhk4u8_SnFYLZkJcPTmvwgMsaA/exec";
 const VERSION = "eval-v2";
+// 寫進試算表「版本說明」欄（10/28 使用者要求：簡述這一版改了什麼，分析時不用回頭翻程式）
+const VERSION_NOTE = "v2（2026-10-28）：第1、2、4題改題幹；10題錯誤選項改寫、字數拉齊、理由移到解說；加進階3題另計分；選項順序依員工編號。基本10題沿用情境1–10欄位，以「版本」欄區分 v1／v2";
 
 // 把握度（自我效能）：依技術表 5 個區段
 const SE = [
@@ -252,9 +254,11 @@ function evalCols(p){
     if(v === -1){ c[k] = "E. 不確定"; c[k+"_對錯"] = 9 }
     else { c[k] = `${letterOf(ord, v)}. ${Q[i].o[v]}`; c[k+"_對錯"] = v === Q[i].a ? 1 : 0 }
   };
+  // 10/28 使用者定：基本 10 題沿用「情境1–10」欄位（v1、v2 共用，靠「版本」欄分）；不另編新題號
   (p.answers || []).forEach((v,i) => put(KQ, v, i, `情境${i+1}(${KQ[i].step})`, p.order && p.order[i]));
   (p.adv_answers || []).forEach((v,i) => put(KQA, v, i, `進階${i+1}(${KQA[i].step})`, p.adv_order && p.adv_order[i]));
   if(p.adv != null) c["進階答對"] = p.adv;
+  if(p.answers || p.adv_answers) c["版本說明"] = VERSION_NOTE;
   (p.l1 || []).forEach((v,i) => { c[`滿意度${i+1}`] = v });
   if(p.suggest != null) c["建議"] = p.suggest;
   if(p.gain != null) c["心得"] = p.gain;
