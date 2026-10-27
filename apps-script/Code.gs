@@ -73,7 +73,8 @@ function doGet(e) {
 // ---------- 訓練成效評估 ----------
 var EVAL_SHEET = 'eval';
 var EVAL_KINDS = ['pre', 'post', 'check', 'lab', 'm3', 'labrun'];   // lab＝技術站自評（上課前，ZPD）；m3＝三個月自學站 lab3m.html（10/26：計畫、練前練後把握度、各站做錯項次，老師在 lab3m.html#/teacher 用 mode=eval 讀）；labrun＝五天版技術站 lab.html 的操作紀錄（10/28：一站一筆，做錯／出事次數、出錯步驟、秒數，欄名「操作_」開頭）
-var EVAL_HEAD = ['收到時間', '類型', '代碼', '梯次日期', '知識答對', 'submission_id', '版本', '原始JSON'];
+// 10/28 使用者定：「版本說明」放在「版本」旁邊（固定欄，試算表已同步插欄）；舊資料此欄空白
+var EVAL_HEAD = ['收到時間', '類型', '代碼', '梯次日期', '知識答對', 'submission_id', '版本', '版本說明', '原始JSON'];
 
 function evalSheet_() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -99,7 +100,7 @@ function evalPost_(p) {
   }
   // 每題一欄（10/25）：網頁送來的 p.cols＝{欄位名稱: 答案}；表頭沒有的欄位名稱就加在最右邊
   var row = [new Date(), p.kind, "'" + String(p.code), p.session || '', p.know == null ? '' : p.know,
-             p.submission_id || '', p.version || '', JSON.stringify(p)];
+             p.submission_id || '', p.version || '', p.version_note || '', JSON.stringify(p)];
   sh.appendRow(row.concat(extraCols_(sh, EVAL_HEAD.length, p.cols)));
   return json_({ ok: true, row: sh.getLastRow() });
 }

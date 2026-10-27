@@ -258,7 +258,6 @@ function evalCols(p){
   (p.answers || []).forEach((v,i) => put(KQ, v, i, `情境${i+1}(${KQ[i].step})`, p.order && p.order[i]));
   (p.adv_answers || []).forEach((v,i) => put(KQA, v, i, `進階${i+1}(${KQA[i].step})`, p.adv_order && p.adv_order[i]));
   if(p.adv != null) c["進階答對"] = p.adv;
-  if(p.answers || p.adv_answers) c["版本說明"] = VERSION_NOTE;
   (p.l1 || []).forEach((v,i) => { c[`滿意度${i+1}`] = v });
   if(p.suggest != null) c["建議"] = p.suggest;
   if(p.gain != null) c["心得"] = p.gain;
@@ -293,6 +292,7 @@ const pct = x => isNaN(x) ? "—" : Math.round(x*100)+"%";
 
 async function send(payload){
   payload.version = VERSION; payload.submitted_at = new Date().toISOString();
+  if(payload.answers || payload.adv_answers) payload.version_note = VERSION_NOTE;   // 後台寫進「版本」旁的固定欄「版本說明」（10/28）
   payload.submission_id = payload.kind + "-" + Date.now() + "-" + Math.random().toString(36).slice(2,8);
   payload.cols = evalCols(payload);
   const local = LS.get("eval_local", []); local.push(payload); LS.set("eval_local", local);   // 本機留底
