@@ -137,7 +137,8 @@ function evalGet_(mode, q) {
     // 只回分數與作答，不回開放題
     var pre = null;
     rows.forEach(function (p) { if (p.kind === 'pre' && String(p.code) === String(q.code) && (!pre || p.submitted_at > pre.submitted_at)) pre = p; });
-    return json_({ ok: true, pre: pre ? { se: pre.se, answers: pre.answers, know: pre.know } : null });
+    // 10/28 eval-v2：多回版本、選項順序、進階題（舊資料沒有這些欄位就是 undefined，網頁會自己處理）
+    return json_({ ok: true, pre: pre ? { se: pre.se, answers: pre.answers, know: pre.know, version: pre.version, order: pre.order, adv_answers: pre.adv_answers, adv: pre.adv, adv_order: pre.adv_order } : null });
   }
   var key = PropertiesService.getScriptProperties().getProperty('TEACHER_KEY');
   if (!key || q.key !== key) return json_({ ok: false, error: 'bad_key' });

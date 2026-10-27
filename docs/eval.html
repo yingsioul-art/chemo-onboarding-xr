@@ -107,9 +107,18 @@ th{color:var(--ink2);font-weight:600;white-space:nowrap}
 /* 到職訓練｜化療靜脈給藥暨人工血管照護 訓練成效評估（Kirkpatrick L1＋L2）
    規格：vault 20_教學\Makar\40_新進護理師到職訓練XR\13_訓練成效評估表_規格_v1.md（改題目時兩邊一起改）
    ENDPOINT：與 index.html 相同的 Apps Script 網址；空白時資料只存在本機瀏覽器（測試用）。
-   結果頁網址加 ?demo=1 可看假資料。 */
+   結果頁網址加 ?demo=1 可看假資料。
+   ── 修改紀錄 ──
+   2026-10-28 eval-v2（使用者決定，方案 D）：
+     理由＝10/27 兩場 10 人前測平均 8.9、5 人滿分（天花板效應），且 eval-v1 的 10 題正解都是字數唯一最長的選項、理由寫在選項裡，題目本身洩漏答案。
+     改法＝①基本 10 題：題幹與正解內容不變（第 1 題改問「戳入前要確認什麼」、第 4 題改問「在哪裡旋開」），錯誤選項改成新人真的會做的做法、字數拉齊、理由移到解說、不用「即可／只／直接／用力」這類一看就錯的字；
+           ②加 3 題進階題（例外情況、問理由、另一種正確做法），另計一個分數（滿分 3）；進階題第 4、5 題（溢灑防護差異、手套沾藥）依使用者決定不放；
+           ③每題 5 個選項：4 個＋固定最後的「不確定」（記 9）；
+           ④選項順序改成依員工編號（或這台裝置的亂數種子）決定，同一人每題順序固定、不同人不同（eval-v1 是全班同一套寫死的 ORDER）；
+           ⑤試算表：舊欄位名稱與順序一律不動，新增「進階1–3」「進階答對」加在最右邊；靠「版本」欄區分 v1／v2，結果頁知識各題只算同版本的配對。
+     審題稿與字數檢查：vault …\52_成效評估資料\20261028_知識題修改方案_與現行版本比較.md 第八節。 */
 const ENDPOINT = "https://script.google.com/macros/s/AKfycbzHpVJHrzP-dC0UWTtxjLVG7BKCxPn28-WUCjH69VMhk4u8_SnFYLZkJcPTmvwgMsaA/exec";
-const VERSION = "eval-v1";
+const VERSION = "eval-v2";
 
 // 把握度（自我效能）：依技術表 5 個區段
 const SE = [
@@ -121,41 +130,71 @@ const SE = [
 ];
 const SE_ANCHOR = ["完全沒把握","不太有把握","普通","有把握","非常有把握"];
 
-// 知識題：a＝正解在 o 的索引（畫面上選項會固定打亂，前後測順序相同）
+// 知識題（eval-v2，2026-10-28）：a＝正解在 o 的索引；畫面上的順序由 orderFor() 依員工編號決定，畫面另有固定最後的「不確定」
+// 基本 10 題：題幹與正解內容同 v1，錯誤選項改成新人真的會做的做法、字數拉齊、理由只放在 ex
 const KQ = [
-  {step:"#3", q:"CSTD 的 Spike 戳入生理食鹽水點滴橡皮塞後，你看到橡皮塞下方還有液體殘留。下一步最適當的是？",
-   o:["不影響，繼續組裝","先處理到橡皮塞下方無液體殘留再繼續","拔出 Spike 重新戳一次","等換接化療藥品時再處理"], a:1,
-   ex:"技術表第 3 項要求確認橡皮塞下方無液體殘留；殘留液體在拆接時可能滴出。"},
-  {step:"#4", q:"主護準備掛上化療藥品，下列哪一組防護裝備穿戴正確？",
-   o:["防水隔離衣＋單層手套＋外科口罩","防水隔離衣（後開式、長袖、袖口可束緊）＋雙層手套套住袖口＋外科口罩＋護目鏡","前開式隔離衣＋雙層手套塞在袖口內＋N95＋護目鏡","隔離衣＋雙層手套＋外科口罩（不必護目鏡）"], a:1,
-   ex:"後開式、長袖、袖口可束緊的防水隔離衣；雙層丁腈膠或乳膠手套需套住袖口；外科口罩；護目鏡或防護面罩。"},
-  {step:"#6", q:"病房使用「輸液幫浦連線」功能，給化療藥前的條碼掃描應包含？",
-   o:["病人手圈＋化療藥袋標籤","幫浦＋病人手圈＋化療藥袋標籤","幫浦＋化療藥袋標籤","病人手圈＋幫浦"], a:1,
+  {step:"#3", q:"CSTD 的 Spike 戳入生理食鹽水點滴橡皮塞之前，應先怎麼確認？",
+   o:["把點滴袋倒過來拿，確認橡皮塞下方的出口管沒有液體","把點滴袋倒過來拿，確認橡皮塞表面已用酒精棉消毒","把點滴袋正著拿，確認橡皮塞下方的出口管沒有液體","把點滴袋倒過來拿，確認出口管內已充滿液體"], a:0,
+   ex:"技術表第 3 項：Spike 戳入前須確認橡皮塞下方無液體殘留，做法是把點滴袋倒過來拿、出口朝上看出口管；殘留液體在拆接時可能滴出。"},
+  {step:"#4", q:"主護準備掛上化療藥品，已穿好後開式長袖防水隔離衣、戴好外科口罩與護目鏡。雙層手套和隔離衣袖口的關係，哪一種正確？",
+   o:["內層手套在袖口內，外層手套套住袖口","內層手套套住袖口，外層手套在袖口內","兩層手套都在袖口內，由袖口束緊壓住","兩層手套都套住袖口，外層再往上拉高一點"], a:0,
+   ex:"內層手套戴在隔離衣袖口內（袖口壓住內層手套），外層手套套住袖口，藥液才不會從袖口縫隙進到手腕。隔離衣：後開式、長袖、袖口可束緊、防水；外科口罩；護目鏡或防護面罩。"},
+  {step:"#6", q:"病房使用「輸液幫浦連線」功能，給化療藥前的條碼掃描應怎麼做？",
+   o:["掃幫浦、病人手圈與化療藥袋三個條碼","掃病人手圈與化療藥袋，手動輸入幫浦編號","掃幫浦與化療藥袋，口頭核對病人姓名與床號","掃幫浦與病人手圈，目視核對化療藥袋標籤"], a:0,
    ex:"連線情境掃描幫浦、病人手圈、化療藥袋三個條碼；非連線情境才只掃手圈與藥袋，且要手動設定 Rate→VTBI。"},
-  {step:"#7／#11", q:"化療藥滴完，要旋開 CSTD 的 Spike 與 Adapter 移除化療藥袋。藥袋應放在哪裡？為什麼？",
-   o:["留在點滴架上，比較穩","放低於眼睛，若有滴漏不會濺到眼睛","舉高過頭，讓管內殘液流乾淨","放在病人床上，方便操作"], a:1,
+  {step:"#7／#11", q:"化療藥滴完，要旋開 CSTD 的 Spike 與 Adapter 移除化療藥袋。應在哪裡旋開？",
+   o:["把藥袋拿到低於眼睛的高度再旋開","把藥袋拿到與眼睛同高的位置再旋開","把藥袋舉到高於眼睛的位置再旋開","藥袋留在點滴架上，在原位旋開"], a:0,
    ex:"拆接時把藥袋放低於眼睛，萬一滴漏或噴濺不會濺到眼睛。"},
   {step:"#9", q:"化療藥袋與 CSTD 的 Adapter 銜接完、掛上點滴架後，接著要設定幫浦。下一步應先？",
-   o:["直接按幫浦","脫除外層手套，因外層可能沾到藥品","脫除兩層手套並洗手","用酒精棉擦拭手套後繼續"], a:1,
+   o:["先脫除外層手套，再設定幫浦","戴著兩層手套設定幫浦，設定完再脫外層","先脫除兩層手套，再設定幫浦","先用酒精棉擦拭外層手套，再設定幫浦"], a:0,
    ex:"前面的操作可能讓化療藥品殘留在外層手套上，先脫除外層再碰幫浦，避免污染環境。"},
   {step:"#16", q:"角針置放後用 10 mL 注射器反抽，抽出淡粉紅色、像被稀釋的液體。下一步？",
-   o:["有回血就好，開始給藥","繼續反抽確認為全血，未確認前不給藥","用力推注 NS 通管後直接給藥","拔針重戳"], a:1,
+   o:["繼續反抽，確認為全血才給藥","已有回血，可以開始給藥","先推注 NS 通管，再給藥","拔除角針，重新置放"], a:0,
    ex:"回血顏色須為全血；稀釋血不能確認針尖在圓盤內、導管通暢，此時給化療藥有外滲風險。"},
   {step:"#8", q:"化療藥袋送到病房時裝在塑膠夾鏈袋內，銜接 CSTD 時應怎麼做？",
-   o:["取出藥袋再銜接，較好操作","不取出，只露出 Spike 與 Adapter 銜接，連夾鏈袋掛上點滴架","取出藥袋，夾鏈袋丟化療廢棄物桶","剪開夾鏈袋底部再銜接"], a:1,
-   ex:"夾鏈袋是第二層防護，藥袋破損或滴漏時可以接住藥品。"},
+   o:["不取出，連夾鏈袋一起掛上點滴架","取出藥袋，夾鏈袋丟化療廢棄物桶","取出藥袋，銜接後再放回夾鏈袋","剪開夾鏈袋底部，再銜接"], a:0,
+   ex:"夾鏈袋是第二層防護，藥袋破損或滴漏時可以接住藥品。銜接時只露出 Spike 與 Adapter。"},
   {step:"#15", q:"角針垂直插入 Port-A，已感覺碰到圓盤底部。接下來應？",
-   o:["再用力壓一下，確保插牢","不再用力強壓，墊片下壓平貼皮膚","稍微旋轉角針找最順的角度","往外拉一點留空間"], a:1,
+   o:["不再強壓，讓墊片平貼皮膚","再往下壓一點，確保角針插牢","旋轉角針，找最順的角度","稍微外拉，在底部留空間"], a:0,
    ex:"插到底後再強壓會使角針前端變鈍，鈍針可能損傷 Port-A 的矽膠膜。"},
   {step:"#17", q:"測完回血後用 10 mL NS 沖管，為什麼要用「推-停-推-停」？",
-   o:["減少病人疼痛","產生擾流，把管壁殘留的血液沖乾淨","控制速度避免管路破裂","確認角針有沒有在圓盤內"], a:1,
+   o:["產生擾流，沖淨管壁殘留血液","放慢推注速度，減輕病人疼痛","控制壓力，避免導管破裂","順便確認角針仍在圓盤內"], a:0,
    ex:"間歇推注產生擾流，比連續推注更能把管壁殘留的血液沖乾淨。"},
   {step:"#18", q:"下列哪一種是正確的正壓封管？",
-   o:["NS 全部推完，先移除注射器再關管夾","保留 NS 0.5–1 mL，關閉管夾後緩慢移除注射器","NS 推完後放開活塞，再關管夾","不必關管夾，直接接上輸液"], a:1,
+   o:["保留 NS 0.5–1 mL，關管夾後再移除注射器","保留 NS 0.5–1 mL，移除注射器後再關管夾","NS 全部推完，移除注射器後再關上管夾","NS 全部推完，放開活塞後再關上管夾"], a:0,
    ex:"封管時讓管內維持正壓，避免血液回流造成堵塞；另一種方法是大拇指壓住活塞後關管夾，再移除注射器。"},
 ];
-// 每題選項的固定顯示順序（同一題前後測一致）
-const ORDER = [[2,1,0,3],[0,3,1,2],[3,0,2,1],[1,2,3,0],[2,0,1,3],[0,2,3,1],[3,1,0,2],[1,3,2,0],[0,1,3,2],[2,3,1,0]];
+// 進階 3 題（eval-v2 新加）：例外情況、問理由、另一種正確做法；另計一個分數（滿分 3）
+const KQA = [
+  {step:"#6 例外", q:"輸液幫浦今天無法連線，給化療藥前應怎麼做？",
+   o:["掃病人手圈與化療藥袋，在幫浦手動設定 Rate→VTBI","掃幫浦、病人手圈與化療藥袋，在幫浦手動設定 Rate→VTBI","掃病人手圈，在幫浦手動設定 Rate→VTBI","暫停給藥，等幫浦恢復連線後再掃描給藥"], a:0,
+   ex:"非連線情境掃病人手圈與化療藥袋，並在幫浦手動設定 Rate→VTBI；不必等幫浦恢復連線。"},
+  {step:"#15 理由", q:"角針插到底後「不要再強壓」，最主要是為了避免什麼？",
+   o:["針尖變鈍，損傷 Port-A 的矽膠膜","角針彎折，刺破 Port-A 的導管","病人疼痛，之後不願意再置放角針","角針卡太緊，之後不容易從 Port-A 拔除"], a:0,
+   ex:"插到底後再強壓會使角針前端變鈍，鈍針可能損傷 Port-A 的矽膠膜。"},
+  {step:"#18 另一法", q:"除了「保留 NS 0.5–1 mL，關管夾後再移除注射器」操作正壓封管，下列哪一種也是正確的正壓封管？",
+   o:["大拇指壓住活塞，關管夾後再移除注射器","推完放開活塞，關管夾後再移除注射器","推完先移除注射器，再關上管夾","推完回抽 0.5 mL，關管夾後再移除注射器"], a:0,
+   ex:"大拇指壓住活塞維持正壓，關管夾後再移除注射器，避免血液回流。"},
+];
+/* 選項順序（10/28 使用者定：每個人不同）：種子＝員工編號（裝置上還沒有員編時用這台裝置的亂數種子），每題用種子打亂 4 個選項；
+   「不確定」不在這裡，畫面固定放最後。前測送出時把用過的順序存在裝置上（eval_ord:員編），後測同一台裝置就沿用，前後測順序才一樣。 */
+function seedOf(){
+  const c = LS.get("eval_code",""); if(codeOK(c)) return "c"+c;
+  let s = LS.get("eval_seed",""); if(!s){ s = "d"+Math.random().toString(36).slice(2,10); LS.set("eval_seed", s) }
+  return s;
+}
+function orderFor(seed, i, n){
+  let h = 2166136261; for(const ch of seed+"#"+i){ h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619)>>>0 }
+  const r = () => { h = (h + 0x6D2B79F5)>>>0; let t = Math.imul(h ^ h>>>15, 1|h); t = t + Math.imul(t ^ t>>>7, 61|t) ^ t; return ((t ^ t>>>14)>>>0)/4294967296 };
+  const a = [...Array(n).keys()]; for(let k=n-1;k>0;k--){ const j = Math.floor(r()*(k+1)); [a[k],a[j]]=[a[j],a[k]] } return a;
+}
+function ordersFor(){
+  const c = LS.get("eval_code",""), saved = codeOK(c) ? LS.get("eval_ord:"+c, null) : null;
+  if(saved && saved.k && saved.a) return saved;
+  const seed = seedOf();
+  return {k: KQ.map((k,i)=>orderFor(seed, i, k.o.length)), a: KQA.map((k,i)=>orderFor(seed, 100+i, k.o.length))};
+}
+const letterOf = (ord, v) => "ABCD"[(ord||[0,1,2,3]).indexOf(v)] || "?";
 
 // 關鍵步驟一次通過（評核教師勾）
 const CS = [
@@ -207,12 +246,15 @@ const SE_SHORT = ["CSTD組裝","給藥前準備","換接","角針置放","角針
 function evalCols(p){
   const c = {};
   (p.se || []).forEach((v,i) => { c[`把握度${i+1}_${SE_SHORT[i]}`] = v });
-  (p.answers || []).forEach((v,i) => {
-    const k = `情境${i+1}(${KQ[i].step})`;
+  // 基本 10 題沿用 v1 的欄位名稱（情境1–10）；進階 3 題是新欄位，後台會加在試算表最右邊（10/28：舊欄位不動、只往後加）
+  const put = (Q, v, i, k, ord) => {
     if(v == null) return;
     if(v === -1){ c[k] = "E. 不確定"; c[k+"_對錯"] = 9 }
-    else { c[k] = `${"ABCD"[ORDER[i].indexOf(v)]}. ${KQ[i].o[v]}`; c[k+"_對錯"] = v === KQ[i].a ? 1 : 0 }
-  });
+    else { c[k] = `${letterOf(ord, v)}. ${Q[i].o[v]}`; c[k+"_對錯"] = v === Q[i].a ? 1 : 0 }
+  };
+  (p.answers || []).forEach((v,i) => put(KQ, v, i, `情境${i+1}(${KQ[i].step})`, p.order && p.order[i]));
+  (p.adv_answers || []).forEach((v,i) => put(KQA, v, i, `進階${i+1}(${KQA[i].step})`, p.adv_order && p.adv_order[i]));
+  if(p.adv != null) c["進階答對"] = p.adv;
   (p.l1 || []).forEach((v,i) => { c[`滿意度${i+1}`] = v });
   if(p.suggest != null) c["建議"] = p.suggest;
   if(p.gain != null) c["心得"] = p.gain;
@@ -240,6 +282,7 @@ function normCode(s){
 }
 const codeOK = c => /^\d{6}$/.test(c);
 const score = ans => KQ.reduce((n,k,i) => n + (ans[i]===k.a ? 1 : 0), 0);
+const scoreA = ans => KQA.reduce((n,k,i) => n + (ans[i]===k.a ? 1 : 0), 0);
 const mean = a => a.length ? a.reduce((x,y)=>x+y,0)/a.length : NaN;
 const f1 = x => isNaN(x) ? "—" : x.toFixed(1);
 const pct = x => isNaN(x) ? "—" : Math.round(x*100)+"%";
@@ -305,6 +348,9 @@ function scaleHTML(name, anchor){
 function quiz(kind){
   $app.className="";
   const isPost = kind==="post";
+  const ORD = ordersFor();   // 這個人的選項順序（基本 k、進階 a）
+  const optsHTML = (k, ord, name) => `<div class="opts">${ord.map((oi,j)=>`<label class="opt" data-n="${name}"><input type="radio" name="${name}" value="${oi}"><span>${"ABCD"[j]}. ${esc(k.o[oi])}</span></label>`).join("")}
+        <label class="opt unsure" data-n="${name}"><input type="radio" name="${name}" value="-1"><span>E. 不確定</span></label></div>`;
   $app.innerHTML = `
     <button class="back" onclick="location.hash=''">← 回首頁</button>
     <h1>${isPost?"後測":"前測"}</h1>
@@ -313,12 +359,13 @@ function quiz(kind){
     <div class="sec">一、操作把握度</div>
     <div style="margin:0 0 10px;font-size:18px;font-weight:700;color:var(--ink)">我有把握能獨立、正確地完成……</div>
     ${SE.map((s,i)=>`<div class="card"><p class="q"><span class="qn">${i+1}.</span>${esc(s)}</p>${scaleHTML("se"+i, SE_ANCHOR)}</div>`).join("")}
-    <div class="sec">二、情境題（單選）</div>
-    ${KQ.map((k,i)=>`<div class="card" id="kq${i}"><p class="q"><span class="qn">${i+1}.</span>${esc(k.q)}</p>
-      <div class="opts">${ORDER[i].map((oi,j)=>`<label class="opt" data-n="kq${i}"><input type="radio" name="kq${i}" value="${oi}"><span>${"ABCD"[j]}. ${esc(k.o[oi])}</span></label>`).join("")}
-        <label class="opt unsure" data-n="kq${i}"><input type="radio" name="kq${i}" value="-1"><span>E. 不確定</span></label></div></div>`).join("")}
+    <div class="sec">二、情境題（基本 10 題，單選）</div>
+    ${KQ.map((k,i)=>`<div class="card" id="kq${i}"><p class="q"><span class="qn">${i+1}.</span>${esc(k.q)}</p>${optsHTML(k, ORD.k[i], "kq"+i)}</div>`).join("")}
+    <div class="sec">三、進階題（3 題，單選）</div>
+    <div class="muted" style="margin:-4px 0 10px">問例外情況、理由、另一種正確做法；不知道就選「不確定」。</div>
+    ${KQA.map((k,i)=>`<div class="card" id="ka${i}"><p class="q"><span class="qn">${i+1}.</span>${esc(k.q)}</p>${optsHTML(k, ORD.a[i], "ka"+i)}</div>`).join("")}
     ${isPost?`
-    <div class="sec">三、課程回饋</div>
+    <div class="sec">四、課程回饋</div>
     ${L1.map((s,i)=>`<div class="card"><p class="q"><span class="qn">${i+1}.</span>${esc(s)}</p>${scaleHTML("l1"+i, L1_ANCHOR)}</div>`).join("")}
     <div class="card"><p class="q">對本次到職訓練的建議（選填）</p><textarea id="sug"></textarea></div>
     <div class="card"><p class="q">本次到職訓練的自我收穫或心得（選填）</p><textarea id="gain"></textarea></div>`:""}
@@ -328,12 +375,13 @@ function quiz(kind){
   document.getElementById("go").onclick = async () => {
     const code = readCode("code"); if(!code) return;
     const val = n => { const r=document.querySelector(`input[name="${n}"]:checked`); return r ? +r.value : null };
-    const se = SE.map((_,i)=>val("se"+i)), ans = KQ.map((_,i)=>val("kq"+i));
+    const se = SE.map((_,i)=>val("se"+i)), ans = KQ.map((_,i)=>val("kq"+i)), adv = KQA.map((_,i)=>val("ka"+i));
     const l1 = isPost ? L1.map((_,i)=>val("l1"+i)) : [];
-    const miss = [...se.map((v,i)=>v==null?`把握度第 ${i+1} 題`:null), ...ans.map((v,i)=>v==null?`情境題第 ${i+1} 題`:null), ...l1.map((v,i)=>v==null?`課程回饋第 ${i+1} 題`:null)].filter(Boolean);
+    const miss = [...se.map((v,i)=>v==null?`把握度第 ${i+1} 題`:null), ...ans.map((v,i)=>v==null?`情境題第 ${i+1} 題`:null), ...adv.map((v,i)=>v==null?`進階題第 ${i+1} 題`:null), ...l1.map((v,i)=>v==null?`課程回饋第 ${i+1} 題`:null)].filter(Boolean);
     if(miss.length){ document.getElementById("msg").innerHTML = `<div class="note">還沒填：${miss.slice(0,6).join("、")}${miss.length>6?` 等 ${miss.length} 題`:""}</div>`; return }
     const btn = document.getElementById("go"); btn.disabled = true; btn.textContent = "送出中…";
-    const payload = {kind, code, session: today(), se, answers: ans, know: score(ans)};
+    LS.set("eval_ord:"+code, ORD);   // 後測在同一台裝置沿用同一套順序
+    const payload = {kind, code, session: today(), se, answers: ans, know: score(ans), adv_answers: adv, adv: scoreA(adv), order: ORD.k, adv_order: ORD.a};
     if(isPost){ payload.l1 = l1; payload.suggest = document.getElementById("sug").value.trim(); payload.gain = document.getElementById("gain").value.trim() }
     const r = await send(payload);
     if(!r.ok){ btn.disabled=false; btn.textContent="重新送出"; document.getElementById("msg").innerHTML=`<div class="note">送出失敗，請再按一次或告訴老師。（${esc(r.error||"")}）</div>`; return }
@@ -376,18 +424,26 @@ async function postFeedback(p, local){
     ${local?`<div class="note">（測試版）尚未設定回傳網址，資料只存在這台裝置。</div>`:""}
     <div class="kpis">
       <div class="kpi"><div class="v">${pre?pre.know:"—"} → ${p.know}</div><div class="l">情境題答對（滿分 10）前測 → 後測</div></div>
+      <div class="kpi"><div class="v">${pre&&pre.adv!=null?pre.adv:"—"} → ${p.adv}</div><div class="l">進階題答對（滿分 3）前測 → 後測</div></div>
       <div class="kpi"><div class="v">${pre?f1(mean(pre.se)):"—"} → ${f1(mean(p.se))}</div><div class="l">把握度平均（滿分 5）前測 → 後測</div></div>
     </div>
     ${pre?"":`<div class="note">找不到員工編號 ${esc(p.code)} 的前測。若前測填了不同編號，請告訴老師。</div>`}
+    ${pre&&pre.version&&pre.version!==VERSION?`<div class="note">前測用的是舊版題目（${esc(pre.version)}），各題對錯不逐題比對。</div>`:""}
     <div class="card"><h2>把握度</h2><div class="tblwrap"><table><tr><th>區段</th><th>前測</th><th>後測</th></tr>${seRow}</table></div></div>
     <div class="sec">情境題解說</div>
-    ${KQ.map((k,i)=>{
-      const mine = p.answers[i], ok = mine===k.a, preOk = pre ? pre.answers[i]===k.a : null;
-      return `<div class="card"><p class="q"><span class="qn">${i+1}.</span>${esc(k.q)}
-        <span class="${ok?"pass":"fail"}" style="margin-left:6px">${ok?"答對":(mine===-1?"不確定":"答錯")}</span>${preOk==null?"":`<span class="muted">（前測${preOk?"答對":(pre.answers[i]===-1?"不確定":"答錯")}）</span>`}</p>
-        <div class="opts">${ORDER[i].map((oi,j)=>`<div class="opt ${oi===k.a?"right":(oi===mine?"wrong":"")}"><span>${"ABCD"[j]}. ${esc(k.o[oi])}${oi===k.a?" ✔":""}${oi===mine&&!ok?"（你的答案）":""}</span></div>`).join("")}${mine===-1?`<div class="opt wrong"><span>E. 不確定（你的答案）</span></div>`:""}</div>
-        <div class="ex">解說：${esc(k.ex)}<span class="muted">（技術表 ${esc(k.step)}）</span></div></div>`}).join("")}
+    ${explainHTML(KQ, p.answers, p.order, pre && pre.version===VERSION ? pre.answers : null)}
+    <div class="sec">進階題解說</div>
+    ${explainHTML(KQA, p.adv_answers||[], p.adv_order, pre && pre.adv_answers ? pre.adv_answers : null)}
     <button onclick="location.hash=''" style="width:100%">回首頁</button>`;
+}
+// 逐題解說（後測結果頁）：依這個人的選項順序排，標出正解與他的答案
+function explainHTML(Q, ans, ords, preAns){
+  return Q.map((k,i)=>{
+    const mine = ans[i], ok = mine===k.a, ord = (ords&&ords[i])||[0,1,2,3], preOk = preAns ? preAns[i]===k.a : null;
+    return `<div class="card"><p class="q"><span class="qn">${i+1}.</span>${esc(k.q)}
+      <span class="${ok?"pass":"fail"}" style="margin-left:6px">${ok?"答對":(mine===-1?"不確定":"答錯")}</span>${preOk==null?"":`<span class="muted">（前測${preOk?"答對":(preAns[i]===-1?"不確定":"答錯")}）</span>`}</p>
+      <div class="opts">${ord.map((oi,j)=>`<div class="opt ${oi===k.a?"right":(oi===mine?"wrong":"")}"><span>${"ABCD"[j]}. ${esc(k.o[oi])}${oi===k.a?" ✔":""}${oi===mine&&!ok?"（你的答案）":""}</span></div>`).join("")}${mine===-1?`<div class="opt wrong"><span>E. 不確定（你的答案）</span></div>`:""}</div>
+      <div class="ex">解說：${esc(k.ex)}<span class="muted">（技術表 ${esc(k.step)}）</span></div></div>`}).join("");
 }
 
 /* ---------- 技術站自評（上課前） ---------- */
@@ -526,6 +582,9 @@ function render(rows){
   const LB = Object.values(lab);
   const paired = Object.keys(post).filter(c => pre[c]);
   const P = paired.map(c => ({code:c, pre:pre[c], post:post[c]}));
+  // 知識各題與進階題只算「前後測都是這一版題目」的配對（eval-v1 題目不同，不能逐題合併）；平均答對題數仍全部列入
+  const Pv = P.filter(x => x.pre.version===VERSION && x.post.version===VERSION), vOld = P.length - Pv.length;
+  const aPre = mean(Pv.map(x=>x.pre.adv)), aPost = mean(Pv.map(x=>x.post.adv)), dA = Pv.map(x=>x.post.adv-x.pre.adv);
   const kPre = mean(P.map(x=>x.pre.know)), kPost = mean(P.map(x=>x.post.know));
   const sPre = mean(P.map(x=>mean(x.pre.se))), sPost = mean(P.map(x=>mean(x.post.se)));
   const unsure = p => p.answers.filter(v=>v===-1).length, uPre = mean(P.map(x=>unsure(x.pre))), uPost = mean(P.map(x=>unsure(x.post)));
@@ -541,6 +600,7 @@ function render(rows){
     <div class="kpis">
       <div class="kpi"><div class="v">${P.length}</div><div class="l">前後測配對人數（前測 ${Object.keys(pre).length}、後測 ${Object.keys(post).length}）</div></div>
       <div class="kpi"><div class="v">${f1(kPre)} → ${f1(kPost)}</div><div class="l">知識：情境題平均答對（滿分 10）</div></div>
+      <div class="kpi"><div class="v">${Pv.length?`${f1(aPre)} → ${f1(aPost)}`:"—"}</div><div class="l">知識：進階題平均答對（滿分 3，${VERSION} 配對 ${Pv.length} 人）</div></div>
       <div class="kpi"><div class="v">${f1(uPre)} → ${f1(uPost)}</div><div class="l">情境題平均選「不確定」題數</div></div>
       <div class="kpi"><div class="v">${f1(sPre)} → ${f1(sPost)}</div><div class="l">自我效能：把握度平均（滿分 5）</div></div>
       <div class="kpi"><div class="v">${C.length?pct(allPass/C.length):"—"}</div><div class="l">技能：6 項關鍵步驟全部一次通過（${allPass}／${C.length} 人）</div></div>
@@ -555,10 +615,13 @@ function render(rows){
       ${LB.filter(p=>p.need).length?`<div class="sub" style="margin:12px 0 2px">學員寫的「最需要老師協助的步驟」</div><ul>${LB.filter(p=>p.need).map(p=>`<li>${esc(p.need)}</li>`).join("")}</ul>`:""}
     </div>
     ${unp.length?`<div class="note">未配對：${unp.map(esc).join("、")}。可能是前後測員工編號填不一樣，請核對。</div>`:""}
+    ${vOld?`<div class="note">有 ${vOld} 組配對用的是舊版題目（eval-v1，10/27–10/28 梯次）。知識「各題答對率」與「進階題」只算 ${VERSION} 的 ${Pv.length} 組；平均答對題數、把握度、滿意度全部列入。</div>`:""}
     <div class="grid2">
-      <div class="card"><h2>知識：各題答對率</h2><div class="sub">配對者，前測 → 後測</div>
+      <div class="card"><h2>知識：各題答對率</h2><div class="sub">${VERSION} 配對者 ${Pv.length} 人，前測 → 後測</div>
         <div class="legend"><span>前測</span><span class="post">後測</span></div>
-        ${bars(KQ.map((k,i)=>`${i+1}. ${k.step}`), KQ.map((k,i)=>mean(P.map(x=>x.pre.answers[i]===k.a?1:0))), KQ.map((k,i)=>mean(P.map(x=>x.post.answers[i]===k.a?1:0))), 1)}</div>
+        ${bars(KQ.map((k,i)=>`${i+1}. ${k.step}`), KQ.map((k,i)=>mean(Pv.map(x=>x.pre.answers[i]===k.a?1:0))), KQ.map((k,i)=>mean(Pv.map(x=>x.post.answers[i]===k.a?1:0))), 1)}
+        <div class="sub" style="margin-top:10px">進階題</div>
+        ${bars(KQA.map((k,i)=>`進階 ${i+1}. ${k.step}`), KQA.map((k,i)=>mean(Pv.map(x=>(x.pre.adv_answers||[])[i]===k.a?1:0))), KQA.map((k,i)=>mean(Pv.map(x=>(x.post.adv_answers||[])[i]===k.a?1:0))), 1)}</div>
       <div class="card"><h2>自我效能：各區段把握度</h2><div class="sub">配對者平均，前測 → 後測（滿分 5）</div>
         <div class="legend"><span>前測</span><span class="post">後測</span></div>
         ${bars(SE, SE.map((_,i)=>mean(P.map(x=>x.pre.se[i]))), SE.map((_,i)=>mean(P.map(x=>x.post.se[i]))), 5)}</div>
@@ -576,6 +639,7 @@ function render(rows){
     <div class="card"><h2>配對差（報告與統計用）</h2>
       <div class="tblwrap"><table><tr><th>指標</th><th>n</th><th>前測 平均</th><th>後測 平均</th><th>差 平均（SD）</th></tr>
       <tr><td>知識（0–10）</td><td>${P.length}</td><td>${f1(kPre)}</td><td>${f1(kPost)}</td><td>${f1(mean(dK))}（${f1(sd(dK))}）</td></tr>
+      <tr><td>進階題（0–3，${VERSION}）</td><td>${Pv.length}</td><td>${f1(aPre)}</td><td>${f1(aPost)}</td><td>${f1(mean(dA))}（${f1(sd(dA))}）</td></tr>
       <tr><td>自我效能（1–5）</td><td>${P.length}</td><td>${f1(sPre)}</td><td>${f1(sPost)}</td><td>${f1(mean(dS))}（${f1(sd(dS))}）</td></tr></table></div>
       <div class="muted" style="margin-top:6px">正式統計（配對 t 檢定或 Wilcoxon signed-rank）請用「匯出 CSV」後再跑。</div></div>
     ${L.some(p=>p.suggest||p.gain)?`<div class="card"><h2>開放題</h2>
@@ -589,15 +653,19 @@ function exportCSV(pre, post, chk, lab){
     ...SE.map((_,i)=>`pre_se${i+1}`), ...SE.map((_,i)=>`post_se${i+1}`),
     ...KQ.map((_,i)=>`pre_k${i+1}`), ...KQ.map((_,i)=>`post_k${i+1}`),
     ...CS.map((_,i)=>`cs${i+1}`), ...L1.map((_,i)=>`l1_${i+1}`), "suggest","gain","check_note",
-    ...LAB_ST.map((_,i)=>`zpd${i+1}`), ...UX.map((_,i)=>`ux${i+1}`), "umux_sus","lab_need","lab_improve"];
+    ...LAB_ST.map((_,i)=>`zpd${i+1}`), ...UX.map((_,i)=>`ux${i+1}`), "umux_sus","lab_need","lab_improve",
+    // eval-v2 新增欄位一律加在最後（10/28）
+    "pre_version","post_version","pre_adv","post_adv", ...KQA.map((_,i)=>`pre_a${i+1}`), ...KQA.map((_,i)=>`post_a${i+1}`)];
   const lines = [head.join(",")];
   codes.forEach(c => {
     const a=pre[c], b=post[c], k=chk[c], z=lab[c], ok=(p,i)=>p?(p.answers[i]===-1?9:(p.answers[i]===KQ[i].a?1:0)):"";
+    const okA=(p,i)=>p&&p.adv_answers?(p.adv_answers[i]===-1?9:(p.adv_answers[i]===KQA[i].a?1:0)):"";
     const r = [c, a?.session??"", b?.session??"", a?.know??"", b?.know??"", a?a.answers.filter(v=>v===-1).length:"", b?b.answers.filter(v=>v===-1).length:"",
       ...SE.map((_,i)=>a?.se[i]??""), ...SE.map((_,i)=>b?.se[i]??""),
       ...KQ.map((_,i)=>ok(a,i)), ...KQ.map((_,i)=>ok(b,i)),
       ...CS.map((_,i)=>k?.cs[i]??""), ...L1.map((_,i)=>b?.l1?.[i]??""), b?.suggest??"", b?.gain??"", k?.note??"",
-      ...LAB_ST.map((_,i)=>z?z.zpd[i]+1:""), ...UX.map((_,i)=>z?.ux[i]??""), z?umuxSUS(z.ux).toFixed(1):"", z?.need??"", z?.improve??""];
+      ...LAB_ST.map((_,i)=>z?z.zpd[i]+1:""), ...UX.map((_,i)=>z?.ux[i]??""), z?umuxSUS(z.ux).toFixed(1):"", z?.need??"", z?.improve??"",
+      a?.version??"", b?.version??"", a?.adv??"", b?.adv??"", ...KQA.map((_,i)=>okA(a,i)), ...KQA.map((_,i)=>okA(b,i))];
     lines.push(r.map(v => /[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g,'""')}"` : v).join(","));
   });
   const blob = new Blob(["﻿"+lines.join("\r\n")], {type:"text/csv;charset=utf-8"});
@@ -609,8 +677,9 @@ function demoRows(){
   const rows = [];
   for(let n=0;n<12;n++){
     const code = String(120100+n*37).padStart(6,"0");
-    const mk = (kind, p, se) => { const answers = KQ.map(k => rnd()<p ? k.a : (rnd()<.5 ? -1 : (k.a+1)%4));
-      return {kind, code, session:today(), se:SE.map(()=>Math.max(1,Math.min(5,Math.round(se+rnd()*1.4-0.7)))), answers, know:score(answers), submitted_at:new Date().toISOString()} };
+    const mk = (kind, p, se) => { const answers = KQ.map(k => rnd()<p ? k.a : (rnd()<.5 ? -1 : (k.a+1)%4)), adv_answers = KQA.map(k => rnd()<p-.2 ? k.a : (rnd()<.5 ? -1 : (k.a+1)%4));
+      return {kind, code, session:today(), version:VERSION, se:SE.map(()=>Math.max(1,Math.min(5,Math.round(se+rnd()*1.4-0.7)))), answers, know:score(answers), adv_answers, adv:scoreA(adv_answers),
+        order:KQ.map((k,i)=>orderFor("c"+code, i, 4)), adv_order:KQA.map((k,i)=>orderFor("c"+code, 100+i, 4)), submitted_at:new Date().toISOString()} };
     rows.push(mk("pre", .55, 2.3));
     if(n<11){ const p = mk("post", .9, 4); p.l1 = L1.map(()=>rnd()<.6?5:4); if(n%4===0) p.gain="更清楚 CSTD 拆接時要注意的地方。"; rows.push(p) }
     rows.push({kind:"lab", code, session:today(), zpd:LAB_ST.map((_,i)=>{ const r=rnd(); return r<(i>=3?.3:.55)?0:(r<.88?1:2) }),
