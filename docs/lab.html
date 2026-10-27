@@ -8,7 +8,8 @@
   到職訓練｜化療靜脈給藥暨人工血管照護基礎技術　動手做技術站（lab.html）
   原始檔：D:\Zettelkasten\20_教學\Makar\40_新進護理師到職訓練XR\50_動手做技術站\lab_src.html＋engine.js＋st_*.js
   產生：python _build_lab.py（內嵌 _共用\handlab.js，輸出到 C:\dev\chemo-onboarding-xr\docs\lab.html）
-  localStorage key：chemo-lab-v1（只記哪些站做完）
+  localStorage key：chemo-lab-v1（只記哪些站做完）；chemo-lab-outbox（還沒送出的操作紀錄）；員工編號沿用 eval_code
+  後台：操作紀錄送 Apps Script（kind＝labrun，eval 分頁「操作_」開頭的欄位；10/28 加）
   步驟照技術評核表〈到職訓練-化療靜脈給藥暨人工血管照護基礎技術〉21 項；圖片沿用到職訓練 XR 圖卡（docs/images）
 -->
 <style>
@@ -281,6 +282,55 @@ function handCtl(card, o){
 }
 
 
+/* 器材托盤自動排版：選項方塊太多或字太長時自動換行（2026-10-27 使用者要求「太多就換行」）
+   規則：畫面最上方（translate 的 y ≤ 20）的 g[data-it] 方塊視為托盤；
+   方塊寬度至少容納文字；排一列放不下或互相重疊時，改成多列，多出來的列往上加高畫面，原本的實驗座標不變。
+   用 MutationObserver 監看所有 svg 重畫，各實驗不必改程式。 */
+function handTrayFit(svg){
+  if(!svg.dataset.vb0){ const v = svg.getAttribute("viewBox"); if(!v) return; svg.dataset.vb0 = v; }
+  const [vx, vy, vw, vh] = svg.dataset.vb0.split(/[\s,]+/).map(Number);
+  const tiles = [...svg.children].filter(g => {
+    if(g.tagName !== "g" || !g.dataset.it) return false;
+    const m = /translate\(\s*([-\d.]+)[\s,]+([-\d.]+)\s*\)/.exec(g.getAttribute("transform") || "");
+    const r = g.querySelector(":scope > rect");
+    if(!m || !r || +m[2] > 20 || +r.getAttribute("height") < 26) return false;
+    g._x = +m[1]; g._y = +m[2]; g._r = r; return true;
+  });
+  if(!tiles.length){ if(svg.getAttribute("viewBox") !== svg.dataset.vb0) svg.setAttribute("viewBox", svg.dataset.vb0); return; }
+  // 方塊加寬到容納文字
+  tiles.forEach(g => {
+    let w = +g._r.getAttribute("width");
+    g.querySelectorAll(":scope > text").forEach(t => { try { w = Math.max(w, t.getComputedTextLength() + 10); } catch(e){} });
+    g._r.setAttribute("width", w); g._r.setAttribute("x", -w / 2); g._w = w;
+  });
+  tiles.sort((a, b) => a._x - b._x);
+  const PAD = 4, GAP = 6, avail = vw - PAD * 2;
+  const bad = tiles.some((g, i) => g._x - g._w / 2 < vx || g._x + g._w / 2 > vx + vw || (i && tiles[i - 1]._x + tiles[i - 1]._w / 2 + 2 > g._x - g._w / 2));
+  if(!bad){ if(svg.getAttribute("viewBox") !== svg.dataset.vb0) svg.setAttribute("viewBox", svg.dataset.vb0); return; }
+  const rows = [[]]; let used = 0;
+  tiles.forEach(g => { const add = (rows[rows.length - 1].length ? GAP : 0) + g._w; if(used + add > avail && rows[rows.length - 1].length){ rows.push([g]); used = g._w; } else { rows[rows.length - 1].push(g); used += add; } });
+  const y0 = Math.min(...tiles.map(g => g._y)), rowH = Math.max(...tiles.map(g => +g._r.getAttribute("height"))) + 8, extra = (rows.length - 1) * rowH;
+  rows.forEach((row, i) => {
+    const tot = row.reduce((s, g) => s + g._w, 0) + GAP * (row.length - 1);
+    let x = vx + (vw - tot) / 2;
+    const y = y0 - extra + i * rowH;
+    row.forEach(g => { g.setAttribute("transform", `translate(${x + g._w / 2} ${y + (g._y - y0)})`); x += g._w + GAP; });
+  });
+  const nv = `${vx} ${vy - extra} ${vw} ${vh + extra}`;
+  if(svg.getAttribute("viewBox") !== nv) svg.setAttribute("viewBox", nv);
+}
+if(typeof MutationObserver !== "undefined") new MutationObserver(recs => {
+  const set = new Set();
+  recs.forEach(r => {
+    const t = r.target;
+    if(t.nodeType !== 1) return;
+    if(t.tagName === "svg") set.add(t); else if(t.closest) { const s = t.closest("svg"); if(s) set.add(s); }
+    r.addedNodes.forEach(n => { if(n.nodeType === 1 && n.querySelectorAll) n.querySelectorAll("svg").forEach(s => set.add(s)); });
+  });
+  // 外層有 data-traykeep 的不套用（到職訓練 lab／lab3m 的托盤自己排版，座標基準不同；10/28）
+  set.forEach(s => { if(s.closest(".hand, .lab, .sim") && !s.closest("[data-traykeep]") && s.querySelector("g[data-it]")) handTrayFit(s); });
+}).observe(document.documentElement, {childList: true, subtree: true});
+
 /* ═══ 技術站引擎：每一站＝一串步驟（steps），依序執行 ═══
    步驟共用欄位：type、task（上方任務列）、bg（情境圖，3:2）、item（這一步做完，評核表第幾項打勾；分好幾步的項目只寫在最後一步）、
                  okMsg（做對後的說明）、note（教學補充，畫面另標）
@@ -304,7 +354,12 @@ function handCtl(card, o){
             move(S, 零件, x, y) 限制移動範圍、drop(S, 零件) 放手時判斷：true＝完成／字串＝提醒／{acc}＝出事／null＝沒事
    drag 可用 scene（自畫的 SVG 背景，取代 bg 照片；可以是 S => 字串）、fillPlace（放好的用物畫滿虛線框）、noCard（放好後不畫用物卡，由 scene 畫）
    choice 的選項可帶 svg（自畫的小圖，viewBox 0 0 120 120）；manip／choice 可用 vb 改畫面範圍（放大局部）、choice 可用 scene 取代 bg
-   錯誤訊息若是 {acc: {title, cause, q, opts, lesson, pic}} 就出事（handAccident），答對處理題才回到出事前 */
+   錯誤訊息若是 {acc: {title, cause, q, opts, lesson, pic}} 就出事（handAccident），答對處理題才回到出事前
+   ── 10/26 三個月自學版（lab3m.html）加的，五天版沒用到、行為不變 ──
+     multi  複選：q、opts [{t, ok, why}]，全部選對、沒有多選才過
+     sort   一張一張分類：cards [{t, sub, ans（類別 id 或陣列）, why}]、cats [{id, t}]、n（每回抽幾張）
+   站（L）可另帶：check（查核表原文陣列，取代 CHECK）、chkName（「查核表」）、onBad(項次)（做錯時記錄）、fin(ctx)（自訂完成畫面）
+   沒有 bg、也沒有 scene 的步驟不顯示情境圖 */
 
 /* 用物卡：img 是 images/ 底下的檔名；crop＝[x, y, w, h]（0～1，取圖的一部分） */
 const ITEMS = {
@@ -337,10 +392,11 @@ const ITEMS = {
 };
 const PIC = src => `<img src="images/${src}" alt="">`;
 const EMO = e => `<div class="emo">${e}</div>`;
-const CHK_NO = n => `<span class="note">（評核表第 ${n} 項）</span>`;
+const CHK_NO = (n, nm) => `<span class="note">（${nm || "評核表"}第 ${n} 項）</span>`;
 
-function checkTable(nums, done, cur){
-  return `<table class="rec"><tr><th>項</th><th>評核表原文</th></tr>${nums.map(n => `<tr class="${done.has(n) ? "ok" : n === cur ? "now" : ""}"><td>${done.has(n) ? "✅" : n === cur ? "▶" : "○"} ${n}</td><td>${CHECK[n - 1]}</td></tr>`).join("")}</table>`;
+function checkTable(nums, done, cur, list, nm){
+  const C = list || CHECK;
+  return `<table class="rec"><tr><th>項</th><th>${nm || "評核表"}原文</th></tr>${nums.map(n => `<tr class="${done.has(n) ? "ok" : n === cur ? "now" : ""}"><td>${done.has(n) ? "✅" : n === cur ? "▶" : "○"} ${n}</td><td>${C[n - 1]}</td></tr>`).join("")}</table>`;
 }
 
 /* 說明視窗：點背景或「知道了」關閉；「再播一次」重新放動畫（重建內容讓 CSS 動畫重跑） */
@@ -353,25 +409,30 @@ function showPop(p){
   d.onclick = e => { const b = e.target.closest("[data-p]"); if(e.target === d || (b && b.dataset.p === "x")) d.remove(); else if(b) d.innerHTML = body(); };
   document.body.appendChild(d);
 }
+/* 操作紀錄通知點（10/28）：頁面有定義 window.onLabLog 才會收到（lab.html 送後台）；沒定義就什麼都不做（lab3m 不受影響）
+   事件：start 開始一站／ok 做對一步／wrong 做錯／acc 出事／undo 上一步／reset 全部重來／fin 完成 */
+const labLog = (ev, d) => { if(typeof window.onLabLog === "function") try{ window.onLabLog(ev, d); }catch(e){} };
 function runStation(pane, L){
   const ST = L.steps;
   let S, accN = 0, holdT = null, mediaFor = -1;
-  const fresh = (si, keep) => ({si, ok: false, fb: "", placed: {}, hit: [], taps: [], seq: [], bad: [], n: 0, last: "", hp: 0, pf: {rate: null, vtbi: null}, psel: "", pos: null, mode: keep ? keep.mode : null, fin: false});
+  const fresh = (si, keep) => ({si, ok: false, fb: "", placed: {}, hit: [], taps: [], seq: [], bad: [], n: 0, last: "", hp: 0, pf: {rate: null, vtbi: null}, psel: "", pos: null, mode: keep ? keep.mode : null, fin: false, sel: [], k: 0, cards: null});
   S = fresh(0);
-  pane.innerHTML = `<div class="card sim hand">
+  labLog("start", {L});
+  // data-traykeep：本站用物托盤自己排版，不套用 handlab.js 的托盤自動換行（座標基準不同，套了會錯位）
+  pane.innerHTML = `<div class="card sim hand" data-traykeep>
     <p class="muted" style="margin:0">${L.intro || "把上排用物<b>拖到畫面上的虛線框</b>（或先點用物、再點虛線框）。放錯了可以把用物拖回上排。"}</p>
     <div class="htask" id="task"></div>
     <div class="simview" id="view"></div>
     <div id="ctrls"></div>
     <div id="fb"></div><div id="media"></div></div>
-    <div class="card"><h3 style="margin-top:0">📋 本站評核表</h3><div id="chk"></div></div>`;
+    <div class="card"><h3 style="margin-top:0">📋 本站${L.chkName || "評核表"}</h3><div id="chk"></div></div>`;
   const card = pane.querySelector(".hand");
   const hist = [], cur = () => JSON.stringify(S);
   const commit = fn => { hist.push(cur()); fn(); ctl.upd(); };
   const ctl = handCtl(card, {
     canUndo: () => hist.length > 0,
-    undo(){ stopHold(); const o = hist.pop(); if(o){ S = JSON.parse(o); S.fb = say("↩ 回到上一步。", true); draw(); } ctl.upd(); },
-    reset(){ stopHold(); hist.length = 0; accN = 0; S = fresh(0); S.fb = say("🔁 全部重來。", true); draw(); ctl.upd(); }});
+    undo(){ stopHold(); labLog("undo", {L, si: S.si}); const o = hist.pop(); if(o){ S = JSON.parse(o); S.fb = say("↩ 回到上一步。", true); draw(); } ctl.upd(); },
+    reset(){ stopHold(); labLog("reset", {L, si: S.si}); hist.length = 0; accN = 0; S = fresh(0); S.fb = say("🔁 全部重來。", true); draw(); ctl.upd(); }});
   const st = () => ST[S.si];
   const goals = s => typeof s.goal === "function" ? s.goal(S) : (s.goal || []);
   const doneItems = () => new Set(ST.slice(0, S.si + (S.ok ? 1 : 0)).flatMap(s => s.item ? [].concat(s.item) : []));
@@ -379,14 +440,16 @@ function runStation(pane, L){
 
   /* 做錯：一般訊息只提醒；{acc} 會出事 */
   function bad(w){
+    if(L.onBad) L.onBad(curItem(), S.si);
+    labLog(w && w.acc ? "acc" : "wrong", {L, si: S.si, item: curItem(), msg: w && w.acc ? w.acc.title || "" : typeof w === "string" ? w : ""});
     if(w && w.acc){ accN++; handAccident(card, Object.assign({pic: EMO("⚠️")}, w.acc), () => { S.fb = say("回到出事前，再做一次。", true); draw(); }); return; }
     beep(false); S.fb = say("⚠️ " + (w || "這樣不對，再想想看。")); draw();
   }
   function finish(){
-    S.ok = true; beep(true);
+    S.ok = true; beep(true); labLog("ok", {L, si: S.si});
     const s = st();
     if(s.popup) setTimeout(() => showPop(s.popup), 120);
-    S.fb = say("✅ " + (s.okMsg || "做對了！") + (s.item ? CHK_NO([].concat(s.item).join("、")) : ""), true) + (s.note ? `<div class="note">📝 教學補充：${s.note}</div>` : "");
+    S.fb = say("✅ " + (s.okMsg || "做對了！") + (s.item ? CHK_NO([].concat(s.item).join("、"), L.chkName) : ""), true) + (s.note ? `<div class="note">📝 教學補充：${s.note}</div>` : "");
   }
   function next(){
     commit(() => {
@@ -445,11 +508,11 @@ function runStation(pane, L){
     return g + `</g></svg>`;
   }
   const scn = s => typeof s.scene === "function" ? s.scene(S) : s.scene;
-  const imgView = s => `<img class="scene" src="images/${S.img || s.bg}" alt="">`;
+  const imgView = s => (S.img || s.bg) ? `<img class="scene" src="images/${S.img || s.bg}" alt="">` : "";
 
   function draw(){
     const done = doneItems();
-    $("#chk").innerHTML = checkTable(L.items, done, S.fin ? 0 : curItem());
+    $("#chk").innerHTML = checkTable(L.items, done, S.fin ? 0 : curItem(), L.check, L.chkName);
     if(S.fin) return drawFin();
     const s = st();
     $("#task").innerHTML = `第 ${S.si + 1} / ${ST.length} 步　${s.task}`;
@@ -469,6 +532,17 @@ function runStation(pane, L){
       S.ord = S.ord || shuffle(s.opts.map((_, i) => i));
       h = `<div class="seqline">${S.seq.length ? S.seq.map((id, i) => `<span>${i + 1}. ${s.opts.find(o => o.id === id).t}</span>`).join("") : `<span style="background:none;color:var(--sub)">依序點下面的動作 👇</span>`}</div>
         <div class="opts">${S.ord.map(i => { const o = s.opts[i]; return `<button class="opt${S.seq.includes(o.id) ? " ok" : ""}" data-b="s:${o.id}"${S.ok || S.seq.includes(o.id) ? " disabled" : ""}>${o.t}</button>`; }).join("")}</div>`;
+    }
+    if(s.type === "multi"){
+      S.ord = S.ord || shuffle(s.opts.map((_, i) => i));
+      h = `<p style="margin:10px 0 0;font-weight:800">${s.q}</p><p class="muted" style="margin:2px 0 0">複選：把<b>全部</b>正確的選起來，再按「確定」。</p><div class="opts">${S.ord.map(i => { const o = s.opts[i]; const cls = S.ok ? (o.ok ? "ok" : "") : S.sel.includes(i) ? "on" : ""; return `<button class="opt ${cls}" data-b="u:${i}"${S.ok ? " disabled" : ""}><span class="ck">${(S.ok ? o.ok : S.sel.includes(i)) ? "☑" : "☐"}</span><span>${o.t}</span></button>`; }).join("")}</div>`
+        + (S.ok ? "" : `<div class="row" style="margin-top:10px"><button class="btn" data-b="u:go">確定</button></div>`);
+    }
+    if(s.type === "sort"){
+      if(!S.cards) S.cards = shuffle(s.cards.map((_, i) => i)).slice(0, s.n || s.cards.length);
+      const n = S.cards.length, cd = S.ok ? null : s.cards[S.cards[S.k]];
+      h = `<div class="readout" style="margin-top:8px;font-weight:800">第 ${Math.min(S.k + 1, n)} / ${n} 張</div><div class="bar"><i style="width:${Math.round(S.k / n * 100)}%"></i></div>`
+        + (cd ? `<div class="sortcard"><b>${cd.t}</b>${cd.sub ? `<small>${cd.sub}</small>` : ""}</div><p style="margin:8px 0 0;font-weight:800">${s.q || "這一張屬於哪一類？"}</p><div class="opts">${s.cats.map(c => `<button class="opt" data-b="t:${c.id}">${c.t}</button>`).join("")}</div>` : "");
     }
     if(s.type === "hold") h = `<div class="bar"><i style="width:${Math.round(S.hp * 100)}%"></i></div><div class="row" style="margin-top:10px"><button class="btn" id="holdb"${S.ok ? " disabled" : ""}>✋ ${s.label}</button><span class="muted">按住不放，進度條跑滿才放手</span></div>`;
     if(s.type === "rhythm"){
@@ -504,6 +578,8 @@ function runStation(pane, L){
     const pin = $("#pin"); if(pin) pin.focus();
   }
   function drawFin(){
+    labLog("fin", {L});
+    if(L.fin) return L.fin({accN, again(){ hist.length = 0; accN = 0; S = fresh(0); labLog("start", {L}); draw(); ctl.upd(); }});
     labDone(L.id); confetti();
     $("#task").innerHTML = "🎉 本站完成！";
     $("#view").innerHTML = `<img class="scene" src="images/${L.finImg || ST[ST.length - 1].bg}" alt="">`;
@@ -512,7 +588,7 @@ function runStation(pane, L){
     // 10/26 使用者：完成一站要有按鈕直接到下一站（依站序；最後一站時跳到還沒做的那一站）
     const li = LABS.indexOf(L), nx = LABS[li + 1] || (allDone ? null : LABS.find(l => !DONE[l.id]));
     const nxBtn = nx ? `<div class="row" style="margin-top:12px"><button class="btn gold" data-b="nxst">▶ 下一站：站 ${LABS.indexOf(nx) + 1}｜${nx.title}</button></div>` : "";
-    handBtns($("#ctrls"), `${allDone ? `<div class="row" style="margin-top:12px"><a class="btn gold" style="text-decoration:none;text-align:center" href="eval.html#labfb">📝 5 站都完成了，填技術站自評 →</a></div>` : nxBtn}<div class="row" style="margin-top:12px"><button class="btn" data-b="again">🔁 再做一次</button><button class="btn ghost" data-b="list">← 回技術站清單</button></div>`, b => { if(b === "again"){ hist.length = 0; accN = 0; S = fresh(0); draw(); ctl.upd(); } else if(b === "nxst"){ location.hash = "/" + nx.id; window.scrollTo(0, 0); } else location.hash = ""; });
+    handBtns($("#ctrls"), `${allDone ? `<div class="row" style="margin-top:12px"><a class="btn gold" style="text-decoration:none;text-align:center" href="eval.html#labfb">📝 5 站都完成了，填技術站自評 →</a></div>` : nxBtn}<div class="row" style="margin-top:12px"><button class="btn" data-b="again">🔁 再做一次</button><button class="btn ghost" data-b="list">← 回技術站清單</button></div>`, b => { if(b === "again"){ hist.length = 0; accN = 0; S = fresh(0); labLog("start", {L}); draw(); ctl.upd(); } else if(b === "nxst"){ location.hash = "/" + nx.id; window.scrollTo(0, 0); } else location.hash = ""; });
     $("#fb").innerHTML = say(`做完評核表第 ${L.items[0]}–${L.items[L.items.length - 1]} 項。這一站出事 <b>${accN}</b> 次${accN ? "——出事的地方，就是實際操作時要特別留意的地方。" : "，很棒！"}`, true);
   }
 
@@ -526,8 +602,8 @@ function runStation(pane, L){
     if(k === "m"){ commit(() => { S.mode = v; finish(); S.fb = say("✅ " + s.opts.find(o => o.id === v).okMsg, true); }); return draw(); }
     if(k === "c"){
       const o = s.opts[+v];
-      if(!o.ok){ if(o.acc) return bad({acc: o.acc}); commit(() => S.bad.push(+v)); beep(false); S.fb = say("⚠️ " + o.why); return draw(); }
-      commit(() => { finish(); S.fb = say("✅ " + o.why + (s.item ? CHK_NO([].concat(s.item).join("、")) : ""), true) + (s.note ? `<div class="note">📝 教學補充：${s.note}</div>` : ""); if(s.after) S.img = s.after; });
+      if(!o.ok){ if(o.acc) return bad({acc: o.acc}); if(L.onBad) L.onBad(curItem(), S.si); labLog("wrong", {L, si: S.si, item: curItem(), msg: o.why || o.t || ""}); commit(() => S.bad.push(+v)); beep(false); S.fb = say("⚠️ " + o.why); return draw(); }
+      commit(() => { finish(); S.fb = say("✅ " + o.why + (s.item ? CHK_NO([].concat(s.item).join("、"), L.chkName) : ""), true) + (s.note ? `<div class="note">📝 教學補充：${s.note}</div>` : ""); if(s.after) S.img = s.after; });
       return draw();
     }
     if(k === "s"){
@@ -537,6 +613,19 @@ function runStation(pane, L){
         beep(true, 660); return draw();
       }
       return bad((s.why || {})[v] || s.orderMsg || "順序不對，想想看這一步之前還要先做什麼。");
+    }
+    if(k === "u"){
+      if(v !== "go"){ const i = +v; commit(() => { S.sel = S.sel.includes(i) ? S.sel.filter(x => x !== i) : S.sel.concat(i); S.fb = ""; }); return draw(); }
+      const wrongPick = S.sel.map(i => s.opts[i]).find(o => !o.ok), miss = s.opts.filter((o, i) => o.ok && !S.sel.includes(i)).length;
+      if(wrongPick) return bad(wrongPick.why || `「${wrongPick.t}」不是正確答案。`);
+      if(miss) return bad(s.missMsg || `還少了 ${miss} 項沒選到，再想想看。`);
+      commit(() => { finish(); if(s.after) S.img = s.after; }); return draw();
+    }
+    if(k === "t"){
+      const cd = s.cards[S.cards[S.k]];
+      if(![].concat(cd.ans).includes(v)) return bad(cd.why || "分錯類了，再想想看。");
+      commit(() => { S.k++; S.fb = say(`✓ ${cd.t}：${cd.why || "正確"}`, true); if(S.k >= S.cards.length){ const f = S.fb; finish(); S.fb = f + S.fb; } });
+      beep(true, 660); return draw();
     }
     if(k === "r"){
       if(v === "met"){ if(metT) stopMet(); else startMet(); return draw(); }
@@ -1247,11 +1336,89 @@ LABS.push({id: "remove", icon: "🔚", title: "Port-A 角針移除", items: [19,
       wrong: {"@bed": "拔出之 Port-A 角針要隨即丟入尖銳物品收集器中，不要先放著。"}, okMsg: "拔出的角針隨即丟入尖銳物品收集器。"},
   ]});
 
+
+/* ═════ 操作紀錄送後台（10/28 使用者：每站做錯幾次、在哪一步出事、花多久） ═════
+   engine.js 每個動作呼叫 window.onLabLog，這裡整理成「一站一筆」：做完一站送一筆；做到一半離開這一站也送一筆（標「中途離開」）
+   員工編號沿用成效評估的 eval_code（前測時填過）；沒有員編或沒網路時先存本機待送清單，之後再送
+   後台：同 eval.html 的 Apps Script（kind＝labrun，存 eval 分頁，欄名都以「操作_」開頭） */
+const ENDPOINT = "https://script.google.com/macros/s/AKfycbzHpVJHrzP-dC0UWTtxjLVG7BKCxPn28-WUCjH69VMhk4u8_SnFYLZkJcPTmvwgMsaA/exec";
+const LOG_VER = "labrun-v1", OUTBOX = "chemo-lab-outbox";
+const LSget = (k, d) => { try{ const v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; }catch(e){ return d; } };
+const LSset = (k, v) => { try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} };
+const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
+const myCode = () => String(LSget("eval_code", "") || "");
+const secSince = t => Math.round((Date.now() - t) / 1000);
+const stepName = (L, si) => { const s = L.steps[si], it = s && s.item ? [].concat(s.item).join("、") : ""; return `第 ${si + 1} 步${it ? `（評核表 #${it}）` : ""}`; };
+let RUN = null;
+window.onLabLog = (ev, d) => {
+  const L = d.L;
+  if(ev === "start"){ endRun(false); RUN = {L, t0: Date.now(), tStep: Date.now(), si: 0, errs: [], wrong: 0, acc: 0, undo: 0, reset: 0, stepSec: {}, act: 0}; return; }
+  if(!RUN || RUN.L !== L) return;
+  RUN.act++;
+  if(ev === "ok"){ RUN.stepSec[d.si] = (RUN.stepSec[d.si] || 0) + secSince(RUN.tStep); RUN.tStep = Date.now(); RUN.si = d.si + 1; }
+  else if(ev === "wrong" || ev === "acc"){ RUN[ev]++; RUN.si = d.si; RUN.errs.push({si: d.si, item: d.item, kind: ev, msg: String(d.msg || "").slice(0, 60), t: secSince(RUN.t0)}); }
+  else if(ev === "undo" || ev === "reset"){ RUN[ev]++; if(ev === "reset"){ RUN.si = 0; RUN.tStep = Date.now(); } }
+  else if(ev === "fin") endRun(true);
+};
+/* 結束一站：完成＝送；中途離開＝有動過才送（只是點進來看看就不記） */
+function endRun(done){
+  const R = RUN; RUN = null;
+  if(!R || (!done && !R.act)) return;
+  const L = R.L, idx = LABS.indexOf(L), sec = secSince(R.t0);
+  // 出錯步驟：同一步做錯合併成「×次數」，出事另列出事名稱
+  const g = {};
+  R.errs.forEach(e => { const k = e.si; g[k] = g[k] || {wrong: 0, acc: []}; if(e.kind === "acc") g[k].acc.push(e.msg); else g[k].wrong++; });
+  const errTxt = Object.keys(g).map(Number).sort((a, b) => a - b).map(si => [g[si].wrong ? `${stepName(L, si)}做錯×${g[si].wrong}` : "", ...g[si].acc.map(t => `${stepName(L, si)}出事：${t}`)].filter(Boolean).join("；")).join("；");
+  const slow = Object.entries(R.stepSec).sort((a, b) => b[1] - a[1])[0];
+  const p = {kind: "labrun", code: myCode(), session: today(), station: L.id, title: L.title, items: L.items, done, stop_at: done ? null : R.si + 1,
+    sec, wrong: R.wrong, acc: R.acc, undo: R.undo, reset: R.reset, errs: R.errs, step_sec: R.stepSec,
+    submitted_at: new Date().toISOString(), version: LOG_VER, submission_id: "labrun-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8)};
+  p.cols = {"操作_站": `站 ${idx + 1}｜${L.title}`, "操作_結果": done ? "完成" : `中途離開（停在第 ${R.si + 1} 步）`, "操作_秒數": sec,
+    "操作_做錯次數": R.wrong, "操作_出事次數": R.acc, "操作_上一步次數": R.undo, "操作_全部重來次數": R.reset,
+    "操作_出錯步驟": errTxt, "操作_最久步驟": slow ? `${stepName(L, +slow[0])} ${slow[1]} 秒` : ""};
+  const box = LSget(OUTBOX, []); box.push(p); LSset(OUTBOX, box);
+  flushLog();
+}
+let flushing = false;
+async function flushLog(){
+  const code = myCode();
+  if(flushing || !ENDPOINT || !/^\d{6}$/.test(code)) return;
+  flushing = true;
+  try{
+    let box = LSget(OUTBOX, []);
+    while(box.length){
+      const p = Object.assign({}, box[0], {code});
+      const r = await (await fetch(ENDPOINT, {method: "POST", headers: {"Content-Type": "text/plain;charset=utf-8"}, body: JSON.stringify(p), redirect: "follow"})).json();
+      if(!r || !r.ok) break;   // 後台還沒開放 labrun 時會回 ok:false，留在本機下次再送
+      box = LSget(OUTBOX, []); box.shift(); LSset(OUTBOX, box);
+    }
+  }catch(e){}
+  flushing = false;
+}
+// 離開某一站（回清單、關掉分頁）時，把做到一半的那一站記下來；下次打開頁面再送
+window.addEventListener("hashchange", () => { if(RUN && location.hash.replace(/^#\/?/, "") !== RUN.L.id) endRun(false); });
+window.addEventListener("pagehide", () => endRun(false));
+setTimeout(flushLog, 1500);
+/* 首頁的員工編號欄：前測填過就自動帶入；也可以在這裡改 */
+function idCard(){
+  const c = myCode(), n = LSget(OUTBOX, []).length;
+  return `<div class="card"><div class="row" style="align-items:center;gap:8px;flex-wrap:wrap">
+    <label>員工編號 <input type="text" id="labcode" inputmode="numeric" maxlength="6" placeholder="6 碼" value="${esc(c)}" style="width:110px"></label>
+    <button class="btn ghost" onclick="saveCode()">${/^\d{6}$/.test(c) ? "修改" : "儲存"}</button></div>
+    <p class="muted" style="margin:6px 0 0">每一站做完，會把<b>做錯幾次、在哪一步出事、花了多久</b>送給老師，用來安排實體課要多練哪裡（不影響成績）。${/^\d{6}$/.test(c) ? "" : "<b>請先填員工編號</b>，紀錄才送得出去。"}${n ? `　還有 ${n} 筆紀錄${/^\d{6}$/.test(c) ? "等網路恢復後送出" : "等你填員工編號後送出"}。` : ""}</p></div>`;
+}
+function saveCode(){
+  const c = $("#labcode").value.trim();
+  if(!/^\d{6}$/.test(c)) return toast("員工編號是 6 碼數字");
+  LSset("eval_code", c); toast("已儲存"); flushLog(); home();
+}
+
 function home(){
   $("#backlab").hidden = true; $("#app").style.maxWidth = $(".top .in").style.maxWidth = "";
   $("#pnum").textContent = `完成 ${LABS.filter(l => DONE[l.id]).length} / ${LABS.length} 站`;
   $("#app").innerHTML = `<header><div class="kicker">新進護理師到職訓練 · 動手做技術站</div><h1>🧪 化療靜脈給藥暨人工血管照護基礎技術</h1>
     <p class="muted">把用物拖到正確的位置（或先點用物、再點位置），照評核表一步一步做。做錯會出事——出事以後要先選對處理方法，才能回到出事前重做。每一站都有「⏸ 暫停」「↩ 上一步」「🔁 全部重來」，放錯的用物可以再拖回上排。</p></header>
+    ${idCard()}
     <div class="grid">${LABS.map(l => `<button class="xp" onclick="location.hash='#/${l.id}'"><span class="ic">${l.icon}</span><span><b>${esc(l.title)}</b><small>${esc(l.desc)}</small><small>評核表第 ${l.items[0]}–${l.items[l.items.length - 1]} 項${DONE[l.id] ? ' · <span class="done">✅ 做完了</span>' : ""}</small></span></button>`).join("")}</div>
     ${(() => { const left = LABS.filter(l => !DONE[l.id]);   // 5 站都做完才能填自評（10/25 使用者定）
       return `<div class="card" style="text-align:center"><b>${left.length ? "做完 5 站，才能填技術站自評" : "5 站都完成了！"}</b>

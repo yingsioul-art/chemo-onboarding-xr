@@ -5,7 +5,7 @@
  * 讀取：
  *   ?mode=summary&since=ISO&until=ISO → 匿名列（無員工編號），給老師圖表頁（until 可省略）
  *   ?mode=detail&since=ISO&key=… → 含員工編號，給老師個人版
- * 訓練成效評估（eval.html，kind＝pre／post／check／lab）另存「eval」分頁：
+ * 訓練成效評估（eval.html，kind＝pre／post／check／lab）、三個月自學站（lab3m.html，kind＝m3）、技術站操作紀錄（lab.html，kind＝labrun）另存「eval」分頁：
  *   ?mode=evalpre&code=…  → 該代碼最近一次前測（後測頁做前後對照用）
  *   ?mode=eval&key=…      → 全部成效資料（老師結果頁）
  *   ?mode=labsum&since=ISO&until=ISO → 技術站自評匿名彙總（只回各站程度＋需協助步驟，不含員工編號），給老師圖表頁開場對焦
@@ -72,7 +72,7 @@ function doGet(e) {
 
 // ---------- 訓練成效評估 ----------
 var EVAL_SHEET = 'eval';
-var EVAL_KINDS = ['pre', 'post', 'check', 'lab', 'm3'];   // lab＝技術站自評（上課前，ZPD）；m3＝三個月自學站 lab3m.html（10/26：計畫、練前練後把握度、各站做錯項次，老師在 lab3m.html#/teacher 用 mode=eval 讀）
+var EVAL_KINDS = ['pre', 'post', 'check', 'lab', 'm3', 'labrun'];   // lab＝技術站自評（上課前，ZPD）；m3＝三個月自學站 lab3m.html（10/26：計畫、練前練後把握度、各站做錯項次，老師在 lab3m.html#/teacher 用 mode=eval 讀）；labrun＝五天版技術站 lab.html 的操作紀錄（10/28：一站一筆，做錯／出事次數、出錯步驟、秒數，欄名「操作_」開頭）
 var EVAL_HEAD = ['收到時間', '類型', '代碼', '梯次日期', '知識答對', 'submission_id', '版本', '原始JSON'];
 
 function evalSheet_() {
