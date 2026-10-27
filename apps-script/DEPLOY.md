@@ -11,7 +11,9 @@ clasp deploy -i AKfycbzHpVJHrzP-dC0UWTtxjLVG7BKCxPn28-WUCjH69VMhk4u8_SnFYLZkJcPT
 ```
 - `clasp deploy -i <部署ID>` ＝在同一個部署上建立新版本，網址不變；沒有 `-i` 會另建一個新部署、新網址（網頁會收不到）。
 - 驗證：`curl "<ENDPOINT>?mode=ping"`；或 `?mode=evalpre&code=<員編>` 看回傳欄位。
-- 歷史：第 5 版 10/26（m3 未部署）→ **第 6 版 2026-10-28 05:30**（eval-v2 evalpre 欄位＋labrun＋m3；由瀏覽器手動部署）。
+- 歷史：第 5 版 10/26（m3 未部署）→ 第 6 版 2026-10-28 05:30（eval-v2 evalpre 欄位＋labrun＋m3）→ **第 7 版 2026-10-28 05:59**（固定欄「版本說明」，eval 分頁 H 欄已手動插入）；兩版都由瀏覽器手動部署。
+- 🔴 clasp 要先在 https://script.google.com/home/usersettings 開「Google Apps Script API」，否則 `clasp push` 回 User has not enabled the Apps Script API。
+- 🔴 改 EVAL_HEAD（固定欄）時，試算表插欄與部署新版要緊接著做；中間舊版程式會讀錯欄（10/28 踩過）。
 
 ## 注意
 - 雲端檔名是「程式碼.gs」，repo 檔名是 `Code.gs`：第一次 `clasp push` 會把雲端檔改名成 Code.gs（內容相同，功能不變）；之後 `clasp pull` 會寫出 `Code.js`，不要和 `Code.gs` 兩份都留。
