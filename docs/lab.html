@@ -69,6 +69,7 @@ h3{font-size:1.05em;margin:18px 0 6px}
 .opt img{width:96px;height:96px;object-fit:cover;border-radius:10px;flex:none}
 .media{margin-top:12px;padding:10px;border-radius:12px;background:color-mix(in srgb,var(--pri) 6%,var(--card))}
 .vids{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.vids.one{grid-template-columns:1fr}
 .vids figure{margin:0}
 .vids video{width:100%;max-height:340px;background:#000;border-radius:10px;display:block}
 .vids figcaption{font-size:.85em;margin-top:4px;color:var(--sub)}
@@ -612,7 +613,7 @@ function runStation(pane, L){
     if(mediaFor !== S.si){
       mediaFor = S.si;
       const m = s.media;
-      $("#media").innerHTML = m ? `<div class="media"><b>${m.title}</b><div class="vids">${m.items.map(v => `<figure><video src="images/${v.src}" poster="images/${v.src.replace(/\.mp4$/, ".jpg")}" controls playsinline preload="metadata"${v.muted === false ? "" : " muted"}></video><figcaption>${v.cap}</figcaption></figure>`).join("")}</div>${m.note ? `<div class="note">${m.note}</div>` : ""}</div>` : "";
+      $("#media").innerHTML = m ? `<div class="media"><b>${m.title}</b><div class="vids${m.items.length === 1 ? " one" : ""}">${m.items.map(v => `<figure><video src="images/${v.src}" poster="images/${v.src.replace(/\.mp4$/, ".jpg")}" controls playsinline preload="metadata"${v.muted === false ? "" : " muted"}></video><figcaption>${v.cap}</figcaption></figure>`).join("")}</div>${m.note ? `<div class="note">${m.note}</div>` : ""}</div>` : "";
     }
     if(useSvg) wire(s);
     if(s.type === "manip" && !S.ok) wireManip(s);
@@ -1176,7 +1177,10 @@ LABS.push({id: "prep", icon: "🛡️", title: "主護護理師執行給藥前�
     hangStep({item: 8, task: "把化療藥袋（在夾鏈袋內）露出的 Spike <b>接上 Adapter</b>，再把藥袋<b>掛上點滴架</b>。", name: "藥袋",
       img: ZIP, w: ZW, h: ZH, sx: ZSX, ax: LOW_CX, ay: LOW_FACE, home: {x: 6, y: 156},
       orderMsg: "先將藥袋上 CSTD 的 Spike 與 Adapter 相互銜接，再將化療藥品掛上點滴架。", okMsg: "藥袋留在夾鏈袋裡，Spike 與 Adapter 銜接，再掛上點滴架。"}),
-    {type: "choice", scene: () => bedside(false) + hungBag(), item: 9, task: "藥袋掛好了。下一個動作是什麼？",
+    /* 10/28 使用者：放藥師調劑影片（〈隱形的威脅〉00:14–02:49），讓學員知道掛上點滴後為什麼要脫除外層手套 */
+    {type: "choice", scene: () => bedside(false) + hungBag(), item: 9, task: "藥袋掛好了。下一個動作是什麼？", media: {title: "🎬 藥師怎麼調劑化療藥：為什麼掛上點滴後要脫除外層手套", items: [
+      {src: "lab/video/pharmacy-compound.mp4", cap: "藥局調劑室：負壓環境、生物安全櫃、藥師的防護裝備，以及調劑完怎麼裝袋送出（約 2 分 35 秒，有旁白）", muted: false}],
+      note: "看完想一想：藥師說「夾鏈袋內＝汙染區、夾鏈袋外＝乾淨區」。你剛才接 Spike、掛藥袋時，外層手套可能碰到汙染區、沾到化療藥，所以要先脫除外層手套，再去按幫浦，才不會把藥帶到幫浦按鍵上。"},
       q: "接好、掛好化療藥袋以後，下一步？", opts: [
         {t: "脫除外層手套", ok: true, why: "上述操作步驟可能有化療藥品殘留在手套上，所以要脫除外層手套。"},
         {t: "直接去按幫浦設定", why: "外層手套可能沾有化療藥，直接按幫浦會污染幫浦按鍵。先脫除外層手套。"},
@@ -1329,7 +1333,10 @@ LABS.push({id: "insert", icon: "📍", title: "Port-A 角針置放", items: [13,
       label: "按住＝大拇指壓住活塞", ms: 1500, early: "大拇指要一直壓住活塞，進度條跑滿才放手。", okMsg: "大拇指壓住針筒活塞，管內維持正壓。"},
     {type: "taps", bg: "lab/L4-clamp.jpg", after: "lab/I17c.jpg", overlay: S => INSET(!S.ok, 296, 64, Z_CLAMP), spots: [{id: "clamp", x: Z_CLAMP.x, y: Z_CLAMP.y, label: "黃色管夾"}], order: ["clamp"],
       task: "維持正壓，<b>關閉管夾</b>（點黃色管夾）。", btns: [{t: "先把注射器拔掉，再關管夾", acc: ACC.back}], okMsg: "維持正壓的狀態下，關閉管夾。"},
-    {type: "hold", bg: "lab/I17c.jpg", after: "lab/A-O7-v2.jpg", item: 18, task: "管夾關好了。<b>移除</b>針筒／注射器。",   /* 10/26 使用者：拿掉「緩慢」兩個字 */
+    {type: "hold", bg: "lab/I17c.jpg", after: "lab/A-O7-v2.jpg", item: 18, task: "管夾關好了。<b>移除</b>針筒／注射器。",
+      /* 10/28 使用者：角針置放最後加碼補充貼敷料技巧（IMG_4827 00:29 起；已裁切只留角針區、去聲音，不含病人可辨識特徵） */
+      media: {title: "🎁 加碼補充：角針置放後，透明敷料怎麼貼", items: [{src: "lab/video/porta-dressing.mp4", cap: "貼敷料的技巧（約 35 秒，無聲）"}],
+        note: "看影片裡敷料怎麼對準角針、怎麼壓平和固定；有不清楚的地方，實體課可以再問老師。"},   /* 10/26 使用者：拿掉「緩慢」兩個字 */
       label: "按住＝移除注射器", ms: 2000, early: "進度條跑滿才放手。", okMsg: "正壓封管完成：先維持正壓 → 關閉管夾 → 再移除注射器。"},
   ]});
 
