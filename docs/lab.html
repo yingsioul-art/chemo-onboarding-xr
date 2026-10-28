@@ -114,6 +114,9 @@ table.rec tr.ok td:first-child{color:var(--ok);font-weight:800}
 @keyframes pulse{50%{opacity:.45}}
 .htask{background:color-mix(in srgb,var(--pri) 10%,var(--card));border-left:5px solid var(--pri);border-radius:12px;padding:8px 12px;margin-top:10px;font-weight:700}
 .htask small{display:block;font-weight:600;color:var(--sub)}
+/* 10/28：選過的情境／方法標籤＋改選按鈕 */
+.modetag{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:0 0 6px;padding:6px 10px;border-radius:10px;background:color-mix(in srgb,var(--gold, #f0b429) 22%,var(--card));border:1.5px solid color-mix(in srgb,var(--gold, #f0b429) 70%,transparent);font-size:15px}
+.modetag .btn{padding:4px 10px;font-size:13px;min-height:0}
 .acc{position:absolute;inset:0;z-index:6;border-radius:var(--r);background:rgba(42,10,5,.94);color:#fff;padding:72px 16px 16px;overflow:auto}
 .acc h2{color:#ffd23f;margin:4px 0}
 .accpic img{width:100%;max-height:190px;object-fit:cover;border-radius:12px}
@@ -444,6 +447,42 @@ function runStation(pane, L){
     labLog(w && w.acc ? "acc" : "wrong", {L, si: S.si, item: curItem(), msg: w && w.acc ? w.acc.title || "" : typeof w === "string" ? w : ""});
     if(w && w.acc){ accN++; handAccident(card, Object.assign({pic: EMO("⚠️")}, w.acc), () => { S.fb = say("回到出事前，再做一次。", true); draw(); }); return; }
     beep(false); S.fb = say("⚠️ " + (w || "這樣不對，再想想看。")); draw();
+    // 10/28 使用者（C）：同一步做錯滿 3 次，跳出說明視窗，按「知道了」才能繼續（手機上下方的提示容易沒看到）
+    S.wc = (S.wc || 0) + 1;
+    if(S.wc % 3 === 0) stuckPop(w);
+  }
+  /* 目前選的情境／方法：這一站前面有 mode 步驟、而且已經選了，才回傳 {s, o}（s＝那一步、o＝選的選項） */
+  function modeNow(){
+    for(let i = S.si - (S.ok && st().type === "mode" ? 0 : 1); i >= 0; i--){
+      const m = ST[i]; if(m.type !== "mode") continue;
+      const o = m.opts.find(x => x.id === S.mode); return o ? {s: m, o} : null;
+    }
+    return null;
+  }
+  function stuckPop(w){
+    const s = st(), mn = modeNow();
+    const help = s.help ? s.help(S) : typeof s.orderMsg === "function" ? s.orderMsg(S) : s.orderMsg || (typeof w === "string" ? w : "");
+    const d = document.createElement("div"); d.className = "pop";
+    d.innerHTML = `<div class="box"><h3 style="margin:0 0 8px">💡 這一步卡住了嗎？</h3>
+      ${mn ? `<p style="margin:0 0 8px">你選的是：<b>${mn.o.t}</b></p>` : ""}
+      ${help ? `<div class="ex" style="margin:0 0 8px">${help}</div>` : ""}
+      ${mn && s.modeDep ? `<p class="muted" style="margin:0 0 8px">如果剛才選錯了，可以按題目上方的「改成…」按鈕，換成另一種再做這一步。</p>` : ""}
+      <div class="row" style="margin-top:10px"><button class="btn gold" data-p="x">知道了，繼續</button></div></div>`;
+    d.querySelector("[data-p]").onclick = () => d.remove();
+    document.body.appendChild(d);
+  }
+  /* 10/28 使用者（B）：在依情境判定的步驟（modeDep）可以直接改選情境，這一步重新做，前面做對的步驟保留 */
+  function switchMode(id){
+    const mn = modeNow(); if(!mn) return;
+    const o = mn.s.opts.find(x => x.id === id); if(!o) return;
+    stopHold(); labLog("mode", {L, si: S.si, mode: id});
+    commit(() => {
+      S = fresh(S.si, {mode: id});
+      const s = st();
+      if(s.skipIf && s.skipIf(S)) S.ok = true;
+      S.fb = say(`🔄 已改成「${o.t}」。${o.okMsg || ""}` + (S.ok && s.skipMsg ? `<br>➖ ${s.skipMsg}` : "　這一步重新做。"), true);
+    });
+    draw();
   }
   function finish(){
     S.ok = true; beep(true); labLog("ok", {L, si: S.si});
@@ -515,7 +554,11 @@ function runStation(pane, L){
     $("#chk").innerHTML = checkTable(L.items, done, S.fin ? 0 : curItem(), L.check, L.chkName);
     if(S.fin) return drawFin();
     const s = st();
-    $("#task").innerHTML = `第 ${S.si + 1} / ${ST.length} 步　${s.task}`;
+    // 10/28 使用者（A）：選過情境／方法之後，每一步題目上方都標出「你選的是哪一種」；modeDep 步驟另有改選按鈕（B）
+    const mn = s.type === "mode" ? null : modeNow();
+    $("#task").innerHTML = (mn ? `<div class="modetag">你選的是：<b>${mn.o.t}</b>${s.modeDep && (!S.ok || (s.skipIf && s.skipIf(S))) ? mn.s.opts.filter(x => x.id !== S.mode).map(x => `<button class="btn ghost" data-mc="${x.id}">改成：${x.t}</button>`).join("") : ""}</div>` : "")
+      + `第 ${S.si + 1} / ${ST.length} 步　${s.task}`;
+    $("#task").querySelectorAll("[data-mc]").forEach(b => b.onclick = () => { if(!ctl.paused) switchMode(b.dataset.mc); });
     const v = $("#view"), c = $("#ctrls");
     const useSvg = ["drag", "taps"].includes(s.type);
     if(s.type === "manip" && !S.pos) S.pos = JSON.parse(JSON.stringify(s.start));
@@ -629,6 +672,12 @@ function runStation(pane, L){
     }
     if(k === "r"){
       if(v === "met"){ if(metT) stopMet(); else startMet(); return draw(); }
+      // 10/28 使用者：頁面設 window.LAB_RHYTHM_FREE（lab.html）時不判斷推-停的頻率，連推兩次、先按停都不算錯；推滿次數就完成
+      if(window.LAB_RHYTHM_FREE){
+        if(v === "push"){ if(S.n >= s.n) return; commit(() => { S.n++; S.last = "push"; S.fb = ""; if(S.n >= s.n){ finish(); if(s.after) S.img = s.after; } }); beep(true, 520); }
+        else { if(S.last !== "push") return; commit(() => { S.last = "stop"; }); beep(true, 700); }
+        return draw();
+      }
       if(v === "push"){ if(S.last === "push") return bad(s.twice || "推完要停一下，再推——要「推-停-推-停」。"); commit(() => { S.n++; S.last = "push"; S.fb = ""; }); beep(true, 520); }
       else { if(S.last !== "push") return bad("先推一下，再停。"); commit(() => { S.last = "stop"; if(S.n >= s.n){ finish(); if(s.after) S.img = s.after; } }); beep(true, 700); }
       return draw();
@@ -1101,7 +1150,7 @@ LABS.push({id: "prep", icon: "🛡️", title: "主護護理師執行給藥前�
         {t: "請病人自己說出姓名與出生年月日，再和手圈、醫囑核對", ok: true, why: "用開放式問句讓病人自己說，再和手圈、醫囑核對。"},
         {t: "問病人：「你是王先生嗎？」病人點頭就好", why: "封閉式問句，病人可能聽錯或順口答「是」。要請病人自己說出姓名與出生年月日。"},
         {t: "看床頭的床號和名牌就好", why: "床號會換、名牌可能放錯，不能當作辨識病人的依據。"}]},
-    {type: "drag", bg: "I10.jpg", item: 6, tool: true, ordered: true, task: "<b>條碼檢核</b>：把條碼機<b>依順序</b>拖到要掃描的地方（依你選的情境）。",
+    {type: "drag", bg: "I10.jpg", item: 6, tool: true, ordered: true, modeDep: true, task: "<b>條碼檢核</b>：把條碼機<b>依順序</b>拖到要掃描的地方（依你選的情境）。",
       orderMsg: S => S.mode === "link" ? "掃描順序：先掃輸液幫浦條碼 → 再掃病人手圈條碼 → 最後隔著塑膠夾鏈袋掃化療藥品點滴袋的標籤條碼。" : "掃描順序：先掃病人手圈條碼 → 再隔著塑膠夾鏈袋掃化療藥品點滴袋的標籤條碼。",
       tray: ["S26"], zones: [
         {id: "pump", r: [94, 8, 214, 90], label: "幫浦條碼"},
@@ -1132,8 +1181,8 @@ LABS.push({id: "prep", icon: "🛡️", title: "主護護理師執行給藥前�
         {t: "脫除外層手套", ok: true, why: "上述操作步驟可能有化療藥品殘留在手套上，所以要脫除外層手套。"},
         {t: "直接去按幫浦設定", why: "外層手套可能沾有化療藥，直接按幫浦會污染幫浦按鍵。先脫除外層手套。"},
         {t: "兩層手套都脫掉", why: "只脫「外層」手套，內層手套繼續保護。"}]},
-    {type: "pump", scene: () => bedside(false) + hungBag(), item: 10, task: "（採非連線操作流程適用）設定輸液點滴幫浦。", drug: "化療藥（練習用）", order: {rate: 100, vtbi: 250},
-      skipIf: S => S.mode === "link", skipMsg: "你選的是「輸液幫浦連線功能情境」，第 10 項不適用。（想練幫浦設定，可以按「全部重來」改選非連線情境。）",
+    {type: "pump", scene: () => bedside(false) + hungBag(), item: 10, modeDep: true, task: "（採非連線操作流程適用）設定輸液點滴幫浦。", drug: "化療藥（練習用）", order: {rate: 100, vtbi: 250},
+      skipIf: S => S.mode === "link", skipMsg: "你選的是「輸液幫浦連線功能情境」，第 10 項不適用。（想練幫浦設定，可以按題目上方的「改成：非輸液幫浦連線功能情境」。）",
       okMsg: "設定順序：Rate → Volume to be infusion (VTBI)，數字和醫囑相同。"},
   ]});
 
@@ -1349,6 +1398,8 @@ const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(
 const myCode = () => String(LSget("eval_code", "") || "");
 const secSince = t => Math.round((Date.now() - t) / 1000);
 const stepName = (L, si) => { const s = L.steps[si], it = s && s.item ? [].concat(s.item).join("、") : ""; return `第 ${si + 1} 步${it ? `（評核表 #${it}）` : ""}`; };
+// 10/28 使用者：推-停-推-停不判斷頻率，都算對（engine.js 看這個旗標；lab3m 沒設，維持原本判斷）
+window.LAB_RHYTHM_FREE = true;
 let RUN = null;
 window.onLabLog = (ev, d) => {
   const L = d.L;
