@@ -190,7 +190,7 @@ const say = (t, ok) => `<div class="${ok ? "ex" : "warn"}">${t}</div>`;
 /* 五天版的站也會載入（重疊步驟要沿用），但本頁只用到它們的步驟物件 */
 const LABS = []; let DONE = {}; function labDone(){}
 /* ═══ 動手做實驗引擎（七上生物站 sims3.js、八上自然 lab.html 共用；build 時內嵌） ═══
-   提供：handDnd 拖曳／點選放置、handAccident 出事＋急救關卡、handCtl 暫停／上一步／全部重來、flameP 火焰
+   提供：handDnd 拖曳／點選放置、handAccident 出狀況＋急救關卡、handCtl 暫停／上一步／全部重來、flameP 火焰
    頁面需先提供：toast(msg)、beep(ok)、shuffle(arr)、confetti() */
 /* 共用：拖曳或「先點器材、再點目的地」；cb.drop(id, x, y) 用 SVG 座標；cb.tap(id) 回傳 true 表示已當成動作處理 */
 function handDnd(svg, cb){
@@ -238,7 +238,7 @@ const BREAK_SVG = `<svg viewBox="0 0 240 110"><rect x="0" y="92" width="240" hei
   <path d="M85 92 l10 -40 l14 8 l-6 32 z M125 92 l4 -34 l16 6 l-4 28z M150 90 l18 -18 l8 10 l-12 10z M70 90 l-14 -10 l6 -6 l14 12z" fill="#dfe8ef" stroke="#fff" stroke-width="2" opacity=".9"/>
   <g stroke="#fff" stroke-width="2" opacity=".7"><path d="M60 40 q6 -10 0 -20"/><path d="M120 34 q6 -10 0 -20"/><path d="M180 40 q6 -10 0 -20"/></g></svg>`;
 
-/* 出事畫面＋急救關卡：答對急救題才能回去重做 */
+/* 出狀況畫面＋急救關卡：答對急救題才能回去重做 */
 function handAccident(card, cfg, onBack){
   const el = document.createElement("div"); el.className = "acc";
   const opts = shuffle(cfg.opts);
@@ -254,8 +254,8 @@ function handAccident(card, cfg, onBack){
     b.classList.add("ok"); beep(true);
     el.querySelectorAll(".ao").forEach(x => x.disabled = true);
     el.querySelectorAll(".flame").forEach(f => f.classList.add("out"));
-    fb.innerHTML = `<div class="accnote ok">✅ ${o.why}</div><div class="accnote">🔴 出事原因：${cfg.lesson}</div>
-      <button class="btn gold" style="margin-top:8px" data-back>🔁 回到出事前，再做一次</button>`;
+    fb.innerHTML = `<div class="accnote ok">✅ ${o.why}</div><div class="accnote">🔴 出狀況原因：${cfg.lesson}</div>
+      <button class="btn gold" style="margin-top:8px" data-back>🔁 回到出狀況前，再做一次</button>`;
     fb.querySelector("[data-back]").onclick = () => { el.remove(); onBack(); };
   });
 }
@@ -296,7 +296,7 @@ function handCtl(card, o){
      mode   選情境（連線／非連線幫浦）：opts [{id, t}]
      drag   拖用物到位置：tray [用物 id]、zones [{id, r:[x1,y1,x2,y2], label}]、goal [[用物, 位置]]（或 S => 陣列）、
             ordered（要照 goal 順序）、tool（用物是工具，放完回到上排，例如條碼機）、judge(S, it, z) 回傳 null／錯誤訊息／{acc}
-            btns [{t, acc}]：畫面下方的「偷吃步」按鈕，按了就出事
+            btns [{t, acc}]：畫面下方的「偷吃步」按鈕，按了就出狀況
      taps   依序點畫面上的點：spots [{id, x, y, label, need}]（need＝點過哪個點才出現）、order [id]、tapImg {點: 換的圖}
      hold   按住不放：label、ms、after（完成後換的圖）
      rhythm 推-停-推-停：n（推幾次）、ml（每次幾 mL）、total（注射器總量，預設 n×ml）、beat [{bpm, t}]＋beatRef（節拍聲選項與文獻）
@@ -309,10 +309,10 @@ function handCtl(card, o){
    popup {title, svg, steps [文字], at [第幾秒亮]}：這一步做對後跳出說明視窗（動畫＋逐步文字），可再播一次
    media {title, items [{src, cap}], note}：這一步下方放說明影片（只在換步驟時重畫，按按鈕不會讓影片重播）
      manip  手動操作示意圖（推入、銜接、戳入）：start {零件: {x, y}}、render(S) 回傳 SVG（零件加 data-part）、
-            move(S, 零件, x, y) 限制移動範圍、drop(S, 零件) 放手時判斷：true＝完成／字串＝提醒／{acc}＝出事／null＝沒事
+            move(S, 零件, x, y) 限制移動範圍、drop(S, 零件) 放手時判斷：true＝完成／字串＝提醒／{acc}＝出狀況／null＝沒事
    drag 可用 scene（自畫的 SVG 背景，取代 bg 照片；可以是 S => 字串）、fillPlace（放好的用物畫滿虛線框）、noCard（放好後不畫用物卡，由 scene 畫）
    choice 的選項可帶 svg（自畫的小圖，viewBox 0 0 120 120）；manip／choice 可用 vb 改畫面範圍（放大局部）、choice 可用 scene 取代 bg
-   錯誤訊息若是 {acc: {title, cause, q, opts, lesson, pic}} 就出事（handAccident），答對處理題才回到出事前
+   錯誤訊息若是 {acc: {title, cause, q, opts, lesson, pic}} 就出狀況（handAccident），答對處理題才回到出狀況前
    ── 10/26 三個月自學版（lab3m.html）加的，五天版沒用到、行為不變 ──
      multi  複選：q、opts [{t, ok, why}]，全部選對、沒有多選才過
      sort   一張一張分類：cards [{t, sub, ans（類別 id 或陣列）, why}]、cats [{id, t}]、n（每回抽幾張）
@@ -391,10 +391,10 @@ function runStation(pane, L){
   const doneItems = () => new Set(ST.slice(0, S.si + (S.ok ? 1 : 0)).flatMap(s => s.item ? [].concat(s.item) : []));
   const curItem = () => { for(let i = S.si; i < ST.length; i++) if(ST[i].item) return [].concat(ST[i].item)[0]; return 0; };
 
-  /* 做錯：一般訊息只提醒；{acc} 會出事 */
+  /* 做錯：一般訊息只提醒；{acc} 會出狀況 */
   function bad(w){
     if(L.onBad) L.onBad(curItem(), S.si);
-    if(w && w.acc){ accN++; handAccident(card, Object.assign({pic: EMO("⚠️")}, w.acc), () => { S.fb = say("回到出事前，再做一次。", true); draw(); }); return; }
+    if(w && w.acc){ accN++; handAccident(card, Object.assign({pic: EMO("⚠️")}, w.acc), () => { S.fb = say("回到出狀況前，再做一次。", true); draw(); }); return; }
     beep(false); S.fb = say("⚠️ " + (w || "這樣不對，再想想看。")); draw();
   }
   function finish(){
@@ -540,7 +540,7 @@ function runStation(pane, L){
     const li = LABS.indexOf(L), nx = LABS[li + 1] || (allDone ? null : LABS.find(l => !DONE[l.id]));
     const nxBtn = nx ? `<div class="row" style="margin-top:12px"><button class="btn gold" data-b="nxst">▶ 下一站：站 ${LABS.indexOf(nx) + 1}｜${nx.title}</button></div>` : "";
     handBtns($("#ctrls"), `${allDone ? `<div class="row" style="margin-top:12px"><a class="btn gold" style="text-decoration:none;text-align:center" href="eval.html#labfb">📝 5 站都完成了，填技術站自評 →</a></div>` : nxBtn}<div class="row" style="margin-top:12px"><button class="btn" data-b="again">🔁 再做一次</button><button class="btn ghost" data-b="list">← 回技術站清單</button></div>`, b => { if(b === "again"){ hist.length = 0; accN = 0; S = fresh(0); draw(); ctl.upd(); } else if(b === "nxst"){ location.hash = "/" + nx.id; window.scrollTo(0, 0); } else location.hash = ""; });
-    $("#fb").innerHTML = say(`做完評核表第 ${L.items[0]}–${L.items[L.items.length - 1]} 項。這一站出事 <b>${accN}</b> 次${accN ? "——出事的地方，就是實際操作時要特別留意的地方。" : "，很棒！"}`, true);
+    $("#fb").innerHTML = say(`做完評核表第 ${L.items[0]}–${L.items[L.items.length - 1]} 項。這一站出狀況 <b>${accN}</b> 次${accN ? "——出狀況的地方，就是實際操作時要特別留意的地方。" : "，很棒！"}`, true);
   }
 
   /* ── 動作 ── */
@@ -727,7 +727,7 @@ const CHECK = [
   "移除方式依各家廠牌使用方式操作，以下為BD安全性賀伯注射針組操作方式：以左手(非慣用手)大拇指、食指固定注射針座盤，以右手(慣用手)大拇指與食指緊握安全針具握柄，準備好即請病人深呼吸，垂直向上拉起直至感覺針尖卡住定位，並聽到「喀」一聲，即表示針尖已縮至底盤中的安全機制內且安全機制已啟動。",
 ];
 
-/* ═════ 出事情境＋處理題（🔴 教學補充，非評核表原文，待使用者審） ═════
+/* ═════ 出狀況情境＋處理題（🔴 教學補充，非評核表原文，待使用者審） ═════
    依據：化療靜脈給藥 52 項表（15700-4-041224）第 15–16、22、38 項；外滲 XR 教材院內原則（不拔針＝保留回抽路徑）；
    危害藥品皮膚／眼睛暴露、針扎處理採一般職安原則（肥皂清水沖洗、洗眼 15 分鐘、立即通報），以院內規範為準 */
 const ACC = {
@@ -1490,7 +1490,7 @@ const XCAT = {cold: "冷敷（0℃，每次 20 分鐘，一天 3–4 次，24–
    和五天版重疊的步驟直接沿用五天版（st_1_drug.js／st_2_port.js）的步驟物件，只把評核表項次換成本查核表項次
    🔴 情境、選項、錯誤說明是 AI 依查核表原文補的教學設計，待老師審 */
 const M3 = [];
-const INTRO = "照查核表一步一步做：選擇、排順序、拖用物、按住或點畫面。做錯會告訴你錯在哪，並記入待加強；危險的錯會「出事」，要先選對處理方法才能回去重做。";
+const INTRO = "照查核表一步一步做：選擇、排順序、拖用物、按住或點畫面。做錯會告訴你錯在哪，並記入待加強；危險的錯會「出狀況」，要先選對處理方法才能回去重做。";
 const R = (a, b) => Array.from({length: b - a + 1}, (_, i) => a + i);
 function m3(mod, n, title, items, desc, steps){
   M3.push({id: mod + "-" + n, mod, n, icon: FORMS[mod].icon, title, items, desc, steps, check: FORMS[mod].check, chkName: "查核表", intro: INTRO});
@@ -2174,7 +2174,7 @@ function home(){
     <div class="card"><details><summary>這個自學站怎麼用？</summary>
       <ol><li><b>排計畫</b>：填到職日，系統先幫你排好每份查核表的預定完成日（可以自己改）。</li>
       <li><b>練前評把握度</b>：每份查核表開始前，先評估自己「照這份查核表全部做對」的把握。</li>
-      <li><b>動手做</b>：照查核表原文一步一步操作。做錯了會提醒你錯在哪；危險的錯會「出事」，要先選對處理方法才能回去重做。</li>
+      <li><b>動手做</b>：照查核表原文一步一步操作。做錯了會提醒你錯在哪；危險的錯會「出狀況」，要先選對處理方法才能回去重做。</li>
       <li><b>重練待加強</b>：做錯過的項目會列在首頁，挑那幾站重練。</li>
       <li><b>練後自評</b>：每份查核表的站都做完後，再評一次把握度，並勾選自己的程度，寫下最需要老師協助的步驟。這些會送給老師，實際評核前老師就知道要幫你練哪裡。</li></ol>
       <p class="note">※ 步驟與右側查核表照腫瘤品管查核表原文。情境、選項與說明是教學補充，以院內規範與老師說明為準。紀錄存在這台裝置；填了員工編號才會送給老師。</p></details></div>
@@ -2287,7 +2287,7 @@ function stationPage(L){
     $("#task").innerHTML = "✓ 本站完成";
     $("#view").innerHTML = "";
     const errs = [...runErr].sort((a, b) => a - b);
-    $("#fb").innerHTML = say(`做完查核表第 ${L.items[0]}–${L.items[L.items.length - 1]} 項。` + (errs.length ? `這一次做錯過第 <b>${errs.join("、")}</b> 項，已記入待加強；之後重做這一站、那幾項都做對，就會移出清單。` : "這一次全部一次做對！") + (fixed.length ? `<br>✓ 第 ${fixed.join("、")} 項之前做錯過，這次做對了，移出待加強。` : "") + (ctx.accN ? `<br>出事 ${ctx.accN} 次：出事的地方，就是實際操作時要特別留意的地方。` : ""), !errs.length);
+    $("#fb").innerHTML = say(`做完查核表第 ${L.items[0]}–${L.items[L.items.length - 1]} 項。` + (errs.length ? `這一次做錯過第 <b>${errs.join("、")}</b> 項，已記入待加強；之後重做這一站、那幾項都做對，就會移出清單。` : "這一次全部一次做對！") + (fixed.length ? `<br>✓ 第 ${fixed.join("、")} 項之前做錯過，這次做對了，移出待加強。` : "") + (ctx.accN ? `<br>出狀況 ${ctx.accN} 次：出狀況的地方，就是實際操作時要特別留意的地方。` : ""), !errs.length);
     handBtns($("#ctrls"), `<div class="row" style="margin-top:12px">${nx ? `<button class="btn" data-b="nx">▶ 下一站：${esc(nx.title)}</button>` : `<button class="btn" data-b="mod">${modDone(L.mod) ? "📝 站都做完了，填練後自評" : "回查核表，看還有哪一站沒做"}</button>`}
       <button class="btn ghost" data-b="again">🔁 再做一次</button><button class="btn ghost" data-b="mod">← 回查核表</button></div>`,
       b => { if(b === "again"){ runErr.clear(); ctx.again(); } else if(b === "nx") location.hash = "#/s/" + nx.id; else location.hash = "#/m/" + L.mod; });
